@@ -3,6 +3,7 @@ extends Control
 
 @onready var city_title_label: Label = $SkylineView/CityBanner/CityTitle
 @onready var city_landmark_label: Label = $SkylineView/CityBanner/CityLandmark
+@onready var skyline_sprite: TextureRect = $SkylineView/SkylineSprite
 @onready var city_status_label: Label = $StatusBar/HBox/CityLabel
 @onready var trail_label: Label = $StatusBar/HBox/TrailLabel
 @onready var clock_label: Label = $StatusBar/HBox/ClockLabel
@@ -146,7 +147,7 @@ func show_dialog(speaker: String, text: String, portrait_id: String = "chief") -
 func _highlight_bbcode(text: String) -> String:
 	var result = text
 	# Highlight alert keywords
-	var alert_words = ["ARREST", "WARRANT", "MATCH!", "ALERT:", "TIME EXPIRED!", "CASE SOLVED!", "CORNERED"]
+	var alert_words = ["ARREST", "WARRANT", "MATCH!", "MATCH CONFIRMED!", "ALERT:", "TIME EXPIRED!", "CASE SOLVED!", "CORNERED"]
 	for w in alert_words:
 		result = result.replace(w, "[color=#f87171][b]%s[/b][/color]" % w)
 
@@ -167,6 +168,16 @@ func _on_city_changed(city_data: Dictionary) -> void:
 	city_title_label.text = "%s, %s" % [city_data["name"], city_data["country"].to_upper()]
 	city_landmark_label.text = "LANDMARK: %s" % city_data["landmark"]
 	city_status_label.text = "LOC: %s" % city_data["name"]
+
+	# Load rasterized pixel-art city skyline if available
+	var city_id = city_data["id"]
+	var city_asset_path = "res://assets/cities/%s.png" % city_id
+	if not ResourceLoader.exists(city_asset_path):
+		city_asset_path = "res://assets/cities/default.png"
+	if ResourceLoader.exists(city_asset_path):
+		var tex = load(city_asset_path)
+		if tex is Texture2D:
+			skyline_sprite.texture = tex
 
 	var sky_rect = get_node_or_null("SkylineView/SkyBg")
 	if sky_rect is ColorRect:
@@ -193,7 +204,6 @@ func _on_time_updated(hours: int, day_str: String, time_str: String) -> void:
 	hours_label.text = "%dH LEFT" % hours
 
 func _on_clue_found(clue: String) -> void:
-	# Clue is displayed in investigate handler
 	pass
 
 func _on_case_resolved(is_victory: bool, message: String) -> void:
@@ -228,7 +238,7 @@ func open_investigate() -> void:
 	var labels: Array[String] = []
 	for p in subscreen_data:
 		labels.append("%s\nWitness: %s" % [p["name"], p["witness"]])
-	_populate_subscreen(labels, true, 42)
+	_populate_subscreen(labels)
 
 func open_depart() -> void:
 	subscreen_mode = "depart"
@@ -239,7 +249,7 @@ func open_depart() -> void:
 	for c_id in subscreen_data:
 		var c = Database.CITIES[c_id]
 		labels.append("✈ FLY TO %s\n   (%s)" % [c["name"], c["country"].to_upper()])
-	_populate_subscreen(labels, true, 42)
+	_populate_subscreen(labels)
 
 func open_crime_computer() -> void:
 	subscreen_mode = "computer"
@@ -256,7 +266,7 @@ func _refresh_computer_labels() -> void:
 		"FEATURE: [%s]" % (f["feature"].to_upper() if f["feature"] != "" else "ANY"),
 		"▶ COMPUTE & ISSUE ARREST WARRANT"
 	]
-	_populate_subscreen(subscreen_data, false, 32)
+	_populate_subscreen(subscreen_data, false)
 
 func open_dossier() -> void:
 	subscreen_mode = "dossier"
@@ -267,14 +277,14 @@ func open_dossier() -> void:
 	items.append("★ STOLEN TREASURE: %s" % GameManager.current_treasure)
 	items.append("--- GATHERED WITNESS CLUES ---")
 	if GameManager.clues_gathered.is_empty():
-		items.append("No clues gathered yet. Question local witnesses!")
+		items.append("No clues gathered yet. Question local witnesses in town!")
 	else:
 		for c in GameManager.clues_gathered:
 			items.append(c)
 	subscreen_data = items
-	_populate_subscreen(items, true, 40)
+	_populate_subscreen(items)
 
-func _populate_subscreen(labels: Array, reset_idx: bool = true, min_height: int = 36) -> void:
+func _populate_subscreen(labels: Array, reset_idx: bool = true) -> void:
 	if reset_idx:
 		subscreen_index = 0
 	subscreen_panel.visible = true
@@ -284,11 +294,20 @@ func _populate_subscreen(labels: Array, reset_idx: bool = true, min_height: int 
 
 	for i in range(labels.size()):
 		var btn = Button.new()
-		btn.text = str(labels[i])
+		var txt_str = str(labels[i])
+		btn.text = txt_str
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.custom_minimum_size = Vector2(0, min_height)
 		btn.add_theme_font_size_override("font_size", 8)
+		
+		# Audit: Dynamically compute height based on line count and text length
+		# A line at 440px width fits ~42 chars of 8px bitmap font.
+		var explicit_lines = txt_str.count("\n") + 1
+		var wrap_lines = ceili(float(txt_str.length()) / 42.0)
+		var total_lines = maxi(explicit_lines, wrap_lines)
+		var btn_height = maxi(34, total_lines * 15 + 14)
+		btn.custom_minimum_size = Vector2(0, btn_height)
+
 		var click_idx = i
 		btn.pressed.connect(func(): _confirm_subscreen(click_idx))
 		subscreen_list.add_child(btn)

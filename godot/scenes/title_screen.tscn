@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://c3m7m0q0p1b4"]
+[gd_scene load_steps=3 format=3 uid="uid://c3m7m0q0p1b4"]
 
 [ext_resource type="Script" path="res://scripts/title_screen.gd" id="1_title"]
+[ext_resource type="Texture2D" path="res://assets/ui/fedora_logo.png" id="2_fedora"]
 
 [node name="TitleScreen" type="Control"]
 layout_mode = 3
@@ -116,36 +117,16 @@ theme_override_colors/font_color = Color(0.55, 0.62, 0.74, 1)
 theme_override_font_sizes/font_size = 8
 text = "ACME DETECTIVE AGENCY - INTERPOL HQ"
 
-[node name="FedoraGraphic" type="Control" parent="."]
+[node name="FedoraLogo" type="TextureRect" parent="."]
+texture_filter = 1
 layout_mode = 0
-offset_left = 240.0
-offset_top = 138.0
-offset_right = 240.0
-offset_bottom = 138.0
-
-[node name="FedoraBrim" type="ColorRect" parent="FedoraGraphic"]
-layout_mode = 0
-offset_left = -60.0
-offset_top = 16.0
-offset_right = 60.0
-offset_bottom = 24.0
-color = Color(0.725, 0.11, 0.18, 1)
-
-[node name="Crown" type="ColorRect" parent="FedoraGraphic"]
-layout_mode = 0
-offset_left = -32.0
-offset_top = -14.0
-offset_right = 32.0
-offset_bottom = 16.0
-color = Color(0.725, 0.11, 0.18, 1)
-
-[node name="YellowBand" type="ColorRect" parent="FedoraGraphic"]
-layout_mode = 0
-offset_left = -32.0
-offset_top = 6.0
-offset_right = 32.0
-offset_bottom = 16.0
-color = Color(0.98, 0.8, 0.08, 1)
+offset_left = 192.0
+offset_top = 128.0
+offset_right = 288.0
+offset_bottom = 192.0
+texture = ExtResource("2_fedora")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="PressStartLabel" type="Label" parent="."]
 layout_mode = 0
@@ -159,10 +140,11 @@ horizontal_alignment = 1
 
 [node name="InstructionsLabel" type="Label" parent="."]
 layout_mode = 0
-offset_top = 286.0
+offset_top = 278.0
 offset_right = 480.0
-offset_bottom = 302.0
+offset_bottom = 312.0
 theme_override_colors/font_color = Color(0.46, 0.54, 0.68, 1)
 theme_override_font_sizes/font_size = 8
-text = "[ARROWS] NAVIGATE   [Z] A   [X] B   [Q] DOSSIER   [E] COMPUTER"
+text = "[ARROWS] MOVE   [Z / SPACE] A   [X] B
+[Q] DOSSIER   [E] COMPUTER   [M] MUTE"
 horizontal_alignment = 1

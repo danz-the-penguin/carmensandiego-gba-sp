@@ -5,11 +5,26 @@ var portraits: Dictionary = {}
 
 func _ready() -> void:
 	_generate_all_portraits()
+	_load_raster_portraits()
 
 func get_portrait(id: String) -> Texture2D:
+	var png_path = "res://assets/portraits/%s.png" % id
+	if ResourceLoader.exists(png_path):
+		var tex = load(png_path)
+		if tex is Texture2D:
+			return tex
 	if portraits.has(id):
 		return portraits[id]
 	return portraits.get("chief", null)
+
+func _load_raster_portraits() -> void:
+	var list = ["carmen", "len_bulk", "lady_agatha", "nick_brunch", "katherine_drib", "fast_eddie", "darlene_dirk", "scar_graynolt", "banker", "pilot", "curator", "chief"]
+	for id in list:
+		var p = "res://assets/portraits/%s.png" % id
+		if ResourceLoader.exists(p):
+			var tex = load(p)
+			if tex is Texture2D:
+				portraits[id] = tex
 
 func _generate_all_portraits() -> void:
 	portraits["carmen"] = _draw_carmen()

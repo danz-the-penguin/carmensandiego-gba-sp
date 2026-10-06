@@ -14,109 +14,57 @@ script = ExtResource("1_hub")
 [node name="SkylineView" type="Control" parent="."]
 layout_mode = 0
 offset_right = 480.0
-offset_bottom = 156.0
+offset_bottom = 144.0
 
 [node name="SkyBg" type="ColorRect" parent="SkylineView"]
 layout_mode = 0
 offset_right = 480.0
-offset_bottom = 156.0
+offset_bottom = 144.0
 color = Color(0.08, 0.11, 0.19, 1)
+
+[node name="SkylineSprite" type="TextureRect" parent="SkylineView"]
+texture_filter = 1
+layout_mode = 0
+offset_top = 40.0
+offset_right = 480.0
+offset_bottom = 144.0
+expand_mode = 1
+stretch_mode = 6
 
 [node name="CityBanner" type="Panel" parent="SkylineView"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 8.0
-offset_right = 468.0
-offset_bottom = 64.0
+offset_left = 8.0
+offset_top = 4.0
+offset_right = 472.0
+offset_bottom = 42.0
 
 [node name="CityTitle" type="Label" parent="SkylineView/CityBanner"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 4.0
-offset_right = 446.0
-offset_bottom = 20.0
+offset_left = 8.0
+offset_top = 2.0
+offset_right = 456.0
+offset_bottom = 16.0
 theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 9
 text = "LONDON, UNITED KINGDOM"
 
 [node name="CityLandmark" type="Label" parent="SkylineView/CityBanner"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 22.0
-offset_right = 446.0
-offset_bottom = 56.0
+offset_left = 8.0
+offset_top = 18.0
+offset_right = 456.0
+offset_bottom = 36.0
 theme_override_colors/font_color = Color(0.68, 0.78, 0.92, 1)
 theme_override_font_sizes/font_size = 8
 text = "LANDMARK: Big Ben and Tower Bridge"
 autowrap_mode = 2
 
-[node name="SkylineGraphic" type="Control" parent="SkylineView"]
-layout_mode = 0
-offset_top = 64.0
-offset_right = 480.0
-offset_bottom = 156.0
-
-[node name="BldgBack" type="ColorRect" parent="SkylineView/SkylineGraphic"]
-layout_mode = 0
-offset_left = 20.0
-offset_top = 16.0
-offset_right = 90.0
-offset_bottom = 92.0
-color = Color(0.12, 0.16, 0.26, 1)
-
-[node name="BldgMid" type="ColorRect" parent="SkylineView/SkylineGraphic"]
-layout_mode = 0
-offset_left = 110.0
-offset_top = 5.0
-offset_right = 180.0
-offset_bottom = 92.0
-color = Color(0.14, 0.19, 0.3, 1)
-
-[node name="Spire" type="ColorRect" parent="SkylineView/SkylineGraphic"]
-layout_mode = 0
-offset_left = 140.0
-offset_top = -12.0
-offset_right = 150.0
-offset_bottom = 5.0
-color = Color(0.2, 0.28, 0.42, 1)
-
-[node name="BldgFore" type="ColorRect" parent="SkylineView/SkylineGraphic"]
-layout_mode = 0
-offset_left = 210.0
-offset_top = 26.0
-offset_right = 300.0
-offset_bottom = 92.0
-color = Color(0.11, 0.15, 0.24, 1)
-
-[node name="BldgRight" type="ColorRect" parent="SkylineView/SkylineGraphic"]
-layout_mode = 0
-offset_left = 330.0
-offset_top = 10.0
-offset_right = 410.0
-offset_bottom = 92.0
-color = Color(0.15, 0.2, 0.32, 1)
-
-[node name="BldgFarRight" type="ColorRect" parent="SkylineView/SkylineGraphic"]
-layout_mode = 0
-offset_left = 425.0
-offset_top = 32.0
-offset_right = 475.0
-offset_bottom = 92.0
-color = Color(0.1, 0.14, 0.22, 1)
-
-[node name="Ground" type="ColorRect" parent="SkylineView/SkylineGraphic"]
-layout_mode = 0
-offset_top = 88.0
-offset_right = 480.0
-offset_bottom = 92.0
-color = Color(0.2, 0.3, 0.45, 1)
-
 [node name="StatusBar" type="Panel" parent="."]
 layout_mode = 0
 offset_left = 8.0
-offset_top = 158.0
+offset_top = 146.0
 offset_right = 472.0
-offset_bottom = 184.0
+offset_bottom = 170.0
 
 [node name="HBox" type="HBoxContainer" parent="StatusBar"]
 layout_mode = 1
@@ -162,16 +110,16 @@ horizontal_alignment = 2
 [node name="DialogBox" type="Panel" parent="."]
 layout_mode = 0
 offset_left = 8.0
-offset_top = 188.0
+offset_top = 174.0
 offset_right = 472.0
 offset_bottom = 262.0
 
 [node name="PortraitFrame" type="Panel" parent="DialogBox"]
 layout_mode = 0
 offset_left = 6.0
-offset_top = 6.0
-offset_right = 68.0
-offset_bottom = 68.0
+offset_top = 12.0
+offset_right = 70.0
+offset_bottom = 76.0
 
 [node name="Portrait" type="TextureRect" parent="DialogBox/PortraitFrame"]
 texture_filter = 1
@@ -190,7 +138,7 @@ stretch_mode = 5
 
 [node name="SpeakerLabel" type="Label" parent="DialogBox"]
 layout_mode = 0
-offset_left = 74.0
+offset_left = 76.0
 offset_top = 4.0
 offset_right = 464.0
 offset_bottom = 18.0
@@ -200,15 +148,16 @@ text = "[ACME DISPATCH]"
 
 [node name="DialogLabel" type="RichTextLabel" parent="DialogBox"]
 layout_mode = 0
-offset_left = 74.0
+offset_left = 76.0
 offset_top = 18.0
 offset_right = 464.0
-offset_bottom = 68.0
+offset_bottom = 82.0
 theme_override_colors/default_color = Color(0.92, 0.94, 0.98, 1)
 theme_override_font_sizes/normal_font_size = 8
 bbcode_enabled = true
 text = "Question witnesses or check transit connections."
-scroll_active = false
+scroll_active = true
+scroll_following = true
 autowrap_mode = 2
 
 [node name="ActionMenu" type="GridContainer" parent="."]
@@ -259,9 +208,9 @@ grow_vertical = 2
 [node name="Header" type="HBoxContainer" parent="SubscreenOverlay"]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 10.0
+offset_top = 8.0
 offset_right = 468.0
-offset_bottom = 30.0
+offset_bottom = 28.0
 
 [node name="TitleLabel" type="Label" parent="SubscreenOverlay/Header"]
 layout_mode = 2
@@ -279,9 +228,9 @@ text = "[B / ESC] BACK"
 [node name="Scroll" type="ScrollContainer" parent="SubscreenOverlay"]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 36.0
+offset_top = 32.0
 offset_right = 468.0
-offset_bottom = 308.0
+offset_bottom = 312.0
 follow_focus = true
 
 [node name="ItemList" type="VBoxContainer" parent="SubscreenOverlay/Scroll"]

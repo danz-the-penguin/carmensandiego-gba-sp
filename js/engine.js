@@ -660,7 +660,10 @@ class GBACarmenGameEngine {
 
   setDialog(text) {
     const dialogBox = document.getElementById("dialog-box");
-    if (dialogBox) dialogBox.textContent = text;
+    if (dialogBox) {
+      dialogBox.textContent = text;
+      dialogBox.scrollTop = dialogBox.scrollHeight;
+    }
   }
 
   updateStatusDisplay(city, time, hours, trail = null) {

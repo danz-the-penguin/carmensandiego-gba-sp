@@ -13,6 +13,11 @@ class GBAGraphicsRenderer {
     // Canvas internal resolution set strictly to 240x160
     this.canvas.width = 240;
     this.canvas.height = 160;
+
+    // Raster PNG asset cache
+    this.cityImages = {};
+    this.portraitImages = {};
+    this.currentCityId = null;
   }
 
   setResolution(w, h) {
@@ -222,8 +227,24 @@ class GBAGraphicsRenderer {
 
   // --- Vibrant 15-Bit GBA City Skylines ---
   drawCitySkyline(cityId) {
+    this.currentCityId = cityId;
     this.setResolution(240, 88);
     this.clear();
+
+    if (!this.cityImages[cityId]) {
+      const img = new Image();
+      img.src = `assets/cities/${cityId}.png`;
+      img.onload = () => {
+        if (this.currentCityId === cityId) this.drawCitySkyline(cityId);
+      };
+      this.cityImages[cityId] = img;
+    }
+    const raster = this.cityImages[cityId];
+    if (raster && raster.complete && raster.naturalWidth > 0) {
+      this.ctx.imageSmoothingEnabled = false;
+      this.ctx.drawImage(raster, 0, 0, 240, 88);
+      return;
+    }
 
     switch (cityId) {
       case "london":
@@ -545,8 +566,32 @@ class GBAGraphicsRenderer {
     this.ctx.fillStyle = "#334155";
     this.ctx.fillRect(82, 6, 76, 68);
 
-    // Witness face & torso
     const wt = witnessType.toLowerCase();
+    let pKey = "banker";
+    if (wt.includes("pilot") || wt.includes("flight") || wt.includes("captain")) pKey = "pilot";
+    else if (wt.includes("curator") || wt.includes("archaeologist") || wt.includes("historian")) pKey = "curator";
+
+    if (!this.portraitImages[pKey]) {
+      const img = new Image();
+      img.src = `assets/portraits/${pKey}.png`;
+      img.onload = () => this.drawWitnessPortrait(witnessType);
+      this.portraitImages[pKey] = img;
+    }
+    const raster = this.portraitImages[pKey];
+    if (raster && raster.complete && raster.naturalWidth > 0) {
+      this.ctx.imageSmoothingEnabled = false;
+      this.ctx.drawImage(raster, 88, 10, 64, 60);
+
+      // Witness name badge banner below
+      this.ctx.fillStyle = "#0f172a";
+      this.ctx.fillRect(40, 72, 160, 11);
+      this.ctx.fillStyle = "#ffd166";
+      this.ctx.font = '6px "Press Start 2P", monospace';
+      this.ctx.textAlign = "center";
+      this.ctx.fillText(witnessType.toUpperCase(), 120, 80);
+      this.ctx.textAlign = "start";
+      return;
+    }
     if (wt.includes("pilot") || wt.includes("flight") || wt.includes("captain")) {
       // Pilot uniform (Navy blue with gold stripes & visor cap)
       this.ctx.fillStyle = "#1e3a8a";
