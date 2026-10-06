@@ -250,7 +250,18 @@ class GBACarmenGameEngine {
     const timeStr = `${dayStr} ${displayHour}${ampm}`;
     const cityStr = CITIES_DATA[this.currentCityId] ? CITIES_DATA[this.currentCityId].name : "ACME";
 
-    this.updateStatusDisplay(cityStr, timeStr, `${this.hoursLeft}H LEFT`);
+    let trail = { text: "● HOT TRAIL", color: "#34d399" };
+    if (this.currentCase && this.currentCase.trail) {
+      if (this.currentCityId === this.currentCase.finalCity) {
+        trail = { text: "★ CORNERED!", color: "#ef4444" };
+      } else if (this.currentCase.trail.includes(this.currentCityId)) {
+        trail = { text: "● HOT TRAIL", color: "#34d399" };
+      } else {
+        trail = { text: "▲ COLD TRAIL", color: "#f87171" };
+      }
+    }
+
+    this.updateStatusDisplay(cityStr, timeStr, `${this.hoursLeft}H LEFT`, trail);
   }
 
   // --- Subscreen Management ---
@@ -652,13 +663,18 @@ class GBACarmenGameEngine {
     if (dialogBox) dialogBox.textContent = text;
   }
 
-  updateStatusDisplay(city, time, hours) {
+  updateStatusDisplay(city, time, hours, trail = null) {
     const cEl = document.getElementById("txt-city");
     const tEl = document.getElementById("txt-clock");
     const hEl = document.getElementById("txt-hours");
+    const trEl = document.getElementById("txt-trail");
     if (cEl) cEl.textContent = city;
     if (tEl) tEl.textContent = time;
     if (hEl) hEl.textContent = hours;
+    if (trEl && trail) {
+      trEl.textContent = trail.text;
+      trEl.style.color = trail.color;
+    }
   }
 }
 

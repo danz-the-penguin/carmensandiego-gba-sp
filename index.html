@@ -310,13 +310,16 @@
     }
 
     .subscreen-item {
-      padding: 5px 8px;
+      padding: 6px 8px;
       border: 1px solid #334155;
       background: #1e293b;
       cursor: pointer;
-      line-height: 1.4;
+      line-height: 1.5;
       font-size: 8px;
       border-radius: 2px;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
     }
     .subscreen-item.selected {
       background: #2563eb;
@@ -753,6 +756,7 @@
           <div class="game-content">
             <div class="status-bar">
               <span id="txt-city">ACME HQ</span>
+              <span id="txt-trail" style="color:#34d399">● HOT TRAIL</span>
               <span id="txt-clock">MON 9AM</span>
               <span id="txt-hours">STANDBY</span>
             </div>

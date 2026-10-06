@@ -1,5 +1,5 @@
 extends Node
-## SoundManager: GBA DirectSound & PSG Audio Synthesizer (Cached for Zero Latency)
+## SoundManager: Dual-Channel SFX Synthesizer + Catchy 8-bit Detective Groove BGM
 
 var sfx_player: AudioStreamPlayer
 var blip_player: AudioStreamPlayer
@@ -18,16 +18,23 @@ var wav_travel: AudioStreamWAV
 var wav_warrant: AudioStreamWAV
 var wav_victory: AudioStreamWAV
 var wav_game_over: AudioStreamWAV
+var wav_bgm: AudioStreamWAV
 
 func _ready() -> void:
 	sfx_player = AudioStreamPlayer.new()
 	blip_player = AudioStreamPlayer.new()
 	blip_player.volume_db = -12.0
 	bgm_player = AudioStreamPlayer.new()
+	bgm_player.volume_db = -16.0
 	add_child(sfx_player)
 	add_child(blip_player)
 	add_child(bgm_player)
 	_cache_all_sounds()
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_M:
+			toggle_bgm()
 
 func _cache_all_sounds() -> void:
 	wav_cursor = _create_tone_wav(440.0, 0.04, "square")
@@ -38,9 +45,27 @@ func _cache_all_sounds() -> void:
 	wav_light = _create_tone_wav(1000.0, 0.03, "square")
 	wav_clue = _create_tone_wav(587.3, 0.15, "square")
 	wav_travel = _create_tone_wav(150.0, 0.35, "noise")
-	wav_warrant = _create_tone_wav(880.0, 0.25, "square")
-	wav_victory = _create_tone_wav(1046.5, 0.4, "square")
-	wav_game_over = _create_tone_wav(196.0, 0.4, "triangle")
+	wav_warrant = _create_tone_wav(880.0, 0.30, "square")
+	wav_victory = _create_tone_wav(1046.5, 0.45, "square")
+	wav_game_over = _create_tone_wav(196.0, 0.45, "triangle")
+	
+	wav_bgm = _create_detective_bgm()
+	bgm_player.stream = wav_bgm
+	start_bgm()
+
+func start_bgm() -> void:
+	if bgm_enabled and not bgm_player.playing:
+		bgm_player.play()
+
+func stop_bgm() -> void:
+	bgm_player.stop()
+
+func toggle_bgm() -> void:
+	bgm_enabled = !bgm_enabled
+	if bgm_enabled:
+		bgm_player.play()
+	else:
+		bgm_player.stop()
 
 func _create_tone_wav(freq: float, duration: float, wave_type: String) -> AudioStreamWAV:
 	var wav := AudioStreamWAV.new()
@@ -67,6 +92,73 @@ func _create_tone_wav(freq: float, duration: float, wave_type: String) -> AudioS
 
 		data[i] = clampi(val, 0, 255)
 
+	wav.data = data
+	return wav
+
+func _create_detective_bgm() -> AudioStreamWAV:
+	var rate := 22050
+	var bpm := 125.0
+	var step_duration := (60.0 / bpm) / 4.0 # 16th note
+	var step_samples := int(step_duration * rate)
+	var total_steps := 32 # 2 bars
+	var total_samples := step_samples * total_steps
+
+	var data := PackedByteArray()
+	data.resize(total_samples)
+
+	var notes := {
+		"C2": 65.4, "D2": 73.4, "F2": 87.3, "G2": 98.0, "A2": 110.0,
+		"C3": 130.8, "D3": 146.8, "E3": 164.8, "F3": 174.6, "G3": 196.0, "A3": 220.0,
+		"C4": 261.6, "D4": 293.7, "E4": 329.6, "F4": 349.2, "A4": 440.0
+	}
+
+	var bass_pattern := [
+		"D2", "D2", "D2", "D2", "F2", "F2", "F2", "F2",
+		"G2", "G2", "G2", "G2", "A2", "A2", "A2", "A2",
+		"D2", "D2", "D2", "D2", "C2", "C2", "C2", "C2",
+		"G2", "G2", "G2", "G2", "A2", "A2", "A2", "A2"
+	]
+
+	var arp_pattern := [
+		"D3", "A3", "D4", "A3", "F3", "C4", "F3", "C4",
+		"G3", "D4", "G3", "D4", "A3", "E4", "A3", "E4",
+		"D3", "A3", "D4", "A3", "C3", "G3", "C4", "G3",
+		"G3", "D4", "G3", "D4", "A3", "E4", "A3", "D4"
+	]
+
+	var bass_phase := 0.0
+	var arp_phase := 0.0
+
+	for s in range(total_samples):
+		var step_idx := (s / step_samples) % total_steps
+		var sample_in_step := s % step_samples
+		var env := maxf(0.0, 1.0 - (float(sample_in_step) / float(step_samples)))
+
+		var bass_freq: float = notes[bass_pattern[step_idx]]
+		bass_phase = fmod(bass_phase + (bass_freq / rate), 1.0)
+		var bass_val := 0.28 * (1.0 if bass_phase < 0.5 else -1.0) * (0.6 + 0.4 * env)
+
+		var arp_freq: float = notes[arp_pattern[step_idx]]
+		arp_phase = fmod(arp_phase + (arp_freq / rate), 1.0)
+		var arp_val := 0.20 * (4.0 * absf(arp_phase - 0.5) - 1.0) * env
+
+		var noise_val := 0.0
+		if step_idx % 8 == 4:
+			var snare_env := maxf(0.0, 1.0 - (float(sample_in_step) / float(step_samples * 1.5)))
+			noise_val = 0.16 * randf_range(-1.0, 1.0) * snare_env
+		elif step_idx % 2 == 0:
+			var hat_env := maxf(0.0, 1.0 - (float(sample_in_step) / float(step_samples * 0.4)))
+			noise_val = 0.05 * randf_range(-1.0, 1.0) * hat_env
+
+		var mix := clampf(bass_val + arp_val + noise_val, -1.0, 1.0)
+		data[s] = int(clampi(int(128 + mix * 115.0), 0, 255))
+
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = rate
+	wav.stereo = false
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_end = total_samples
 	wav.data = data
 	return wav
 

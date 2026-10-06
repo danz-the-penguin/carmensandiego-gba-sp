@@ -25,16 +25,16 @@ color = Color(0.08, 0.11, 0.19, 1)
 [node name="CityBanner" type="Panel" parent="SkylineView"]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 10.0
+offset_top = 8.0
 offset_right = 468.0
-offset_bottom = 60.0
+offset_bottom = 64.0
 
 [node name="CityTitle" type="Label" parent="SkylineView/CityBanner"]
 layout_mode = 0
 offset_left = 10.0
-offset_top = 6.0
+offset_top = 4.0
 offset_right = 446.0
-offset_bottom = 22.0
+offset_bottom = 20.0
 theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
 theme_override_font_sizes/font_size = 10
 text = "LONDON, UNITED KINGDOM"
@@ -42,9 +42,9 @@ text = "LONDON, UNITED KINGDOM"
 [node name="CityLandmark" type="Label" parent="SkylineView/CityBanner"]
 layout_mode = 0
 offset_left = 10.0
-offset_top = 24.0
+offset_top = 22.0
 offset_right = 446.0
-offset_bottom = 44.0
+offset_bottom = 56.0
 theme_override_colors/font_color = Color(0.68, 0.78, 0.92, 1)
 theme_override_font_sizes/font_size = 8
 text = "LANDMARK: Big Ben and Tower Bridge"
@@ -52,16 +52,16 @@ autowrap_mode = 2
 
 [node name="SkylineGraphic" type="Control" parent="SkylineView"]
 layout_mode = 0
-offset_top = 60.0
+offset_top = 64.0
 offset_right = 480.0
 offset_bottom = 156.0
 
 [node name="BldgBack" type="ColorRect" parent="SkylineView/SkylineGraphic"]
 layout_mode = 0
 offset_left = 20.0
-offset_top = 20.0
+offset_top = 16.0
 offset_right = 90.0
-offset_bottom = 96.0
+offset_bottom = 92.0
 color = Color(0.12, 0.16, 0.26, 1)
 
 [node name="BldgMid" type="ColorRect" parent="SkylineView/SkylineGraphic"]
@@ -69,7 +69,7 @@ layout_mode = 0
 offset_left = 110.0
 offset_top = 5.0
 offset_right = 180.0
-offset_bottom = 96.0
+offset_bottom = 92.0
 color = Color(0.14, 0.19, 0.3, 1)
 
 [node name="Spire" type="ColorRect" parent="SkylineView/SkylineGraphic"]
@@ -83,9 +83,9 @@ color = Color(0.2, 0.28, 0.42, 1)
 [node name="BldgFore" type="ColorRect" parent="SkylineView/SkylineGraphic"]
 layout_mode = 0
 offset_left = 210.0
-offset_top = 30.0
+offset_top = 26.0
 offset_right = 300.0
-offset_bottom = 96.0
+offset_bottom = 92.0
 color = Color(0.11, 0.15, 0.24, 1)
 
 [node name="BldgRight" type="ColorRect" parent="SkylineView/SkylineGraphic"]
@@ -93,22 +93,22 @@ layout_mode = 0
 offset_left = 330.0
 offset_top = 10.0
 offset_right = 410.0
-offset_bottom = 96.0
+offset_bottom = 92.0
 color = Color(0.15, 0.2, 0.32, 1)
 
 [node name="BldgFarRight" type="ColorRect" parent="SkylineView/SkylineGraphic"]
 layout_mode = 0
 offset_left = 425.0
-offset_top = 35.0
+offset_top = 32.0
 offset_right = 475.0
-offset_bottom = 96.0
+offset_bottom = 92.0
 color = Color(0.1, 0.14, 0.22, 1)
 
 [node name="Ground" type="ColorRect" parent="SkylineView/SkylineGraphic"]
 layout_mode = 0
-offset_top = 92.0
+offset_top = 88.0
 offset_right = 480.0
-offset_bottom = 96.0
+offset_bottom = 92.0
 color = Color(0.2, 0.3, 0.45, 1)
 
 [node name="StatusBar" type="Panel" parent="."]
@@ -135,6 +135,14 @@ theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
 theme_override_font_sizes/font_size = 8
 text = "LOC: LONDON"
 
+[node name="TrailLabel" type="Label" parent="StatusBar/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.2, 0.88, 0.55, 1)
+theme_override_font_sizes/font_size = 8
+text = "● HOT TRAIL"
+horizontal_alignment = 1
+
 [node name="ClockLabel" type="Label" parent="StatusBar/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -158,19 +166,49 @@ offset_top = 188.0
 offset_right = 472.0
 offset_bottom = 262.0
 
-[node name="TextLabel" type="Label" parent="DialogBox"]
+[node name="PortraitFrame" type="Panel" parent="DialogBox"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 68.0
+offset_bottom = 68.0
+
+[node name="Portrait" type="TextureRect" parent="DialogBox/PortraitFrame"]
+texture_filter = 1
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 8.0
-offset_top = 6.0
-offset_right = -8.0
-offset_bottom = -6.0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = -2.0
+offset_bottom = -2.0
 grow_horizontal = 2
 grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SpeakerLabel" type="Label" parent="DialogBox"]
+layout_mode = 0
+offset_left = 74.0
+offset_top = 4.0
+offset_right = 464.0
+offset_bottom = 18.0
+theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
 theme_override_font_sizes/font_size = 8
+text = "[ACME DISPATCH]"
+
+[node name="DialogLabel" type="RichTextLabel" parent="DialogBox"]
+layout_mode = 0
+offset_left = 74.0
+offset_top = 18.0
+offset_right = 464.0
+offset_bottom = 68.0
+theme_override_colors/default_color = Color(0.92, 0.94, 0.98, 1)
+theme_override_font_sizes/normal_font_size = 8
+bbcode_enabled = true
 text = "Question witnesses or check transit connections."
+scroll_active = false
 autowrap_mode = 2
 
 [node name="ActionMenu" type="GridContainer" parent="."]
@@ -244,8 +282,69 @@ offset_left = 12.0
 offset_top = 36.0
 offset_right = 468.0
 offset_bottom = 308.0
+follow_focus = true
 
 [node name="ItemList" type="VBoxContainer" parent="SubscreenOverlay/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
+
+[node name="FlightOverlay" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RadarBox" type="Panel" parent="FlightOverlay"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 70.0
+offset_right = 440.0
+offset_bottom = 250.0
+
+[node name="FlightTitle" type="Label" parent="FlightOverlay/RadarBox"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 16.0
+offset_right = 390.0
+offset_bottom = 36.0
+theme_override_colors/font_color = Color(0.3, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "✈ ACME GLOBAL RADAR ✈"
+horizontal_alignment = 1
+
+[node name="FlightRoute" type="Label" parent="FlightOverlay/RadarBox"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 50.0
+offset_right = 390.0
+offset_bottom = 76.0
+theme_override_colors/font_color = Color(1, 0.88, 0.35, 1)
+theme_override_font_sizes/font_size = 12
+text = "LONDON ➔ TOKYO"
+horizontal_alignment = 1
+
+[node name="FlightSubtext" type="Label" parent="FlightOverlay/RadarBox"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 88.0
+offset_right = 390.0
+offset_bottom = 108.0
+theme_override_colors/font_color = Color(0.7, 0.8, 0.95, 1)
+theme_override_font_sizes/font_size = 8
+text = "TRANSIT TIME: -4 HOURS | TRACKING TRANSIT..."
+horizontal_alignment = 1
+
+[node name="FlightStatus" type="Label" parent="FlightOverlay/RadarBox"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 126.0
+offset_right = 390.0
+offset_bottom = 146.0
+theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
+theme_override_font_sizes/font_size = 8
+text = "CONNECTING TO LOCAL ACME FIELD OFFICE..."
+horizontal_alignment = 1

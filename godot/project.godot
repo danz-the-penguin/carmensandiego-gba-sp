@@ -23,6 +23,7 @@ config/features=PackedStringArray("4.7")
 
 Database="*res://scripts/autoload/database.gd"
 SoundManager="*res://scripts/autoload/sound_manager.gd"
+PortraitManager="*res://scripts/autoload/portrait_manager.gd"
 GameManager="*res://scripts/autoload/game_manager.gd"
 
 [display]

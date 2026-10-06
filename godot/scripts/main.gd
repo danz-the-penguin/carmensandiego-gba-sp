@@ -17,7 +17,7 @@ func _on_case_started() -> void:
 	_switch_scene(preload("res://scenes/city_hub.tscn").instantiate())
 
 func _on_case_resolved(is_victory: bool, message: String) -> void:
-	await get_tree().create_timer(3.5).timeout
+	await get_tree().create_timer(5.0).timeout
 	load_title_screen()
 
 func _switch_scene(new_scene: Node) -> void:
