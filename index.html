@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Where in the World is Carmen Sandiego? - Game Boy Advance SP Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* GBA SP Platinum / Pearl Silver Metal Palette */
+      --sp-metal-light: #e8ecf4;
+      --sp-metal-mid: #c4cad8;
+      --sp-metal-dark: #9da5b8;
+      --sp-metal-shadow: #737b8e;
+      --sp-bezel: #20222a;
+      --sp-bezel-shadow: #111218;
+      --sp-btn-grey: #484b5c;
+      --sp-btn-dark: #2c2e3b;
+      --sp-hinge: #a8b0c2;
+      --sp-accent-blue: #38bdf8;
+      --sp-gold: #ffd166;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: #0b0d14;
+      background-image: 
+        radial-gradient(#1a2032 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, #07090e, #111522);
+      background-size: 24px 24px, 100% 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      color: #f8fafc;
+      padding: 16px 10px;
+    }
+
+    .top-controls-bar {
+      color: #94a3b8;
+      font-size: 8px;
+      margin-bottom: 12px;
+      text-align: center;
+      line-height: 1.8;
+      max-width: 650px;
+    }
+
+    .top-controls-bar kbd {
+      background: #1e293b;
+      border: 1px solid #475569;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #ffd166;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
+    /* =====================================================================
+       GAME BOY ADVANCE SP CLAMSHELL CONSOLE (AGS-001 / AGS-101)
+       ===================================================================== */
+    .sp-console {
+      width: 530px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      filter: drop-shadow(0 20px 40px rgba(0,0,0,0.85));
+    }
+
+    /* ---------------------------------------------------------------------
+       TOP HALF: DISPLAY LID
+       --------------------------------------------------------------------- */
+    .sp-lid {
+      width: 520px;
+      height: 384px;
+      background: linear-gradient(135deg, var(--sp-metal-light), var(--sp-metal-mid) 50%, var(--sp-metal-dark));
+      border-radius: 20px 20px 6px 6px;
+      box-shadow: 
+        inset 0 2px 4px #ffffff,
+        inset 0 -2px 4px var(--sp-metal-shadow),
+        0 4px 10px rgba(0,0,0,0.5);
+      border-left: 2px solid #ffffff;
+      border-top: 2px solid #ffffff;
+      border-right: 3px solid var(--sp-metal-shadow);
+      padding: 12px 16px 8px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Rubber cushioning pads in corners */
+    .sp-cushion {
+      width: 8px;
+      height: 4px;
+      background: #555968;
+      border-radius: 2px;
+      position: absolute;
+    }
+    .cushion-tl { top: 8px; left: 16px; }
+    .cushion-tr { top: 8px; right: 16px; }
+
+    /* Screen Bezel in dark slate */
+    .sp-screen-bezel {
+      width: 494px;
+      height: 352px;
+      background: var(--sp-bezel);
+      border-radius: 8px;
+      box-shadow: 
+        inset 0 3px 6px rgba(0,0,0,0.8),
+        0 1px 2px rgba(255,255,255,0.4);
+      border: 2px solid var(--sp-bezel-shadow);
+      padding: 6px 12px 6px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .sp-nintendo-logo {
+      font-family: sans-serif;
+      font-size: 8px;
+      font-weight: 900;
+      color: #636674;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    /* GBA Viewport (Exact 3:2 Aspect Ratio: 450px x 300px) */
+    .screen-lcd {
+      width: 450px;
+      height: 300px;
+      aspect-ratio: 3 / 2;
+      background: #0b0f19;
+      border-radius: 4px;
+      border: 2px solid #000;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.7);
+      transition: filter 0.25s ease, background 0.25s ease;
+    }
+
+    /* Screen Light Modes (AGS-101 Bright vs Normal vs AGS-001 Frontlit) */
+    .screen-lcd.mode-ags101-bright {
+      filter: contrast(1.05) brightness(1.05);
+    }
+    .screen-lcd.mode-ags101-normal {
+      filter: contrast(0.95) brightness(0.92);
+    }
+    .screen-lcd.mode-ags001-frontlit {
+      filter: contrast(0.88) brightness(0.95) sepia(0.08) hue-rotate(170deg);
+    }
+
+    /* Scanlines */
+    .screen-lcd.scanlines::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(0, 0, 0, 0.12) 50%, transparent 50%),
+                  linear-gradient(90deg, rgba(0, 0, 0, 0.08) 50%, transparent 50%);
+      background-size: 2px 2px;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Pixel-perfect canvas scaling (No squishing!) */
+    #game-canvas {
+      width: 100%;
+      height: 165px;
+      image-rendering: pixelated;
+      background: #0b0c1e;
+      border-bottom: 2px solid #1e293b;
+      display: block;
+    }
+
+    /* Fullscreen Title / Cutscene mode */
+    .screen-lcd.fullscreen-title #game-canvas {
+      height: 300px;
+      border-bottom: none;
+    }
+    .screen-lcd.fullscreen-title .game-content {
+      display: none;
+    }
+
+    /* GBA Dynamic UI Area (takes remaining 135px) */
+    .game-content {
+      height: 135px;
+      padding: 5px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: #f8fafc;
+      font-size: 8px;
+      line-height: 1.45;
+      background: #0f172a;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 3px 8px;
+      border-radius: 2px;
+      font-size: 8px;
+      font-weight: bold;
+      color: var(--sp-gold);
+    }
+
+    .dialog-area {
+      height: 56px;
+      max-height: 58px;
+      padding: 5px 8px;
+      background: #1a2234;
+      border: 1px solid #38bdf8;
+      border-radius: 2px;
+      color: #f8fafc;
+      overflow-y: auto;
+      word-break: break-word;
+      font-size: 8px;
+      line-height: 1.5;
+    }
+
+    .action-menu {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+
+    .menu-item {
+      padding: 5px 8px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      cursor: pointer;
+      font-size: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #94a3b8;
+      border-radius: 2px;
+    }
+
+    .menu-item.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #60a5fa;
+    }
+
+    .cursor-icon {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      background: currentColor;
+      clip-path: polygon(0% 0%, 100% 50%, 0% 100%);
+      visibility: hidden;
+    }
+    .menu-item.active .cursor-icon {
+      visibility: visible;
+    }
+
+    /* Subscreen Overlay Modal */
+    .subscreen-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.98);
+      z-index: 50;
+      display: none;
+      flex-direction: column;
+      padding: 8px;
+      font-size: 8px;
+      overflow-y: auto;
+    }
+    .subscreen-overlay.active {
+      display: flex;
+    }
+
+    .subscreen-header {
+      border-bottom: 2px solid #38bdf8;
+      padding-bottom: 4px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--sp-gold);
+      font-weight: bold;
+    }
+
+    .subscreen-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .subscreen-item {
+      padding: 5px 8px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      cursor: pointer;
+      line-height: 1.4;
+      font-size: 8px;
+      border-radius: 2px;
+    }
+    .subscreen-item.selected {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #93c5fd;
+    }
+
+    .brand-gba-sp {
+      margin-top: 4px;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .brand-gameboy {
+      font-family: sans-serif;
+      font-weight: 900;
+      font-style: italic;
+      color: #7d8296;
+      font-size: 8px;
+    }
+    .brand-sp {
+      font-family: sans-serif;
+      font-weight: 900;
+      font-style: italic;
+      color: #38bdf8;
+      font-size: 9px;
+    }
+
+    /* ---------------------------------------------------------------------
+       MIDDLE HINGE SECTION
+       --------------------------------------------------------------------- */
+    .sp-hinge-assembly {
+      width: 516px;
+      height: 24px;
+      background: linear-gradient(to bottom, #d2d8e6, #9aa2b4 50%, #757d90);
+      border-radius: 8px;
+      box-shadow: 
+        inset 0 1px 2px #fff,
+        inset 0 -2px 3px rgba(0,0,0,0.6),
+        0 3px 6px rgba(0,0,0,0.5);
+      border: 1px solid #5d6373;
+      margin: -2px 0;
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      position: relative;
+    }
+
+    /* Left and Right Hinge Barrels */
+    .hinge-barrel-left {
+      width: 44px;
+      height: 16px;
+      background: linear-gradient(to bottom, #eff2f8, #9aa2b4);
+      border-radius: 4px;
+      border: 1px solid #6c7385;
+    }
+    .hinge-center-gap {
+      flex: 1;
+      height: 4px;
+      background: #20222a;
+      margin: 0 12px;
+      border-radius: 2px;
+    }
+    .hinge-barrel-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* SP Status LEDs on Hinge */
+    .sp-led-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+    .led-power {
+      width: 6px;
+      height: 6px;
+      background: #00e676;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #00e676, inset 0 1px 1px #fff;
+    }
+    .led-charge {
+      width: 6px;
+      height: 6px;
+      background: #f59e0b;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #f59e0b, inset 0 1px 1px #fff;
+    }
+    .led-tag {
+      font-size: 5px;
+      font-family: sans-serif;
+      font-weight: 800;
+      color: #2b2e3b;
+    }
+
+    /* ---------------------------------------------------------------------
+       BOTTOM HALF: CONTROLS DECK
+       --------------------------------------------------------------------- */
+    .sp-base-deck {
+      width: 520px;
+      height: 275px;
+      background: linear-gradient(135deg, var(--sp-metal-light), var(--sp-metal-mid) 50%, var(--sp-metal-dark));
+      border-radius: 6px 6px 36px 36px;
+      box-shadow: 
+        inset 0 3px 4px #ffffff,
+        inset 0 -8px 12px var(--sp-metal-shadow),
+        0 15px 35px rgba(0,0,0,0.7);
+      border-left: 2px solid #ffffff;
+      border-bottom: 5px solid var(--sp-metal-shadow);
+      border-right: 3px solid var(--sp-metal-shadow);
+      padding: 12px 18px 20px 18px;
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    /* Top Shoulder Buttons (L & R) peaking out behind base */
+    .sp-shoulder-l {
+      position: absolute;
+      top: -14px;
+      left: 18px;
+      width: 64px;
+      height: 18px;
+      background: #9aa1b4;
+      border-radius: 8px 8px 0 0;
+      border: 1px solid #ccd2e2;
+      border-bottom: none;
+      box-shadow: inset 0 2px 2px #fff, 0 -2px 3px rgba(0,0,0,0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: sans-serif;
+      font-weight: 900;
+      font-size: 9px;
+      color: #2c2e3b;
+      z-index: 5;
+    }
+    .sp-shoulder-r {
+      position: absolute;
+      top: -14px;
+      right: 18px;
+      width: 64px;
+      height: 18px;
+      background: #9aa1b4;
+      border-radius: 8px 8px 0 0;
+      border: 1px solid #ccd2e2;
+      border-bottom: none;
+      box-shadow: inset 0 2px 2px #fff, 0 -2px 3px rgba(0,0,0,0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: sans-serif;
+      font-weight: 900;
+      font-size: 9px;
+      color: #2c2e3b;
+      z-index: 5;
+    }
+    .sp-shoulder-l:active, .sp-shoulder-l.pressed,
+    .sp-shoulder-r:active, .sp-shoulder-r.pressed {
+      transform: translateY(2px);
+      filter: brightness(0.85);
+    }
+
+    /* Left Control Wing (D-Pad) */
+    .sp-left-controls {
+      width: 104px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dpad-container {
+      width: 94px;
+      height: 94px;
+      position: relative;
+    }
+    .dpad-well {
+      width: 94px;
+      height: 94px;
+      background: #9aa1b4;
+      border-radius: 50%;
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.5);
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .dpad-cross {
+      width: 84px;
+      height: 84px;
+      position: absolute;
+      top: 5px;
+      left: 5px;
+    }
+    .dpad-btn {
+      position: absolute;
+      background: var(--sp-btn-dark);
+      box-shadow: inset 0 2px 1px #555, 0 3px 2px rgba(0,0,0,0.6);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      border: none;
+      outline: none;
+      transition: filter 0.05s, transform 0.05s;
+    }
+    .dpad-btn:active, .dpad-btn.pressed {
+      transform: translateY(1px);
+      filter: brightness(0.8);
+    }
+    .dpad-up { width: 28px; height: 32px; top: 0; left: 28px; border-radius: 3px 3px 0 0; }
+    .dpad-down { width: 28px; height: 32px; bottom: 0; left: 28px; border-radius: 0 0 3px 3px; }
+    .dpad-left { width: 32px; height: 28px; top: 28px; left: 0; border-radius: 3px 0 0 3px; }
+    .dpad-right { width: 32px; height: 28px; top: 28px; right: 0; border-radius: 0 3px 3px 0; }
+    .dpad-center { position: absolute; width: 28px; height: 28px; top: 28px; left: 28px; background: var(--sp-btn-dark); }
+    .dpad-center-circle {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      top: 35px;
+      left: 35px;
+      border-radius: 50%;
+      background: radial-gradient(#15161c, #2c2e3b);
+      pointer-events: none;
+    }
+    .dpad-up::after { content: "▲"; font-size: 7px; color: #1c1d24; }
+    .dpad-down::after { content: "▼"; font-size: 7px; color: #1c1d24; }
+    .dpad-left::after { content: "◀"; font-size: 7px; color: #1c1d24; }
+    .dpad-right::after { content: "▶"; font-size: 7px; color: #1c1d24; }
+
+    /* Center SP Cluster (Brightness Sun Button, Speaker, Start/Select) */
+    .sp-center-controls {
+      width: 130px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+
+    /* Iconic GBA SP Small Screen Light Button */
+    .sp-light-btn-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .btn-sp-light {
+      width: 22px;
+      height: 22px;
+      background: #474b5c;
+      border-radius: 50%;
+      border: 1px solid #75798e;
+      box-shadow: inset 0 1px 2px #fff, 0 2px 3px rgba(0,0,0,0.6);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffd166;
+      font-size: 11px;
+      transition: transform 0.05s, filter 0.05s;
+    }
+    .btn-sp-light:active, .btn-sp-light.pressed {
+      transform: translateY(1px);
+      filter: brightness(0.85);
+    }
+    .sp-light-label {
+      font-size: 6px;
+      color: #4b5266;
+      font-family: sans-serif;
+      font-weight: 800;
+    }
+
+    /* Central Perforated Speaker Grille */
+    .sp-speaker-holes {
+      display: grid;
+      grid-template-columns: repeat(6, 4px);
+      gap: 4px;
+      margin: 8px 0;
+    }
+    .speaker-dot {
+      width: 4px;
+      height: 4px;
+      background: #5d6375;
+      border-radius: 50%;
+      box-shadow: inset 0 1px 1px rgba(0,0,0,0.8);
+    }
+
+    /* Start & Select Oval Pills */
+    .sp-menu-pills {
+      display: flex;
+      gap: 14px;
+      margin-top: 6px;
+    }
+    .pill-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .btn-pill {
+      width: 32px;
+      height: 10px;
+      background: #55596b;
+      border-radius: 6px;
+      border: 1px solid #828699;
+      box-shadow: inset 0 1px 1px #fff, 0 2px 2px rgba(0,0,0,0.6);
+      cursor: pointer;
+    }
+    .btn-pill:active, .btn-pill.pressed {
+      transform: translateY(1px);
+      filter: brightness(0.8);
+    }
+    .pill-tag {
+      font-size: 6px;
+      color: #4b5266;
+      font-family: sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Right Action Cluster (B & A Buttons) */
+    .sp-right-controls {
+      width: 104px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-action-col {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .col-b {
+      left: 10px;
+      top: 56px;
+    }
+    .col-a {
+      right: 10px;
+      top: 26px;
+    }
+
+    .btn-round {
+      width: 36px;
+      height: 36px;
+      background: var(--sp-btn-dark);
+      border-radius: 50%;
+      border: 1px solid #5a5e73;
+      box-shadow: 
+        inset 0 2px 2px #75798e,
+        0 3px 4px rgba(0,0,0,0.6);
+      cursor: pointer;
+      outline: none;
+      transition: transform 0.05s, filter 0.05s;
+    }
+    .btn-round:active, .btn-round.pressed {
+      transform: translateY(2px);
+      box-shadow: inset 0 1px 1px #111, 0 1px 2px rgba(0,0,0,0.8);
+      filter: brightness(0.85);
+    }
+
+    .btn-action-label {
+      font-size: 9px;
+      color: #3b3f52;
+      font-family: sans-serif;
+      font-weight: 900;
+    }
+
+    /* Toolbar & Quick Action Buttons */
+    .toolbar-container {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      align-items: center;
+      font-size: 7px;
+      color: #94a3b8;
+    }
+
+    .tool-btn {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #ffd166;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      padding: 5px 8px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .tool-btn:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-controls-bar">
+    🎮 <strong>GAME BOY ADVANCE SP CONTROLS:</strong><br>
+    <kbd>▲/▼/◀/▶</kbd> or <kbd>W/A/S/D</kbd> = D-Pad &nbsp;|&nbsp; 
+    <kbd>Z</kbd> / <kbd>Space</kbd> = [A] Confirm &nbsp;|&nbsp; 
+    <kbd>X</kbd> / <kbd>Esc</kbd> = [B] Back &nbsp;|&nbsp; 
+    <kbd>Q</kbd> = [L] Dossier &nbsp;|&nbsp; 
+    <kbd>E</kbd> = [R] Crime Comp &nbsp;|&nbsp; 
+    <kbd>B</kbd> = [☼] Toggle SP Light
+  </div>
+
+  <div class="sp-console">
+    <!-- TOP HALF: DISPLAY LID -->
+    <div class="sp-lid">
+      <div class="sp-cushion cushion-tl"></div>
+      <div class="sp-cushion cushion-tr"></div>
+
+      <div class="sp-screen-bezel">
+        <div class="sp-nintendo-logo">Nintendo</div>
+
+        <!-- 240x160 Native GBA Viewport -->
+        <div class="screen-lcd scanlines mode-ags101-bright fullscreen-title" id="lcd-screen">
+          <canvas id="game-canvas" width="240" height="160"></canvas>
+
+          <div class="game-content">
+            <div class="status-bar">
+              <span id="txt-city">ACME HQ</span>
+              <span id="txt-clock">MON 9AM</span>
+              <span id="txt-hours">STANDBY</span>
+            </div>
+
+            <div class="dialog-area" id="dialog-box">
+              Reporting to ACME Detective HQ...
+            </div>
+
+            <div class="action-menu" id="menu-grid">
+              <div class="menu-item active" data-action="0">
+                <span class="cursor-icon"></span> 1.INVESTIGATE
+              </div>
+              <div class="menu-item" data-action="1">
+                <span class="cursor-icon"></span> 2.DEPART
+              </div>
+              <div class="menu-item" data-action="2">
+                <span class="cursor-icon"></span> 3.CRIME COMP [R]
+              </div>
+              <div class="menu-item" data-action="3">
+                <span class="cursor-icon"></span> 4.DOSSIER [L]
+              </div>
+            </div>
+          </div>
+
+          <!-- Subscreen Overlay Modal -->
+          <div class="subscreen-overlay" id="subscreen-overlay">
+            <div class="subscreen-header">
+              <span id="subscreen-title">MENU</span>
+              <span id="subscreen-hint">[B] BACK</span>
+            </div>
+            <div class="subscreen-list" id="subscreen-items">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <div class="brand-gba-sp">
+          <span class="brand-gameboy">GAME BOY ADVANCE</span>
+          <span class="brand-sp">SP</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- HINGE ASSEMBLY -->
+    <div class="sp-hinge-assembly">
+      <div class="hinge-barrel-left"></div>
+      <div class="hinge-center-gap"></div>
+      <div class="hinge-barrel-right">
+        <div class="sp-led-indicator">
+          <div class="led-power" id="led-power"></div>
+          <span class="led-tag">POWER</span>
+        </div>
+        <div class="sp-led-indicator">
+          <div class="led-charge" id="led-charge"></div>
+          <span class="led-tag">CHARGE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM HALF: CONTROLS DECK -->
+    <div class="sp-base-deck">
+      <!-- L & R Shoulder Triggers -->
+      <button class="sp-shoulder-l" id="btn-l" aria-label="L Shoulder">L (NOTES)</button>
+      <button class="sp-shoulder-r" id="btn-r" aria-label="R Shoulder">R (COMPUTER)</button>
+
+      <!-- Left Controls (D-Pad) -->
+      <div class="sp-left-controls">
+        <div class="dpad-container">
+          <div class="dpad-well"></div>
+          <div class="dpad-cross">
+            <button class="dpad-btn dpad-up" id="btn-up" aria-label="Up"></button>
+            <button class="dpad-btn dpad-right" id="btn-right" aria-label="Right"></button>
+            <button class="dpad-btn dpad-down" id="btn-down" aria-label="Down"></button>
+            <button class="dpad-btn dpad-left" id="btn-left" aria-label="Left"></button>
+            <div class="dpad-center"></div>
+            <div class="dpad-center-circle"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Controls (Light Sun Button, Speaker, Start/Select) -->
+      <div class="sp-center-controls">
+        <!-- Iconic SP Screen Light Toggle Button -->
+        <div class="sp-light-btn-wrap">
+          <button class="btn-sp-light" id="btn-light" aria-label="Toggle Screen Light" title="Toggle Screen Light (AGS-101 / AGS-001)">☼</button>
+          <span class="sp-light-label">LIGHT</span>
+        </div>
+
+        <!-- Speaker Grille -->
+        <div class="sp-speaker-holes">
+          <div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div>
+          <div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div>
+          <div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div><div class="speaker-dot"></div>
+        </div>
+
+        <!-- Start & Select Pills -->
+        <div class="sp-menu-pills">
+          <div class="pill-item">
+            <button class="btn-pill" id="btn-select" aria-label="Select"></button>
+            <span class="pill-tag">SELECT</span>
+          </div>
+          <div class="pill-item">
+            <button class="btn-pill" id="btn-start" aria-label="Start"></button>
+            <span class="pill-tag">START</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Controls (B & A Buttons) -->
+      <div class="sp-right-controls">
+        <div class="btn-action-col col-b">
+          <button class="btn-round" id="btn-b" aria-label="B Button"></button>
+          <span class="btn-action-label">B</span>
+        </div>
+        <div class="btn-action-col col-a">
+          <button class="btn-round" id="btn-a" aria-label="A Button"></button>
+          <span class="btn-action-label">A</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Toolbar -->
+  <div class="toolbar-container">
+    <span>GBA SP OPTIONS:</span>
+    <button class="tool-btn" id="btn-sp-light-toolbar">☼ SP Light: AGS-101</button>
+    <button class="tool-btn" id="btn-toggle-scanlines">Toggle Scanlines</button>
+    <button class="tool-btn" id="btn-toggle-bgm">Music: ON</button>
+    <button class="tool-btn" id="btn-quick-dossier">[L] Notes</button>
+    <button class="tool-btn" id="btn-quick-computer">[R] Crime Computer</button>
+  </div>
+
+  <!-- Load Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/graphics.js"></script>
+  <script src="js/engine.js"></script>
+
+  <script>
+    // Initialize GBA SP Systems
+    const canvas = document.getElementById("game-canvas");
+    const renderer = new GBAGraphicsRenderer(canvas);
+    const engine = new GBACarmenGameEngine(renderer, gbaAudio);
+
+    // Boot Title Screen
+    engine.initTitleScreen();
+
+    // Hardware Button Bindings
+    const btnA = document.getElementById("btn-a");
+    const btnB = document.getElementById("btn-b");
+    const btnL = document.getElementById("btn-l");
+    const btnR = document.getElementById("btn-r");
+    const btnUp = document.getElementById("btn-up");
+    const btnDown = document.getElementById("btn-down");
+    const btnLeft = document.getElementById("btn-left");
+    const btnRight = document.getElementById("btn-right");
+    const btnStart = document.getElementById("btn-start");
+    const btnSelect = document.getElementById("btn-select");
+    const btnLight = document.getElementById("btn-light");
+    const btnLightToolbar = document.getElementById("btn-sp-light-toolbar");
+
+    btnA.addEventListener("click", () => engine.handleConfirm());
+    btnB.addEventListener("click", () => engine.handleCancel());
+    btnL.addEventListener("click", () => engine.handleTriggerL());
+    btnR.addEventListener("click", () => engine.handleTriggerR());
+    btnUp.addEventListener("click", () => engine.handleDirection("up"));
+    btnDown.addEventListener("click", () => engine.handleDirection("down"));
+    btnLeft.addEventListener("click", () => engine.handleDirection("left"));
+    btnRight.addEventListener("click", () => engine.handleDirection("right"));
+    btnStart.addEventListener("click", () => engine.handleConfirm());
+    btnSelect.addEventListener("click", () => engine.handleSelect());
+
+    function toggleLight() {
+      engine.handleBrightness();
+      const labels = ["☼ Light: AGS-101 Bright", "☼ Light: AGS-101 Normal", "☼ Light: AGS-001 Frontlit"];
+      btnLightToolbar.textContent = labels[engine.brightnessIndex || 0];
+    }
+    btnLight.addEventListener("click", toggleLight);
+    btnLightToolbar.addEventListener("click", toggleLight);
+
+    document.getElementById("btn-quick-dossier").addEventListener("click", () => engine.handleTriggerL());
+    document.getElementById("btn-quick-computer").addEventListener("click", () => engine.handleTriggerR());
+
+    // Hub Menu Click Support
+    const menuItems = Array.from(document.querySelectorAll(".menu-item"));
+    menuItems.forEach((item, idx) => {
+      item.addEventListener("click", () => {
+        engine.menuIndex = idx;
+        engine.updateMenuHighlight();
+        engine.handleConfirm();
+      });
+    });
+
+    // Keyboard Controller Bindings (including SP brightness button)
+    window.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if (k === "arrowup" || k === "w") {
+        e.preventDefault();
+        btnUp.classList.add("pressed");
+        engine.handleDirection("up");
+      } else if (k === "arrowdown" || k === "s") {
+        e.preventDefault();
+        btnDown.classList.add("pressed");
+        engine.handleDirection("down");
+      } else if (k === "arrowleft" || k === "a") {
+        e.preventDefault();
+        btnLeft.classList.add("pressed");
+        engine.handleDirection("left");
+      } else if (k === "arrowright" || k === "d") {
+        e.preventDefault();
+        btnRight.classList.add("pressed");
+        engine.handleDirection("right");
+      } else if (k === "z" || k === "j" || k === " " || k === "enter") {
+        e.preventDefault();
+        btnA.classList.add("pressed");
+        engine.handleConfirm();
+      } else if (k === "x" || k === "k" || k === "escape" || k === "backspace") {
+        e.preventDefault();
+        btnB.classList.add("pressed");
+        engine.handleCancel();
+      } else if (k === "q" || k === "1") {
+        e.preventDefault();
+        btnL.classList.add("pressed");
+        engine.handleTriggerL();
+      } else if (k === "e" || k === "2") {
+        e.preventDefault();
+        btnR.classList.add("pressed");
+        engine.handleTriggerR();
+      } else if (k === "b") {
+        e.preventDefault();
+        btnLight.classList.add("pressed");
+        toggleLight();
+      } else if (k === "tab" || k === "shift") {
+        e.preventDefault();
+        btnSelect.classList.add("pressed");
+        engine.handleSelect();
+      } else if (k === "m") {
+        e.preventDefault();
+        toggleBgmMusic();
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      const k = e.key.toLowerCase();
+      if (k === "arrowup" || k === "w") btnUp.classList.remove("pressed");
+      if (k === "arrowdown" || k === "s") btnDown.classList.remove("pressed");
+      if (k === "arrowleft" || k === "a") btnLeft.classList.remove("pressed");
+      if (k === "arrowright" || k === "d") btnRight.classList.remove("pressed");
+      if (k === "z" || k === "j" || k === " " || k === "enter") btnA.classList.remove("pressed");
+      if (k === "x" || k === "k" || k === "escape" || k === "backspace") btnB.classList.remove("pressed");
+      if (k === "q" || k === "1") btnL.classList.remove("pressed");
+      if (k === "e" || k === "2") btnR.classList.remove("pressed");
+      if (k === "b") btnLight.classList.remove("pressed");
+      if (k === "tab" || k === "shift") btnSelect.classList.remove("pressed");
+    });
+
+    // Toggle Scanlines
+    const lcdScreen = document.getElementById("lcd-screen");
+    document.getElementById("btn-toggle-scanlines").addEventListener("click", () => {
+      lcdScreen.classList.toggle("scanlines");
+    });
+
+    // Toggle BGM Music
+    const btnToggleBgm = document.getElementById("btn-toggle-bgm");
+    function toggleBgmMusic() {
+      const active = gbaAudio.toggleBGM();
+      btnToggleBgm.textContent = active ? "Music: ON" : "Music: OFF";
+    }
+    btnToggleBgm.addEventListener("click", toggleBgmMusic);
+  </script>
+</body>
+</html>

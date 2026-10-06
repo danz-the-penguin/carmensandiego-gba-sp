@@ -1,0 +1,9 @@
+[gd_resource type="FontFile" load_steps=2 format=3 uid="uid://bfontretro1234"]
+
+[ext_resource type="FontFile" uid="uid://bd4rm0vbt6gv5" path="res://assets/fonts/PressStart2P.ttf" id="1_font"]
+
+[resource]
+fallbacks = Array[Font]([ExtResource("1_font")])
+subpixel_positioning = 0
+msdf = false
+antialiasing = 0

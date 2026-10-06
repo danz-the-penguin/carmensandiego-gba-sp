@@ -1,0 +1,223 @@
+extends Node
+## GameManager: Core Procedural Case Generation, Time Management & GBA Controls
+
+signal case_started
+signal city_changed(city_data: Dictionary)
+signal time_updated(hours_left: int, day_str: String, time_str: String)
+signal clue_found(clue_text: String)
+signal warrant_issued(suspect_name: String)
+signal case_resolved(is_victory: bool, message: String)
+signal light_mode_changed(mode_name: String)
+
+enum State { TITLE, BRIEFING, CITY_HUB, DOSSIER, CRIME_COMPUTER, ARREST, GAMEOVER }
+
+var current_state: State = State.TITLE
+
+# Player Profile
+var cases_solved: int = 0
+var current_rank: Dictionary
+
+# Active Case
+var current_treasure: String = ""
+var current_criminal: Dictionary = {}
+var current_trail: Array[String] = []
+var current_clues: Dictionary = {}
+var current_city_id: String = "london"
+var hours_left: int = 40
+var day_index: int = 0 # 0=MON
+var hour_of_day: int = 9 # 9:00 AM
+
+# Warrant & Notes
+var warrant_suspect: Dictionary = {}
+var clues_gathered: Array[String] = []
+var computer_filters: Dictionary = {
+	"sex": "", "hair": "", "vehicle": "", "hobby": "", "feature": ""
+}
+
+# GBA SP Light Modes: "ags101_bright", "ags101_normal", "ags001_frontlit"
+var light_modes: Array[String] = ["ags101_bright", "ags101_normal", "ags001_frontlit"]
+var light_mode_index: int = 0
+
+const DAYS: Array[String] = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+
+func _ready() -> void:
+	load_profile()
+
+func load_profile() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load("user://detective_profile.cfg") == OK:
+		cases_solved = cfg.get_value("player", "cases_solved", 0)
+	update_rank()
+
+func save_profile() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("player", "cases_solved", cases_solved)
+	cfg.save("user://detective_profile.cfg")
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("gba_light"):
+		cycle_light_mode()
+
+func update_rank() -> void:
+	current_rank = Database.RANKS[0]
+	for r in Database.RANKS:
+		if cases_solved >= r["required_cases"]:
+			current_rank = r
+
+func cycle_light_mode() -> void:
+	light_mode_index = (light_mode_index + 1) % light_modes.size()
+	SoundManager.play_light()
+	light_mode_changed.emit(light_modes[light_mode_index])
+
+# --- Procedural Case Generator ---
+func start_new_case() -> void:
+	update_rank()
+	var hops: int = current_rank["hops"]
+	hours_left = current_rank["deadline_hours"]
+	day_index = 0
+	hour_of_day = 9
+	warrant_suspect = {}
+	clues_gathered.clear()
+	computer_filters = {"sex": "", "hair": "", "vehicle": "", "hobby": "", "feature": ""}
+
+	# 1. Stolen treasure & start city
+	var treasure_data: Dictionary = Database.TREASURES.pick_random()
+	current_treasure = treasure_data["name"]
+	var start_city: String = treasure_data["city"]
+	current_city_id = start_city
+
+	# 2. Culprit
+	current_criminal = Database.SUSPECTS.pick_random()
+	if current_rank["title"] == "ACE DETECTIVE" and randf() < 0.6:
+		for s in Database.SUSPECTS:
+			if s["id"] == "carmen":
+				current_criminal = s
+				break
+
+	# 3. Flight trail
+	current_trail = [start_city]
+	var curr: String = start_city
+	for i in range(hops):
+		var city_dict: Dictionary = Database.CITIES[curr]
+		var connections: Array = city_dict["connections"]
+		var candidates: Array = []
+		for c in connections:
+			if not current_trail.has(c):
+				candidates.append(c)
+		var next_city: String = candidates.pick_random() if candidates.size() > 0 else connections.pick_random()
+		current_trail.append(next_city)
+		curr = next_city
+
+	# 4. Generate city clues
+	current_clues.clear()
+	for i in range(current_trail.size() - 1):
+		var this_city: String = current_trail[i]
+		var next_city: String = current_trail[i + 1]
+		var next_data: Dictionary = Database.CITIES[next_city]
+
+		var geo_clues: Array[String] = [
+			"Exchanged money for " + next_data["currency"] + "!",
+			"Flew to a country flying " + next_data["flag"] + ".",
+			"Heard speaking " + next_data["language"] + ".",
+			"Mentioned sight-seeing at " + next_data["landmark"] + "!"
+		]
+		geo_clues.shuffle()
+
+		var trait_clues: Array[String] = [
+			"Suspect had striking " + current_criminal["hair"].to_upper() + " hair.",
+			"Suspect fled in a " + current_criminal["vehicle"].to_upper() + ".",
+			"Suspect talked about playing " + current_criminal["hobby"].to_upper() + ".",
+			"Suspect was wearing a " + current_criminal["feature"].to_upper() + "!"
+		]
+
+		current_clues[this_city] = [
+			geo_clues[0],
+			geo_clues[1],
+			trait_clues[i % trait_clues.size()]
+		]
+
+	var final_city: String = current_trail[-1]
+	current_clues[final_city] = [
+		"Suspect is cornered at the hideout! Ensure your warrant is issued!",
+		"Witness confirms the fugitive is trapped inside!",
+		"ACME backup is arriving! Close in for the arrest!"
+	]
+
+	current_state = State.BRIEFING
+	case_started.emit()
+	broadcast_time()
+
+# --- Time & Navigation ---
+func spend_hours(h: int) -> bool:
+	hours_left = maxi(0, hours_left - h)
+	hour_of_day += h
+
+	while hour_of_day >= 24:
+		hour_of_day -= 24
+		day_index = (day_index + 1) % DAYS.size()
+
+	# Bedtime penalty between 10 PM and 6 AM
+	if hour_of_day >= 22 or hour_of_day < 6:
+		hours_left = maxi(0, hours_left - 8)
+		if hour_of_day >= 22:
+			day_index = (day_index + 1) % DAYS.size()
+		hour_of_day = 6
+		SoundManager.play_cancel()
+
+	broadcast_time()
+
+	if hours_left <= 0:
+		trigger_game_over()
+		return false
+	return true
+
+func broadcast_time() -> void:
+	var ampm: String = "PM" if hour_of_day >= 12 else "AM"
+	var disp_hour: int = 12 if (hour_of_day % 12 == 0) else (hour_of_day % 12)
+	var time_str: String = "%d%s" % [disp_hour, ampm]
+	time_updated.emit(hours_left, DAYS[day_index], time_str)
+
+func travel_to(destination_id: String) -> void:
+	SoundManager.play_travel()
+	if not spend_hours(4):
+		return
+	current_city_id = destination_id
+	city_changed.emit(Database.CITIES[current_city_id])
+
+func investigate_place(place_index: int) -> void:
+	if not spend_hours(2):
+		return
+
+	var clue_text := ""
+	if current_clues.has(current_city_id):
+		var city_clues: Array = current_clues[current_city_id]
+		clue_text = city_clues[place_index % city_clues.size()]
+	else:
+		clue_text = "Nobody matching that description was seen here! You've lost the trail!"
+
+	SoundManager.play_clue()
+	var full_clue := "[%s] %s" % [Database.CITIES[current_city_id]["name"], clue_text]
+	clues_gathered.append(full_clue)
+	clue_found.emit(full_clue)
+
+	# If final hideout reached
+	if current_city_id == current_trail[-1]:
+		attempt_arrest()
+
+func attempt_arrest() -> void:
+	current_state = State.ARREST
+	if not warrant_suspect.is_empty() and warrant_suspect["id"] == current_criminal["id"]:
+		SoundManager.play_victory()
+		cases_solved += 1
+		save_profile()
+		var quote = current_criminal.get("quote", "Curses! Foiled again!")
+		case_resolved.emit(true, "%s: \"%s\"\n\nCASE SOLVED! %s apprehended! %s recovered! Promotion: %s" % [current_criminal["name"], quote, current_criminal["name"], current_treasure, current_rank["title"]])
+	else:
+		SoundManager.play_game_over()
+		var msg := "ALERT: You cornered %s without a valid warrant! The criminal escaped!" % current_criminal["name"] if warrant_suspect.is_empty() else "BLUNDER: Warrant was for %s, but thief was %s! Escaped!" % [warrant_suspect["name"], current_criminal["name"]]
+		case_resolved.emit(false, msg)
+
+func trigger_game_over() -> void:
+	current_state = State.GAMEOVER
+	SoundManager.play_game_over()
+	case_resolved.emit(false, "TIME EXPIRED! The deadline passed and the thief escaped!")

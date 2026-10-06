@@ -1,0 +1,12 @@
+# Godot 4 editor cache and import artifacts
+.godot/
+*.translation
+
+# Build binaries and macOS DMGs (exceeds GitHub 100MB limit)
+build/
+*.dmg
+
+# OS artifacts
+.DS_Store
+*.swp
+*~

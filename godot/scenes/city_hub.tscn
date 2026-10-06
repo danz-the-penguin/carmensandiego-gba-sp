@@ -1,0 +1,251 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8f4m9q3p5x1"]
+
+[ext_resource type="Script" path="res://scripts/city_hub.gd" id="1_hub"]
+
+[node name="CityHub" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_hub")
+
+[node name="SkylineView" type="Control" parent="."]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 156.0
+
+[node name="SkyBg" type="ColorRect" parent="SkylineView"]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 156.0
+color = Color(0.08, 0.11, 0.19, 1)
+
+[node name="CityBanner" type="Panel" parent="SkylineView"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 468.0
+offset_bottom = 60.0
+
+[node name="CityTitle" type="Label" parent="SkylineView/CityBanner"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 6.0
+offset_right = 446.0
+offset_bottom = 22.0
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "LONDON, UNITED KINGDOM"
+
+[node name="CityLandmark" type="Label" parent="SkylineView/CityBanner"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 24.0
+offset_right = 446.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(0.68, 0.78, 0.92, 1)
+theme_override_font_sizes/font_size = 8
+text = "LANDMARK: Big Ben and Tower Bridge"
+autowrap_mode = 2
+
+[node name="SkylineGraphic" type="Control" parent="SkylineView"]
+layout_mode = 0
+offset_top = 60.0
+offset_right = 480.0
+offset_bottom = 156.0
+
+[node name="BldgBack" type="ColorRect" parent="SkylineView/SkylineGraphic"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 90.0
+offset_bottom = 96.0
+color = Color(0.12, 0.16, 0.26, 1)
+
+[node name="BldgMid" type="ColorRect" parent="SkylineView/SkylineGraphic"]
+layout_mode = 0
+offset_left = 110.0
+offset_top = 5.0
+offset_right = 180.0
+offset_bottom = 96.0
+color = Color(0.14, 0.19, 0.3, 1)
+
+[node name="Spire" type="ColorRect" parent="SkylineView/SkylineGraphic"]
+layout_mode = 0
+offset_left = 140.0
+offset_top = -12.0
+offset_right = 150.0
+offset_bottom = 5.0
+color = Color(0.2, 0.28, 0.42, 1)
+
+[node name="BldgFore" type="ColorRect" parent="SkylineView/SkylineGraphic"]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 30.0
+offset_right = 300.0
+offset_bottom = 96.0
+color = Color(0.11, 0.15, 0.24, 1)
+
+[node name="BldgRight" type="ColorRect" parent="SkylineView/SkylineGraphic"]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 10.0
+offset_right = 410.0
+offset_bottom = 96.0
+color = Color(0.15, 0.2, 0.32, 1)
+
+[node name="BldgFarRight" type="ColorRect" parent="SkylineView/SkylineGraphic"]
+layout_mode = 0
+offset_left = 425.0
+offset_top = 35.0
+offset_right = 475.0
+offset_bottom = 96.0
+color = Color(0.1, 0.14, 0.22, 1)
+
+[node name="Ground" type="ColorRect" parent="SkylineView/SkylineGraphic"]
+layout_mode = 0
+offset_top = 92.0
+offset_right = 480.0
+offset_bottom = 96.0
+color = Color(0.2, 0.3, 0.45, 1)
+
+[node name="StatusBar" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 158.0
+offset_right = 472.0
+offset_bottom = 184.0
+
+[node name="HBox" type="HBoxContainer" parent="StatusBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_right = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CityLabel" type="Label" parent="StatusBar/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
+theme_override_font_sizes/font_size = 8
+text = "LOC: LONDON"
+
+[node name="ClockLabel" type="Label" parent="StatusBar/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 8
+text = "TIME: MON 9AM"
+horizontal_alignment = 1
+
+[node name="HoursLabel" type="Label" parent="StatusBar/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.45, 0.45, 1)
+theme_override_font_sizes/font_size = 8
+text = "40H LEFT"
+horizontal_alignment = 2
+
+[node name="DialogBox" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 188.0
+offset_right = 472.0
+offset_bottom = 262.0
+
+[node name="TextLabel" type="Label" parent="DialogBox"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = -8.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 8
+text = "Question witnesses or check transit connections."
+autowrap_mode = 2
+
+[node name="ActionMenu" type="GridContainer" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 266.0
+offset_right = 472.0
+offset_bottom = 314.0
+columns = 2
+
+[node name="BtnInvestigate" type="Button" parent="ActionMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 8
+text = "1. INVESTIGATE [A]"
+
+[node name="BtnDepart" type="Button" parent="ActionMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 8
+text = "2. DEPART [B]"
+
+[node name="BtnComputer" type="Button" parent="ActionMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 8
+text = "3. CRIME COMP [R]"
+
+[node name="BtnDossier" type="Button" parent="ActionMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 8
+text = "4. DOSSIER [L]"
+
+[node name="SubscreenOverlay" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Header" type="HBoxContainer" parent="SubscreenOverlay"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 468.0
+offset_bottom = 30.0
+
+[node name="TitleLabel" type="Label" parent="SubscreenOverlay/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "MENU"
+
+[node name="HintLabel" type="Label" parent="SubscreenOverlay/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.82, 1)
+theme_override_font_sizes/font_size = 8
+text = "[B / ESC] BACK"
+
+[node name="Scroll" type="ScrollContainer" parent="SubscreenOverlay"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 36.0
+offset_right = 468.0
+offset_bottom = 308.0
+
+[node name="ItemList" type="VBoxContainer" parent="SubscreenOverlay/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
