@@ -190,6 +190,36 @@ class GBASoundEngine {
     });
   }
 
+  impact() {
+    this.init();
+    this.playTone(110, 0.35, "sawtooth", 0.55);
+  }
+
+  cuffs() {
+    this.init();
+    this.playTone(1600, 0.05, "triangle", 0.4);
+    setTimeout(() => this.playTone(2100, 0.06, "square", 0.4), 60);
+  }
+
+  radioLock() {
+    this.init();
+    const tones = [880, 1320, 1760];
+    tones.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 0.1, "sine", 0.35), idx * 75);
+    });
+  }
+
+  ping() {
+    this.init();
+    this.playTone(1480, 0.08, "sine", 0.25);
+  }
+
+  whoosh() {
+    this.init();
+    this.playTone(280, 0.15, "triangle", 0.35);
+  }
+
+
   // --- Background GBA Spy Mystery Theme ---
 
   startBGM() {

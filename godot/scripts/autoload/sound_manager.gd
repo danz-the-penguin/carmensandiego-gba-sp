@@ -20,6 +20,10 @@ var wav_victory: AudioStreamWAV
 var wav_game_over: AudioStreamWAV
 var wav_impact: AudioStreamWAV
 var wav_cuffs: AudioStreamWAV
+var wav_static: AudioStreamWAV
+var wav_radio_lock: AudioStreamWAV
+var wav_ping: AudioStreamWAV
+var wav_whoosh: AudioStreamWAV
 var wav_bgm: AudioStreamWAV
 
 func _ready() -> void:
@@ -65,6 +69,10 @@ func _cache_all_sounds() -> void:
 	wav_game_over = _load_override("game_over", _create_tone_wav(196.0, 0.45, "triangle"))
 	wav_impact = _load_override("impact", _create_impact_wav())
 	wav_cuffs = _load_override("cuffs", _create_cuffs_wav())
+	wav_static = _load_override("static", _create_static_wav())
+	wav_radio_lock = _load_override("radio_lock", _create_radio_lock_wav())
+	wav_ping = _load_override("ping", _create_ping_wav())
+	wav_whoosh = _load_override("whoosh", _create_whoosh_wav())
 	
 	wav_bgm = _load_override("bgm", _create_detective_bgm())
 	bgm_player.stream = wav_bgm
@@ -203,6 +211,10 @@ func play_victory() -> void: play_sfx(wav_victory)
 func play_game_over() -> void: play_sfx(wav_game_over)
 func play_impact() -> void: play_sfx(wav_impact)
 func play_cuffs() -> void: play_sfx(wav_cuffs)
+func play_static() -> void: play_sfx(wav_static)
+func play_radio_lock() -> void: play_sfx(wav_radio_lock)
+func play_ping() -> void: play_sfx(wav_ping)
+func play_whoosh() -> void: play_sfx(wav_whoosh)
 
 func _create_impact_wav() -> AudioStreamWAV:
 	var wav := AudioStreamWAV.new()
@@ -244,3 +256,81 @@ func _create_cuffs_wav() -> AudioStreamWAV:
 		data[i] = int(clampi(int(128 + tone * 120.0), 0, 255))
 	wav.data = data
 	return wav
+
+func _create_static_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.12
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	for i in range(sample_count):
+		var t := float(i) / float(sample_count)
+		var env := sin(t * PI)
+		var noise := randf_range(-1.0, 1.0) * env
+		data[i] = int(clampi(int(128 + noise * 100.0), 0, 255))
+	wav.data = data
+	return wav
+
+func _create_radio_lock_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.32
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	# 3-tone ascending electronic lock chime (880Hz -> 1320Hz -> 1760Hz)
+	var chord_freqs = [880.0, 1320.0, 1760.0]
+	var phase := 0.0
+	for i in range(sample_count):
+		var seg := clampi(int((float(i) / float(sample_count)) * 3.0), 0, 2)
+		var f: float = chord_freqs[seg]
+		phase = fmod(phase + (f / wav.mix_rate), 1.0)
+		var t_in_seg := fmod(float(i), float(sample_count) / 3.0) / (float(sample_count) / 3.0)
+		var env := 1.0 - t_in_seg * 0.7
+		var val := (1.0 if phase < 0.5 else -1.0) * env * 0.6
+		data[i] = int(clampi(int(128 + val * 120.0), 0, 255))
+	wav.data = data
+	return wav
+
+func _create_ping_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.18
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	var freq := 1480.0
+	var phase := 0.0
+	for i in range(sample_count):
+		var t := float(i) / float(sample_count)
+		var env := exp(-t * 12.0)
+		phase = fmod(phase + (freq / wav.mix_rate), 1.0)
+		var val := sin(phase * TAU) * env
+		data[i] = int(clampi(int(128 + val * 120.0), 0, 255))
+	wav.data = data
+	return wav
+
+func _create_whoosh_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.20
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	for i in range(sample_count):
+		var t := float(i) / float(sample_count)
+		var env := sin(t * PI)
+		var noise := randf_range(-1.0, 1.0) * env * (1.0 - t * 0.5)
+		data[i] = int(clampi(int(128 + noise * 110.0), 0, 255))
+	wav.data = data
+	return wav
+

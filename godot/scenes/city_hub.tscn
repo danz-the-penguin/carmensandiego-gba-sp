@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://b8f4m9q3p5x1"]
+[gd_scene load_steps=6 format=3 uid="uid://b8f4m9q3p5x1"]
 
 [ext_resource type="Script" path="res://scripts/city_hub.gd" id="1_hub"]
 [ext_resource type="Script" path="res://scripts/weather_overlay.gd" id="2_weather"]
+[ext_resource type="Script" path="res://scripts/inspect_overlay.gd" id="3_inspect"]
+[ext_resource type="Script" path="res://scripts/radio_overlay.gd" id="4_radio"]
+[ext_resource type="Script" path="res://scripts/chase_overlay.gd" id="5_chase"]
 
 [node name="CityHub" type="Control"]
 layout_mode = 3
@@ -174,7 +177,7 @@ offset_left = 8.0
 offset_top = 266.0
 offset_right = 472.0
 offset_bottom = 314.0
-columns = 2
+columns = 3
 
 [node name="BtnInvestigate" type="Button" parent="ActionMenu"]
 layout_mode = 2
@@ -203,6 +206,21 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 8
 text = "4. DOSSIER [L]"
+
+[node name="BtnRadio" type="Button" parent="ActionMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 8
+text = "5. WIRE RADIO [X]"
+
+[node name="BtnInspect" type="Button" parent="ActionMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 8
+text = "6. SEARCH SCENE [Y]"
+
 
 [node name="SubscreenOverlay" type="Panel" parent="."]
 visible = false
@@ -410,3 +428,233 @@ theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
 theme_override_font_sizes/font_size = 8
 text = "PRESS [A] OR SPACE TO CONTINUE"
 horizontal_alignment = 1
+
+[node name="InspectOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_inspect")
+
+[node name="TopBar" type="Panel" parent="InspectOverlay"]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 32.0
+
+[node name="StatusLabel" type="Label" parent="InspectOverlay/TopBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 468.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 9
+text = "CRIME SCENE INVESTIGATION"
+
+[node name="BottomBar" type="Panel" parent="InspectOverlay"]
+layout_mode = 0
+offset_top = 288.0
+offset_right = 480.0
+offset_bottom = 320.0
+
+[node name="HintBar" type="Label" parent="InspectOverlay/BottomBar"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 472.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
+theme_override_font_sizes/font_size = 8
+text = "D-PAD: MOVE LENS | [A] EXAMINE SPOT | [B] RETURN"
+horizontal_alignment = 1
+
+[node name="ClueCard" type="Panel" parent="InspectOverlay"]
+visible = false
+layout_mode = 0
+offset_left = 30.0
+offset_top = 60.0
+offset_right = 450.0
+offset_bottom = 260.0
+
+[node name="Title" type="Label" parent="InspectOverlay/ClueCard"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 408.0
+offset_bottom = 32.0
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 10
+text = "★ EVIDENCE RECOVERED ★"
+horizontal_alignment = 1
+
+[node name="Desc" type="RichTextLabel" parent="InspectOverlay/ClueCard"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 44.0
+offset_right = 404.0
+offset_bottom = 144.0
+theme_override_font_sizes/normal_font_size = 8
+bbcode_enabled = true
+text = "Evidence description..."
+
+[node name="Hint" type="Label" parent="InspectOverlay/ClueCard"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 160.0
+offset_right = 408.0
+offset_bottom = 184.0
+theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
+theme_override_font_sizes/font_size = 8
+text = "PRESS [A] OR SPACE TO COLLECT EVIDENCE"
+horizontal_alignment = 1
+
+[node name="RadioOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4_radio")
+
+[node name="TopBar" type="Panel" parent="RadioOverlay"]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 32.0
+
+[node name="TitleLabel" type="Label" parent="RadioOverlay/TopBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 468.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.2, 0.9, 0.45, 1)
+theme_override_font_sizes/font_size = 9
+text = "📻 ACME SURVEILLANCE RADIO RECEIVER"
+
+[node name="DialBox" type="Panel" parent="RadioOverlay"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 188.0
+offset_right = 440.0
+offset_bottom = 212.0
+
+[node name="FreqLabel" type="Label" parent="RadioOverlay/DialBox"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 4.0
+offset_right = 392.0
+offset_bottom = 20.0
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 8
+text = "TUNING: 88.0 MHz"
+horizontal_alignment = 1
+
+[node name="TeletypeBox" type="Panel" parent="RadioOverlay"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 218.0
+offset_right = 450.0
+offset_bottom = 284.0
+
+[node name="Text" type="RichTextLabel" parent="RadioOverlay/TeletypeBox"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 412.0
+offset_bottom = 60.0
+theme_override_font_sizes/normal_font_size = 8
+bbcode_enabled = true
+text = "Scanning..."
+
+[node name="BottomBar" type="Panel" parent="RadioOverlay"]
+layout_mode = 0
+offset_top = 288.0
+offset_right = 480.0
+offset_bottom = 320.0
+
+[node name="HintBar" type="Label" parent="RadioOverlay/BottomBar"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 472.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
+theme_override_font_sizes/font_size = 8
+text = "LEFT/RIGHT: TUNE DIAL | [B] CLOSE RECEIVER"
+horizontal_alignment = 1
+
+[node name="ChaseOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_chase")
+
+[node name="TopBar" type="Panel" parent="ChaseOverlay"]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 32.0
+
+[node name="TitleLabel" type="Label" parent="ChaseOverlay/TopBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 468.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(1, 0.3, 0.35, 1)
+theme_override_font_sizes/font_size = 9
+text = "★ FOOT CHASE: SUSPECT PURSUIT ★"
+
+[node name="PromptBox" type="Panel" parent="ChaseOverlay"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 60.0
+offset_right = 450.0
+offset_bottom = 150.0
+
+[node name="PromptLabel" type="Label" parent="ChaseOverlay/PromptBox"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 410.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(1, 0.88, 0.3, 1)
+theme_override_font_sizes/font_size = 10
+text = "⚡ OBSTACLE DETECTED! ⚡"
+horizontal_alignment = 1
+
+[node name="SubtextLabel" type="Label" parent="ChaseOverlay/PromptBox"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 32.0
+offset_right = 410.0
+offset_bottom = 48.0
+theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 8
+text = "PRESS [B] TO VAULT!"
+horizontal_alignment = 1
+
+[node name="TimerBg" type="ColorRect" parent="ChaseOverlay/PromptBox"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 58.0
+offset_right = 400.0
+offset_bottom = 74.0
+color = Color(0.12, 0.15, 0.22, 1)
+
+[node name="TimerBar" type="ColorRect" parent="ChaseOverlay/PromptBox"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 58.0
+offset_right = 400.0
+offset_bottom = 74.0
+color = Color(0.2, 0.9, 0.4, 1)
+

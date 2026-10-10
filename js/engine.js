@@ -278,8 +278,72 @@ class GBACarmenGameEngine {
       data: p,
       index: i
     }));
+    this.subscreenOptions.push({
+      title: "🔍 4. SWEEP CRIME SCENE (MAGNIFYING LENS)",
+      isInspect: true
+    });
     this.renderSubscreen("INVESTIGATE LOCATIONS", this.subscreenOptions);
   }
+
+  openRadioIntercept() {
+    this.subscreenMode = "radio";
+    this.subscreenIndex = 0;
+    this.audio.shoulderTrigger();
+    const suspect = this.currentCase.criminal;
+    const trail = this.currentCase.trail;
+    const currIdx = trail.indexOf(this.currentCityId);
+    const nextCityId = currIdx !== -1 && currIdx < trail.length - 1 ? trail[currIdx + 1] : null;
+
+    let lead = `SUSPECT SURVEILLANCE: Vehicle logged as a ${suspect.vehicle || "Convertible"}, with a ${suspect.feature || "Ruby Ring"}!`;
+    if (nextCityId && CITIES_DATA[nextCityId]) {
+      const nc = CITIES_DATA[nextCityId];
+      lead = `V.I.L.E. INTERCEPT: Operative ticketed for ${nc.name} (${nc.country})! Local currency: ${nc.currency}.`;
+    }
+
+    this.audio.radioLock();
+    const entry = `[RADIO INTERCEPT] ${lead}`;
+    if (!this.cluesGathered.includes(entry)) {
+      this.cluesGathered.push(entry);
+    }
+    this.subscreenOptions = [
+      { title: "★ SIGNAL LOCKED (96.4 MHz) ★" },
+      { title: lead },
+      { title: "▶ PRESS [B] TO RETURN TO HQ" }
+    ];
+    this.renderSubscreen("📻 ACME SURVEILLANCE RADIO RECEIVER", this.subscreenOptions);
+  }
+
+  openCrimeSceneInspection() {
+    this.subscreenMode = "inspect";
+    this.subscreenIndex = 0;
+    this.audio.ping();
+    const suspect = this.currentCase.criminal;
+    const trail = this.currentCase.trail;
+    const currIdx = trail.indexOf(this.currentCityId);
+    const nextCityId = currIdx !== -1 && currIdx < trail.length - 1 ? trail[currIdx + 1] : null;
+
+    let lead = `PHYSICAL TRACE: Evidence matches suspect hobby (${suspect.hobby || "Tennis"}) and feature (${suspect.feature || "Ruby Ring"})!`;
+    if (nextCityId && CITIES_DATA[nextCityId]) {
+      const nc = CITIES_DATA[nextCityId];
+      lead = `RECOVERED TRAVEL DOC: Boarding slip stamped for flight to ${nc.name} (${nc.landmark})!`;
+    }
+
+    this.hoursLeft = Math.min(this.deadlineHours, this.hoursLeft + 2);
+    this.updateClock();
+    const entry = `[PHYSICAL EVIDENCE] ${lead}`;
+    if (!this.cluesGathered.includes(entry)) {
+      this.cluesGathered.push(entry);
+    }
+
+    this.subscreenOptions = [
+      { title: "★ EVIDENCE DETECTED WITH MAGNIFYING LENS ★" },
+      { title: lead },
+      { title: "+2 HOURS TIME BONUS CREDITED TO TIMELINE!" },
+      { title: "▶ PRESS [B] TO RETURN TO HQ" }
+    ];
+    this.renderSubscreen("🔍 CRIME SCENE PHYSICAL INSPECTION", this.subscreenOptions);
+  }
+
 
   openDepartSubscreen() {
     this.subscreenMode = "depart";
@@ -376,15 +440,26 @@ class GBACarmenGameEngine {
 
   // --- Subscreen Confirm Handler ---
   handleSubscreenConfirm() {
+    if (this.subscreenMode === "radio" || this.subscreenMode === "inspect") {
+      this.closeSubscreen();
+      return;
+    }
+
     if (this.subscreenMode === "investigate") {
       const placeOpt = this.subscreenOptions[this.subscreenIndex];
       this.closeSubscreen();
+
+      if (placeOpt.isInspect) {
+        this.openCrimeSceneInspection();
+        return;
+      }
 
       // Draw witness portrait
       this.renderer.drawWitnessPortrait(placeOpt.data.witness);
 
       // Spend 2 hours
       if (!this.spendHours(2)) return;
+
 
       let clueText = "";
       if (this.currentCase.trail.includes(this.currentCityId)) {
@@ -607,6 +682,10 @@ class GBACarmenGameEngine {
       this.openCrimeComputerSubscreen();
     } else if (this.menuIndex === 3) {
       this.openDossierSubscreen();
+    } else if (this.menuIndex === 4) {
+      this.openRadioIntercept();
+    } else if (this.menuIndex === 5) {
+      this.openCrimeSceneInspection();
     }
   }
 
@@ -633,10 +712,10 @@ class GBACarmenGameEngine {
       this.audio.cursor();
       this.updateSubscreenSelection();
     } else if (this.state === "CITY_HUB") {
-      if (dir === "up") this.menuIndex = (this.menuIndex + 2) % 4;
-      else if (dir === "down") this.menuIndex = (this.menuIndex + 2) % 4;
-      else if (dir === "left") this.menuIndex = (this.menuIndex - 1 + 4) % 4;
-      else if (dir === "right") this.menuIndex = (this.menuIndex + 1) % 4;
+      if (dir === "left") this.menuIndex = (this.menuIndex % 3 > 0) ? this.menuIndex - 1 : this.menuIndex + 2;
+      else if (dir === "right") this.menuIndex = (this.menuIndex % 3 < 2) ? this.menuIndex + 1 : this.menuIndex - 2;
+      else if (dir === "up") this.menuIndex = (this.menuIndex >= 3) ? this.menuIndex - 3 : this.menuIndex + 3;
+      else if (dir === "down") this.menuIndex = (this.menuIndex < 3) ? this.menuIndex + 3 : this.menuIndex - 3;
       this.audio.cursor();
       this.updateMenuHighlight();
     }
@@ -645,11 +724,12 @@ class GBACarmenGameEngine {
   handleSelect() {
     this.audio.init();
     if (!this.subscreenMode && this.state === "CITY_HUB") {
-      this.menuIndex = (this.menuIndex + 1) % 4;
+      this.menuIndex = (this.menuIndex + 1) % 6;
       this.audio.cursor();
       this.updateMenuHighlight();
     }
   }
+
 
   updateMenuHighlight() {
     const menuItems = Array.from(document.querySelectorAll(".menu-item"));

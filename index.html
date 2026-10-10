@@ -249,9 +249,10 @@
 
     .action-menu {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 3px;
     }
+
 
     .menu-item {
       padding: 5px 8px;
@@ -791,7 +792,14 @@
               <div class="menu-item" data-action="3">
                 <span class="cursor-icon"></span> 4.DOSSIER [L]
               </div>
+              <div class="menu-item" data-action="4">
+                <span class="cursor-icon"></span> 5.WIRE RADIO [X]
+              </div>
+              <div class="menu-item" data-action="5">
+                <span class="cursor-icon"></span> 6.SEARCH SCENE [Y]
+              </div>
             </div>
+
           </div>
 
           <!-- Subscreen Overlay Modal -->
@@ -900,7 +908,10 @@
     <button class="tool-btn" id="btn-toggle-bgm">Music: ON</button>
     <button class="tool-btn" id="btn-quick-dossier">[L] Notes</button>
     <button class="tool-btn" id="btn-quick-computer">[R] Crime Computer</button>
+    <button class="tool-btn" id="btn-quick-radio">[X] Wire Radio</button>
+    <button class="tool-btn" id="btn-quick-inspect">[Y] Search Scene</button>
   </div>
+
 
   <!-- Load Scripts -->
   <script src="js/data.js"></script>
@@ -952,6 +963,8 @@
 
     document.getElementById("btn-quick-dossier").addEventListener("click", () => engine.handleTriggerL());
     document.getElementById("btn-quick-computer").addEventListener("click", () => engine.handleTriggerR());
+    document.getElementById("btn-quick-radio").addEventListener("click", () => engine.openRadioIntercept());
+    document.getElementById("btn-quick-inspect").addEventListener("click", () => engine.openCrimeSceneInspection());
 
     // Hub Menu Click Support
     const menuItems = Array.from(document.querySelectorAll(".menu-item"));
@@ -986,7 +999,7 @@
         e.preventDefault();
         btnA.classList.add("pressed");
         engine.handleConfirm();
-      } else if (k === "x" || k === "k" || k === "escape" || k === "backspace") {
+      } else if (k === "k" || k === "escape" || k === "backspace") {
         e.preventDefault();
         btnB.classList.add("pressed");
         engine.handleCancel();
@@ -998,6 +1011,12 @@
         e.preventDefault();
         btnR.classList.add("pressed");
         engine.handleTriggerR();
+      } else if (k === "x" || k === "5") {
+        e.preventDefault();
+        engine.openRadioIntercept();
+      } else if (k === "y" || k === "i" || k === "6") {
+        e.preventDefault();
+        engine.openCrimeSceneInspection();
       } else if (k === "b") {
         e.preventDefault();
         btnLight.classList.add("pressed");
@@ -1011,6 +1030,7 @@
         toggleBgmMusic();
       }
     });
+
 
     window.addEventListener("keyup", (e) => {
       const k = e.key.toLowerCase();

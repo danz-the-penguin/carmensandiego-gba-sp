@@ -17,6 +17,13 @@ extends Control
 @onready var btn_depart: Button = $ActionMenu/BtnDepart
 @onready var btn_computer: Button = $ActionMenu/BtnComputer
 @onready var btn_dossier: Button = $ActionMenu/BtnDossier
+@onready var btn_radio: Button = $ActionMenu/BtnRadio
+@onready var btn_inspect: Button = $ActionMenu/BtnInspect
+
+@onready var inspect_overlay: Control = $InspectOverlay
+@onready var radio_overlay: Control = $RadioOverlay
+@onready var chase_overlay: Control = $ChaseOverlay
+
 
 @onready var subscreen_panel: Panel = $SubscreenOverlay
 @onready var subscreen_title: Label = $SubscreenOverlay/Header/TitleLabel
@@ -76,17 +83,26 @@ const CITY_PALETTES = {
 }
 
 func _ready() -> void:
-	action_buttons = [btn_investigate, btn_depart, btn_computer, btn_dossier]
+	action_buttons = [btn_investigate, btn_depart, btn_computer, btn_dossier, btn_radio, btn_inspect]
 
 	btn_investigate.pressed.connect(func(): _activate_menu_slot(0))
 	btn_depart.pressed.connect(func(): _activate_menu_slot(1))
 	btn_computer.pressed.connect(func(): _activate_menu_slot(2))
 	btn_dossier.pressed.connect(func(): _activate_menu_slot(3))
+	btn_radio.pressed.connect(func(): _activate_menu_slot(4))
+	btn_inspect.pressed.connect(func(): _activate_menu_slot(5))
+
+	inspect_overlay.evidence_discovered.connect(_on_evidence_discovered)
+	inspect_overlay.inspection_closed.connect(_on_overlay_closed)
+	radio_overlay.radio_intercept_solved.connect(_on_radio_solved)
+	radio_overlay.radio_closed.connect(_on_overlay_closed)
+	chase_overlay.chase_completed.connect(_on_chase_completed)
 
 	GameManager.city_changed.connect(_on_city_changed)
 	GameManager.time_updated.connect(_on_time_updated)
 	GameManager.clue_found.connect(_on_clue_found)
 	GameManager.case_resolved.connect(_on_case_resolved)
+
 
 	original_pos = position
 
@@ -127,7 +143,7 @@ func _process(delta: float) -> void:
 		portrait_rect.position.y = 12.0
 
 func _input(event: InputEvent) -> void:
-	if flight_overlay.visible:
+	if flight_overlay.visible or inspect_overlay.visible or radio_overlay.visible or chase_overlay.visible:
 		return
 
 	if is_case_ended:
@@ -181,16 +197,45 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_pressed("gba_b") or event.is_action_pressed("ui_cancel"):
 			close_subscreen()
 	else:
-		if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
-			current_menu_index ^= 1
+		if event is InputEventKey and event.pressed and not event.echo:
+			if event.keycode == KEY_1:
+				_activate_menu_slot(0)
+				return
+			elif event.keycode == KEY_2:
+				_activate_menu_slot(1)
+				return
+			elif event.keycode == KEY_3:
+				_activate_menu_slot(2)
+				return
+			elif event.keycode == KEY_4:
+				_activate_menu_slot(3)
+				return
+			elif event.keycode in [KEY_5, KEY_X, KEY_W]:
+				_activate_menu_slot(4)
+				return
+			elif event.keycode in [KEY_6, KEY_Y, KEY_I]:
+				_activate_menu_slot(5)
+				return
+
+		if event.is_action_pressed("ui_left"):
+			current_menu_index = (current_menu_index - 1) if (current_menu_index % 3 > 0) else (current_menu_index + 2)
 			SoundManager.play_cursor()
 			_update_menu_highlight()
-		elif event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down"):
-			current_menu_index ^= 2
+		elif event.is_action_pressed("ui_right"):
+			current_menu_index = (current_menu_index + 1) if (current_menu_index % 3 < 2) else (current_menu_index - 2)
+			SoundManager.play_cursor()
+			_update_menu_highlight()
+		elif event.is_action_pressed("ui_up"):
+			current_menu_index = (current_menu_index - 3) if current_menu_index >= 3 else (current_menu_index + 3)
+			SoundManager.play_cursor()
+			_update_menu_highlight()
+		elif event.is_action_pressed("ui_down"):
+			current_menu_index = (current_menu_index + 3) if current_menu_index < 3 else (current_menu_index - 3)
 			SoundManager.play_cursor()
 			_update_menu_highlight()
 		elif event.is_action_pressed("gba_a") or event.is_action_pressed("ui_accept"):
 			_activate_menu_slot(current_menu_index)
+
 
 func show_dialog(speaker: String, text: String, portrait_id: String = "chief") -> void:
 	speaker_label.text = speaker
@@ -341,17 +386,27 @@ func _activate_menu_slot(idx: int) -> void:
 		1: open_depart()
 		2: open_crime_computer()
 		3: open_dossier()
+		4: open_radio_intercept()
+		5: open_crime_scene_inspection()
 
 # --- Subscreens ---
 func open_investigate() -> void:
 	subscreen_mode = "investigate"
 	var city = Database.CITIES[GameManager.current_city_id]
 	subscreen_title.text = "INVESTIGATE WITNESSES (%s)" % city["name"]
-	subscreen_data = city["places"]
+	subscreen_data = []
+	for p in city["places"]:
+		subscreen_data.append({"type": "witness", "name": p["name"], "witness": p["witness"]})
+	subscreen_data.append({"type": "inspect", "name": "🔍 SWEEP SCENE FOR PHYSICAL EVIDENCE", "witness": "Magnifying Glass"})
+	
 	var labels: Array[String] = []
 	for p in subscreen_data:
-		labels.append("%s\nWitness: %s" % [p["name"], p["witness"]])
+		if p["type"] == "witness":
+			labels.append("%s\nWitness: %s" % [p["name"], p["witness"]])
+		else:
+			labels.append("%s\nExamine scene with tactile magnifying lens" % p["name"])
 	_populate_subscreen(labels)
+
 
 func open_depart() -> void:
 	subscreen_mode = "depart"
@@ -448,7 +503,10 @@ func _confirm_subscreen(idx: int) -> void:
 	match subscreen_mode:
 		"investigate":
 			close_subscreen()
-			_handle_investigation(idx)
+			if idx < subscreen_data.size() and subscreen_data[idx] is Dictionary and subscreen_data[idx].get("type") == "inspect":
+				open_crime_scene_inspection()
+			else:
+				_handle_investigation(idx)
 		"depart":
 			var dest_id = subscreen_data[idx]
 			close_subscreen()
@@ -499,9 +557,48 @@ func _handle_investigation(place_index: int) -> void:
 			var warn_text = "%s\n\n[color=#f87171][b]WARNING: Suspect spotted nearby! You do NOT have an arrest warrant yet! Open Crime Computer [R] and secure a warrant before arresting![/b][/color]" % clue_text
 			show_dialog("[WITNESS: %s]" % witness_role.to_upper(), warn_text, portrait_id)
 		else:
-			_trigger_dramatic_arrest()
+			show_dialog("[ACME DISPATCH]", "WARRANT CONFIRMED FOR %s! Suspect bolting into the back-alleys — AFTER THEM!" % GameManager.warrant_suspect["name"], "chief")
+			await get_tree().create_timer(1.2).timeout
+			_start_alley_chase()
 	else:
 		show_dialog("[WITNESS: %s]" % witness_role.to_upper(), clue_text, portrait_id)
+
+func open_radio_intercept() -> void:
+	subscreen_panel.visible = false
+	radio_overlay.start_radio_intercept(GameManager.current_city_id)
+
+func open_crime_scene_inspection() -> void:
+	subscreen_panel.visible = false
+	var city = Database.CITIES[GameManager.current_city_id]
+	var place = city["places"][0]["name"]
+	inspect_overlay.start_inspection(GameManager.current_city_id, place)
+
+func _start_alley_chase() -> void:
+	subscreen_panel.visible = false
+	chase_overlay.start_chase(GameManager.current_criminal)
+
+func _on_chase_completed(_success: bool) -> void:
+	_trigger_dramatic_arrest()
+
+func _on_evidence_discovered(clue_text: String) -> void:
+	var city_name = Database.CITIES[GameManager.current_city_id]["name"]
+	var full = "[%s EVIDENCE] %s" % [city_name, clue_text]
+	if not GameManager.clues_gathered.has(full):
+		GameManager.clues_gathered.append(full)
+	GameManager.clue_found.emit(full)
+	show_dialog("[PHYSICAL EVIDENCE]", clue_text, "curator")
+
+func _on_radio_solved(clue_text: String) -> void:
+	var city_name = Database.CITIES[GameManager.current_city_id]["name"]
+	var full = "[%s INTERCEPT] %s" % [city_name, clue_text]
+	if not GameManager.clues_gathered.has(full):
+		GameManager.clues_gathered.append(full)
+	GameManager.clue_found.emit(full)
+	show_dialog("[RADIO SURVEILLANCE]", clue_text, "chief")
+
+func _on_overlay_closed() -> void:
+	_update_menu_highlight()
+
 
 func _trigger_dramatic_arrest() -> void:
 	var criminal = GameManager.current_criminal
