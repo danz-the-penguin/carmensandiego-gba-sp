@@ -65,12 +65,12 @@ A 2010s neo-retro detective adventure inspired by the 1985 classic *"Where in th
 
 ## 🎨 Asset Directory & Resolution Specifications
 
-All game visual assets adhere to strict retro pixel-art resolution budgets and integer pixel scaling:
+For complete documentation, see [ASSETS.md](file:///Users/danz/Downloads/gemini-sandbox/carmensandiego/ASSETS.md). All game visual assets adhere to strict retro pixel-art resolution budgets and integer pixel scaling:
 
 | Asset Category | Locations (`godot/` & `assets/`) | Resolution | Format | Description / Roles |
 | :--- | :--- | :--- | :--- | :--- |
-| **Regional Witness Portraits** | `assets/portraits/`<br>`godot/assets/portraits/` | **128 × 128** | RGB PNG | 15 location-based portraits: 3 archetypes (Banker, Pilot, Curator) across 5 regions (Europe, Asia, Latin America, Africa/MidEast, Americas) |
-| **V.I.L.E. & ACME Portraits** | `assets/portraits/`<br>`godot/assets/portraits/` | **128 × 128** | RGB PNG | Carmen Sandiego, Chief, and criminal operatives (Katherine Drib, Len Bulk, Nick Brunch, Lady Agatha, Fast Eddie, etc.) |
+| **Regional Witness Portraits** | `assets/portraits/`<br>`godot/assets/portraits/` | **256 × 256** | RGB PNG | 15 location-based portraits: 3 archetypes (Banker, Pilot, Curator) across 5 regions (Europe, Asia, Latin America, Africa/MidEast, Americas) |
+| **V.I.L.E. & ACME Portraits** | `assets/portraits/`<br>`godot/assets/portraits/` | **256 × 256** | RGB PNG | Carmen Sandiego, Chief, and criminal operatives (Katherine Drib, Len Bulk, Nick Brunch, Lady Agatha, Fast Eddie, etc.) |
 | **City Skylines & Panoramas** | `assets/cities/`<br>`godot/assets/cities/` | **240 × 90** | RGBA PNG | 16 capitals (London, Paris, Tokyo, Rio, Cairo, Kathmandu, etc.) with parallax celestial bodies and animated weather overlays |
 | **Regional Passport Visas** | `assets/ui/`<br>`godot/assets/ui/` | **96 × 64** | RGBA PNG | 5 regional immigration visa stamps (`stamp_europe`, `stamp_asia`, `stamp_latin`, `stamp_africa`, `stamp_americas`) |
 | **UI Badges & Logos** | `assets/ui/`<br>`godot/assets/ui/` | **96 × 64** | RGBA PNG | ACME Detective Badge, Fedora Insignia Logo |
