@@ -687,7 +687,7 @@ class GBAGraphicsRenderer {
   }
 
   // --- GBA Witness Encounter (Full-Color Portrait Frame) ---
-  drawWitnessPortrait(witnessType) {
+  drawWitnessPortrait(witnessType, region = "americas") {
     this.setResolution(240, 88);
     this.clear();
 
@@ -707,17 +707,29 @@ class GBAGraphicsRenderer {
     this.ctx.fillRect(82, 6, 76, 68);
 
     const wt = witnessType.toLowerCase();
-    let pKey = "banker";
-    if (wt.includes("pilot") || wt.includes("flight") || wt.includes("captain")) pKey = "pilot";
-    else if (wt.includes("curator") || wt.includes("archaeologist") || wt.includes("historian")) pKey = "curator";
+    let baseRole = "banker";
+    if (wt.includes("pilot") || wt.includes("flight") || wt.includes("captain") || wt.includes("customs") || wt.includes("harbor") || wt.includes("sailor")) baseRole = "pilot";
+    else if (wt.includes("curator") || wt.includes("archaeologist") || wt.includes("historian") || wt.includes("restorer") || wt.includes("archivist") || wt.includes("scholar") || wt.includes("guide")) baseRole = "curator";
+
+    let reg = (region || "americas").toLowerCase();
+    if (reg.includes("africa")) reg = "africa";
+    const pKey = `${baseRole}_${reg}`;
 
     if (!this.portraitImages[pKey]) {
       const img = new Image();
       img.src = `assets/portraits/${pKey}.png`;
-      img.onload = () => this.drawWitnessPortrait(witnessType);
+      img.onload = () => this.drawWitnessPortrait(witnessType, region);
+      img.onerror = () => {
+        if (!this.portraitImages[baseRole]) {
+          const fb = new Image();
+          fb.src = `assets/portraits/${baseRole}.png`;
+          fb.onload = () => this.drawWitnessPortrait(witnessType, region);
+          this.portraitImages[baseRole] = fb;
+        }
+      };
       this.portraitImages[pKey] = img;
     }
-    const raster = this.portraitImages[pKey];
+    const raster = this.portraitImages[pKey] || this.portraitImages[baseRole];
     if (raster && raster.complete && raster.naturalWidth > 0) {
       this.ctx.imageSmoothingEnabled = false;
       this.ctx.drawImage(raster, 88, 10, 64, 60);

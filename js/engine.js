@@ -895,8 +895,9 @@ class GBACarmenGameEngine {
         return;
       }
 
-      // Draw witness portrait
-      this.renderer.drawWitnessPortrait(placeOpt.data.witness);
+      // Draw regional witness portrait
+      const reg = (this.audio && this.audio.getRegionForCity(this.currentCityId)) || "americas";
+      this.renderer.drawWitnessPortrait(placeOpt.data.witness, reg);
 
       // Spend 2 hours
       if (!this.spendHours(2)) return;

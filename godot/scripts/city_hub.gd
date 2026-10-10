@@ -644,7 +644,10 @@ func _use_gadget(gadget_id: String) -> void:
 			if not GameManager.clues_gathered.has(intel):
 				GameManager.clues_gathered.append(intel)
 			GameManager.clue_found.emit(intel)
-			show_dialog("[UV BLACKLIGHT]", "High-intensity ultraviolet sweep detected trace forensic residue: %s!" % picked, "curator")
+			var reg = SoundManager.get_region_for_city(GameManager.current_city_id)
+			if reg == "africa_mideast":
+				reg = "africa"
+			show_dialog("[UV BLACKLIGHT]", "High-intensity ultraviolet sweep detected trace forensic residue: %s!" % picked, "curator_%s" % reg)
 
 		"lockpick":
 			GameManager.hours_left = mini(GameManager.current_rank.get("deadline_hours", 48), GameManager.hours_left + 3)
@@ -771,12 +774,16 @@ func _handle_investigation(place_index: int) -> void:
 	var place = city["places"][place_index % city["places"].size()]
 	var witness_role = place["witness"]
 	
-	# Select witness portrait
-	var portrait_id = "banker"
+	# Select regional witness portrait based on city location and archetype
+	var reg = SoundManager.get_region_for_city(GameManager.current_city_id)
+	if reg == "africa_mideast":
+		reg = "africa"
+	var base_role = "banker"
 	if place_index == 1:
-		portrait_id = "pilot"
+		base_role = "pilot"
 	elif place_index == 2:
-		portrait_id = "curator"
+		base_role = "curator"
+	var portrait_id = "%s_%s" % [base_role, reg]
 	
 	# Spend 2 hours
 	if not GameManager.spend_hours(2):
@@ -854,7 +861,10 @@ func _on_evidence_discovered(clue_text: String) -> void:
 	if not GameManager.clues_gathered.has(full):
 		GameManager.clues_gathered.append(full)
 	GameManager.clue_found.emit(full)
-	show_dialog("[PHYSICAL EVIDENCE]", clue_text, "curator")
+	var reg = SoundManager.get_region_for_city(GameManager.current_city_id)
+	if reg == "africa_mideast":
+		reg = "africa"
+	show_dialog("[PHYSICAL EVIDENCE]", clue_text, "curator_%s" % reg)
 
 func _on_radio_solved(clue_text: String) -> void:
 	var city_name = Database.CITIES[GameManager.current_city_id]["name"]

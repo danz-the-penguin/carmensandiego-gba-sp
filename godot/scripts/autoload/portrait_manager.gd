@@ -15,10 +15,29 @@ func get_portrait(id: String) -> Texture2D:
 			return tex
 	if portraits.has(id):
 		return portraits[id]
+	# Regional fallback (e.g., banker_europe -> banker)
+	if id.contains("_"):
+		var base_id = id.split("_")[0]
+		if portraits.has(base_id):
+			return portraits[base_id]
+		var base_png = "res://assets/portraits/%s.png" % base_id
+		if ResourceLoader.exists(base_png):
+			var btex = load(base_png)
+			if btex is Texture2D:
+				return btex
 	return portraits.get("chief", null)
 
 func _load_raster_portraits() -> void:
-	var list = ["carmen", "len_bulk", "lady_agatha", "nick_brunch", "katherine_drib", "fast_eddie", "darlene_dirk", "scar_graynolt", "banker", "pilot", "curator", "chief"]
+	var list = [
+		"carmen", "len_bulk", "lady_agatha", "nick_brunch", "katherine_drib", "fast_eddie", "darlene_dirk", "scar_graynolt",
+		"banker", "pilot", "curator", "chief",
+		"banker_europe", "pilot_europe", "curator_europe",
+		"banker_asia", "pilot_asia", "curator_asia",
+		"banker_latin", "pilot_latin", "curator_latin",
+		"banker_africa", "pilot_africa", "curator_africa",
+		"banker_africa_mideast", "pilot_africa_mideast", "curator_africa_mideast",
+		"banker_americas", "pilot_americas", "curator_americas"
+	]
 	for id in list:
 		var p = "res://assets/portraits/%s.png" % id
 		if ResourceLoader.exists(p):
