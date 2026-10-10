@@ -11,6 +11,16 @@ class GBACarmenGameEngine {
     // Persistent player profile
     this.profile = this.loadProfile();
 
+    // Tactical ACME Gadgets Inventory (Replenished each case)
+    this.gadgetCharges = {
+      uv_light: 2,
+      gps_tracer: 1,
+      lockpick: 2,
+      polygraph: 2
+    };
+    this.activeTrap = null;
+    this.trapTimer = null;
+
     // Game state
     this.state = "TITLE"; // TITLE, BRIEFING, CITY_HUB, SUBSCREEN, ARREST, GAMEOVER
     this.currentCase = null;
@@ -24,7 +34,7 @@ class GBACarmenGameEngine {
 
     // Navigation state
     this.menuIndex = 0; // 0=Investigate, 1=Depart, 2=Crime Comp, 3=Dossier
-    this.subscreenMode = null; // 'investigate', 'depart', 'computer_filter', 'dossier'
+    this.subscreenMode = null; // 'investigate', 'depart', 'computer_filter', 'dossier', 'gadgets', 'museum', 'trap'
     this.subscreenIndex = 0;
     this.subscreenOptions = [];
 
@@ -44,12 +54,16 @@ class GBACarmenGameEngine {
     try {
       if (typeof localStorage !== "undefined" && localStorage && typeof localStorage.getItem === "function") {
         const saved = localStorage.getItem("carmen_gba_profile");
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (!parsed.recoveredTreasures) parsed.recoveredTreasures = [];
+          return parsed;
+        }
       }
     } catch (e) {
       // Storage not available
     }
-    return { casesSolved: 0, rankIndex: 0 };
+    return { casesSolved: 0, rankIndex: 0, recoveredTreasures: [] };
   }
 
   saveProfile() {
@@ -183,6 +197,12 @@ class GBACarmenGameEngine {
     this.warrantSuspect = null;
     this.cluesGathered = [];
     this.computerFilters = { sex: null, hair: null, vehicle: null, hobby: null, feature: null };
+    this.gadgetCharges = {
+      uv_light: 2,
+      gps_tracer: 1,
+      lockpick: 2,
+      polygraph: 2
+    };
 
     // Go to briefing screen
     this.state = "BRIEFING";
@@ -390,6 +410,10 @@ class GBACarmenGameEngine {
 
     const items = [
       { title: warrantTitle },
+      { title: `★ STOLEN TREASURE: ${this.currentCase.treasure}` },
+      { title: "⚡ [G] ACME GADGET BELT (Deploy Gadgets)", action: "gadgets" },
+      { title: "🏛 [V] EVIDENCE HALL & MUSEUM (Recovered Relics)", action: "museum" },
+      { title: "--- GATHERED WITNESS CLUES ---" },
       ...this.cluesGathered.map((c) => ({ title: `> ${c}` }))
     ];
 
@@ -397,7 +421,245 @@ class GBACarmenGameEngine {
       items.push({ title: "No clues gathered yet. Question witnesses in town!" });
     }
 
-    this.renderSubscreen("CASE DOSSIER [L]", items);
+    this.renderSubscreen("CASE DOSSIER & GEAR [L]", items);
+  }
+
+  openGadgets() {
+    this.subscreenMode = "gadgets";
+    this.subscreenIndex = 0;
+    const g = this.gadgetCharges;
+    this.subscreenOptions = [
+      {
+        title: `⚡ GPS MICRO-TRACER [${g.gps_tracer} BATTERY]\n   Ping satellite for suspect flight destination.`,
+        gadgetId: "gps_tracer"
+      },
+      {
+        title: `⚡ UV BLACKLIGHT SCANNER [${g.uv_light} BATTERY]\n   Fluorescent beam scans for hidden trait evidence.`,
+        gadgetId: "uv_light"
+      },
+      {
+        title: `⚡ ELECTRONIC LOCKPICK [${g.lockpick} BATTERY]\n   Bypasses transit security (+3 Hours saved).`,
+        gadgetId: "lockpick"
+      },
+      {
+        title: `⚡ POCKET POLYGRAPH [${g.polygraph} BATTERY]\n   Voice stress test extracts suspect trait.`,
+        gadgetId: "polygraph"
+      },
+      {
+        title: "◀ CLOSE GADGET BELT",
+        gadgetId: "back"
+      }
+    ];
+    this.renderSubscreen("ACME TACTICAL GADGET BELT", this.subscreenOptions);
+  }
+
+  useGadget(gadgetId) {
+    if (gadgetId === "back") {
+      this.closeSubscreen();
+      return;
+    }
+
+    const charges = this.gadgetCharges[gadgetId] || 0;
+    if (charges <= 0) {
+      this.audio.cancel();
+      this.closeSubscreen();
+      this.setDialog("BATTERY DEPLETED! No charges remaining. Gadgets recharge automatically on your next case assignment.");
+      return;
+    }
+
+    this.gadgetCharges[gadgetId]--;
+    this.audio.gadget();
+    this.closeSubscreen();
+
+    const lcd = document.getElementById("lcd-screen");
+    if (lcd) {
+      lcd.classList.add("screen-shake");
+      setTimeout(() => lcd.classList.remove("screen-shake"), 250);
+    }
+
+    if (gadgetId === "gps_tracer") {
+      const trail = this.currentCase.trail;
+      const currIdx = trail.indexOf(this.currentCityId);
+      if (currIdx !== -1 && currIdx < trail.length - 1) {
+        const nextId = trail[currIdx + 1];
+        const nextData = CITIES_DATA[nextId];
+        const intel = `[GPS SATELLITE FIX] Micro-tracer transponder tracked to ${nextData.name}, ${nextData.country.toUpperCase()}!`;
+        if (!this.cluesGathered.includes(intel)) this.cluesGathered.push(intel);
+        this.setDialog(`[GPS TRACER] Satellite link confirmed! Transponder signals indicate suspect boarded a flight bound for ${nextData.name} (${nextData.country})!`);
+      } else if (currIdx === trail.length - 1) {
+        this.setDialog("[GPS TRACER] SIGNAL MAXIMUM! Suspect is hiding in THIS city right now! Obtain a warrant and corner them!");
+      } else {
+        this.setDialog("[GPS TRACER] Signal out of range! The suspect did not transit through this city. You are off the trail!");
+      }
+    } else if (gadgetId === "uv_light") {
+      const suspect = this.currentCase.criminal;
+      const traits = [
+        `suspect left hair strands dyed ${suspect.hair}`,
+        `tire tread residue matches a ${suspect.vehicle}`,
+        `metallic scrape matches a ${suspect.feature}`
+      ];
+      const picked = traits[Math.floor(Math.random() * traits.length)];
+      const intel = `[UV SCAN] Blacklight revealed fluorescent residue: ${picked}!`;
+      if (!this.cluesGathered.includes(intel)) this.cluesGathered.push(intel);
+      this.setDialog(`[UV BLACKLIGHT] High-intensity ultraviolet sweep detected trace forensic residue: ${picked}!`);
+    } else if (gadgetId === "lockpick") {
+      this.hoursLeft = Math.min(this.getRank().deadlineHours, this.hoursLeft + 3);
+      this.updateTimeDisplay();
+      this.setDialog("[ACME LOCKPICK] Electronic decoder bypassed VIP customs gates and tarmac security! Saved +3 Hours on the investigation clock!");
+    } else if (gadgetId === "polygraph") {
+      const suspect = this.currentCase.criminal;
+      const traits = [
+        `witness confirms suspect has a ${suspect.feature}`,
+        `polygraph analysis confirms suspect is into ${suspect.hobby}`,
+        `voice stress pattern confirms suspect is ${suspect.sex}`
+      ];
+      const picked = traits[Math.floor(Math.random() * traits.length)];
+      const intel = `[POLYGRAPH INTEL] Lie detector cross-examination: ${picked}!`;
+      if (!this.cluesGathered.includes(intel)) this.cluesGathered.push(intel);
+      this.setDialog(`[POCKET POLYGRAPH] Biometric sensors detected elevated perspiration and voice tremor: ${picked}!`);
+    }
+  }
+
+  openMuseum() {
+    this.subscreenMode = "museum";
+    this.subscreenIndex = 0;
+    this.audio.confirm();
+
+    const recovered = this.profile.recoveredTreasures || [];
+    let recoveredCount = 0;
+
+    const items = TREASURES_DATA.map((t) => {
+      const rec = recovered.find((r) => r.name === t.name);
+      if (rec) {
+        recoveredCount++;
+        return {
+          title: `★ ${t.name} (RECOVERED)\n   Recovered from ${rec.thief}! Value: ${t.value}\n   ${t.lore}`
+        };
+      } else {
+        const cityData = CITIES_DATA[t.city];
+        const cityName = cityData ? cityData.name : "UNKNOWN";
+        return {
+          title: `🔒 ${t.name} (STOLEN)\n   Missing from ${cityName}. Value: ${t.value}\n   Apprehend culprit to restore to ACME vault.`
+        };
+      }
+    });
+
+    items.push({ title: "◀ PRESS [B] TO RETURN TO HQ" });
+    this.subscreenOptions = items;
+    this.renderSubscreen(`🏛 ACME EVIDENCE VAULT (${recoveredCount}/${TREASURES_DATA.length} RECOVERED)`, items);
+  }
+
+  triggerTrap(placeOpt, continueClue) {
+    const types = ["smoke", "blackout", "decoy"];
+    const type = types[Math.floor(Math.random() * types.length)];
+    this.activeTrap = {
+      type: type,
+      placeOpt: placeOpt,
+      continueClue: continueClue,
+      resolved: false
+    };
+    this.subscreenMode = "trap";
+    this.subscreenIndex = 0;
+    this.audio.siren();
+
+    const lcd = document.getElementById("lcd-screen");
+    if (lcd) {
+      lcd.classList.add("screen-shake");
+      setTimeout(() => lcd.classList.remove("screen-shake"), 300);
+    }
+
+    let title = "";
+    let desc = "";
+    let hint = "";
+    if (type === "smoke") {
+      title = "⚡ V.I.L.E. SMOKE AMBUSH! ⚡";
+      desc = "Henchman popped a toxic smoke canister! You're losing visibility!";
+      hint = "PRESS [B] OR ESC TO DIVE & VAULT CLEAR!";
+    } else if (type === "blackout") {
+      title = "⚡ CIRCUIT SABOTAGE! BLACKOUT! ⚡";
+      desc = "Power grid cut! Pitch black room! Footsteps are fading into the shadows!";
+      hint = "PRESS [A] OR SPACE TO DEPLOY ACME UV BLACKLIGHT!";
+    } else if (type === "decoy") {
+      title = "⚡ SUSPICIOUS WITNESS DETECTED! ⚡";
+      desc = "Informant is stammering nervously and whispering into a hidden earpiece!";
+      hint = "PRESS [A] OR SPACE TO DEPLOY POCKET LIE DETECTOR!";
+    }
+
+    this.subscreenOptions = [
+      { title: desc },
+      { title: `▶ ${hint}` },
+      { title: "⏱ [2.5 SECONDS TO REACT!]" }
+    ];
+    this.renderSubscreen(title, this.subscreenOptions);
+
+    if (this.trapTimer) clearTimeout(this.trapTimer);
+    this.trapTimer = setTimeout(() => {
+      this.resolveTrap(false);
+    }, 2500);
+  }
+
+  resolveTrap(success) {
+    if (!this.activeTrap || this.activeTrap.resolved) return;
+    this.activeTrap.resolved = true;
+    if (this.trapTimer) {
+      clearTimeout(this.trapTimer);
+      this.trapTimer = null;
+    }
+
+    const trap = this.activeTrap;
+    const suspect = this.currentCase.criminal;
+    const type = trap.type;
+
+    if (success) {
+      this.audio.gadget();
+      let bonusClue = "";
+      let title = "";
+      let msg = "";
+      if (type === "smoke") {
+        title = "★ NARROW ESCAPE! ★";
+        msg = "Clean dive! You rolled under the toxic smoke cloud and cornered the witness!";
+      } else if (type === "blackout") {
+        title = "★ UV BLACKLIGHT ACTIVATED! ★";
+        bonusClue = `Glowing footprints reveal suspect vehicle: ${suspect.vehicle}!`;
+        msg = `UV beam illuminates the dark! ${bonusClue}`;
+      } else if (type === "decoy") {
+        title = "★ V.I.L.E. DECOY EXPOSED! ★";
+        bonusClue = `Lie detector spikes! Informant confesses: 'Thief has ${suspect.hair} hair!'`;
+        msg = `Voice stress analyzer exposed the plant! ${bonusClue}`;
+      }
+
+      if (bonusClue) {
+        const intel = `[INTEL] ${bonusClue}`;
+        if (!this.cluesGathered.includes(intel)) this.cluesGathered.push(intel);
+      }
+
+      this.subscreenOptions = [
+        { title: msg },
+        { title: "▶ PROCEEDING TO WITNESS QUESTIONING..." }
+      ];
+      this.renderSubscreen(title, this.subscreenOptions);
+    } else {
+      this.audio.cancel();
+      const penalty = type === "smoke" ? 3 : 2;
+      this.hoursLeft = Math.max(1, this.hoursLeft - penalty);
+      this.updateTimeDisplay();
+
+      let title = "✖ AMBUSH HIT! ✖";
+      let msg = `Disoriented by V.I.L.E. sabotage! Lost ${penalty} hours recovering your bearings!`;
+      this.subscreenOptions = [
+        { title: msg },
+        { title: "▶ PROCEEDING TO WITNESS QUESTIONING..." }
+      ];
+      this.renderSubscreen(title, this.subscreenOptions);
+    }
+
+    setTimeout(() => {
+      this.closeSubscreen();
+      this.activeTrap = null;
+      this.typewrite(trap.continueClue, () => {
+        this.setDialog(trap.continueClue);
+      });
+    }, 1500);
   }
 
   renderSubscreen(title, items) {
@@ -440,7 +702,28 @@ class GBACarmenGameEngine {
 
   // --- Subscreen Confirm Handler ---
   handleSubscreenConfirm() {
-    if (this.subscreenMode === "radio" || this.subscreenMode === "inspect") {
+    if (this.subscreenMode === "radio" || this.subscreenMode === "inspect" || this.subscreenMode === "museum") {
+      this.closeSubscreen();
+      return;
+    }
+
+    if (this.subscreenMode === "gadgets") {
+      const opt = this.subscreenOptions[this.subscreenIndex];
+      if (opt) {
+        this.useGadget(opt.gadgetId);
+      }
+      return;
+    }
+
+    if (this.subscreenMode === "dossier") {
+      const opt = this.subscreenOptions[this.subscreenIndex];
+      if (opt && opt.action === "gadgets") {
+        this.openGadgets();
+        return;
+      } else if (opt && opt.action === "museum") {
+        this.openMuseum();
+        return;
+      }
       this.closeSubscreen();
       return;
     }
@@ -460,7 +743,6 @@ class GBACarmenGameEngine {
       // Spend 2 hours
       if (!this.spendHours(2)) return;
 
-
       let clueText = "";
       if (this.currentCase.trail.includes(this.currentCityId)) {
         const cityClues = this.currentCase.clues[this.currentCityId];
@@ -479,6 +761,12 @@ class GBACarmenGameEngine {
       const entry = `[${CITIES_DATA[this.currentCityId].name}] ${clueText}`;
       if (!this.cluesGathered.includes(entry)) {
         this.cluesGathered.push(entry);
+      }
+
+      // 22% chance of V.I.L.E. Ambush Trap on non-final cities
+      if (Math.random() < 0.22 && this.currentCityId !== this.currentCase.finalCity) {
+        this.triggerTrap(placeOpt, fullClue);
+        return;
       }
 
       // If at final city and investigating, check for arrest
@@ -524,8 +812,6 @@ class GBACarmenGameEngine {
         this.audio.cursor();
         this.renderCrimeComputerFilters();
       }
-    } else if (this.subscreenMode === "dossier") {
-      this.closeSubscreen();
     }
   }
 
@@ -572,6 +858,19 @@ class GBACarmenGameEngine {
     if (this.warrantSuspect && this.warrantSuspect.id === criminal.id) {
       this.audio.victory();
       this.renderer.drawVictoryScene(criminal);
+
+      if (!this.profile.recoveredTreasures) this.profile.recoveredTreasures = [];
+      const treasureObj = TREASURES_DATA.find((t) => t.name === this.currentCase.treasure);
+      const exists = this.profile.recoveredTreasures.some((r) => r.name === this.currentCase.treasure);
+      if (!exists) {
+        this.profile.recoveredTreasures.push({
+          name: this.currentCase.treasure,
+          thief: criminal.name,
+          city: this.currentCityId,
+          lore: treasureObj ? treasureObj.lore : "Historical world relic.",
+          value: treasureObj ? treasureObj.value : "$10,000,000"
+        });
+      }
 
       this.profile.casesSolved++;
       this.saveProfile();
@@ -668,6 +967,13 @@ class GBACarmenGameEngine {
       return;
     }
 
+    if (this.subscreenMode === "trap") {
+      if (this.activeTrap && (this.activeTrap.type === "blackout" || this.activeTrap.type === "decoy")) {
+        this.resolveTrap(true);
+        return;
+      }
+    }
+
     if (this.subscreenMode) {
       this.handleSubscreenConfirm();
       return;
@@ -691,6 +997,12 @@ class GBACarmenGameEngine {
 
   handleCancel() {
     this.audio.init();
+    if (this.subscreenMode === "trap") {
+      if (this.activeTrap && this.activeTrap.type === "smoke") {
+        this.resolveTrap(true);
+        return;
+      }
+    }
     if (this.subscreenMode) {
       this.closeSubscreen();
     } else {

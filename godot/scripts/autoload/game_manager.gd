@@ -14,9 +14,19 @@ enum State { TITLE, BRIEFING, CITY_HUB, DOSSIER, CRIME_COMPUTER, ARREST, GAMEOVE
 
 var current_state: State = State.TITLE
 
-# Player Profile
+# Player Profile & Evidence Hall
 var cases_solved: int = 0
 var current_rank: Dictionary
+var recovered_treasures: Array = []
+
+# Tactical ACME Gadgets Inventory (Replenished each case)
+var gadget_charges: Dictionary = {
+	"uv_light": 2,
+	"gps_tracer": 1,
+	"lockpick": 2,
+	"polygraph": 2
+}
+
 
 # Active Case
 var current_treasure: String = ""
@@ -48,12 +58,15 @@ func load_profile() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load("user://detective_profile.cfg") == OK:
 		cases_solved = cfg.get_value("player", "cases_solved", 0)
+		recovered_treasures = cfg.get_value("player", "recovered_treasures", [])
 	update_rank()
 
 func save_profile() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("player", "cases_solved", cases_solved)
+	cfg.set_value("player", "recovered_treasures", recovered_treasures)
 	cfg.save("user://detective_profile.cfg")
+
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("gba_light"):
@@ -80,6 +93,14 @@ func start_new_case() -> void:
 	warrant_suspect = {}
 	clues_gathered.clear()
 	computer_filters = {"sex": "", "hair": "", "vehicle": "", "hobby": "", "feature": ""}
+	
+	gadget_charges = {
+		"uv_light": 2,
+		"gps_tracer": 1,
+		"lockpick": 2,
+		"polygraph": 2
+	}
+
 
 	# 1. Stolen treasure & start city
 	var treasure_data: Dictionary = Database.TREASURES.pick_random()
@@ -217,10 +238,34 @@ func attempt_arrest() -> void:
 	if not warrant_suspect.is_empty() and warrant_suspect["id"] == current_criminal["id"]:
 		SoundManager.play_victory()
 		cases_solved += 1
+		
+		var found_already = false
+		for rec in recovered_treasures:
+			if rec is Dictionary and rec.get("name") == current_treasure:
+				found_already = true
+				break
+		if not found_already:
+			var t_lore = ""
+			var t_val = "$10,000,000"
+			for t in Database.TREASURES:
+				if t["name"] == current_treasure:
+					t_lore = t.get("lore", "")
+					t_val = t.get("value", "$10,000,000")
+					break
+			recovered_treasures.append({
+				"name": current_treasure,
+				"thief": current_criminal.get("name", "SUSPECT"),
+				"city": current_city_id,
+				"lore": t_lore,
+				"value": t_val
+			})
+
 		save_profile()
+		update_rank()
 		var quote = current_criminal.get("quote", "Curses! Foiled again!")
 		case_resolved.emit(true, "%s: \"%s\"\n\nCASE SOLVED! %s apprehended! %s recovered! Promotion: %s" % [current_criminal["name"], quote, current_criminal["name"], current_treasure, current_rank["title"]])
 	else:
+
 		SoundManager.play_game_over()
 		var msg := "ALERT: You cornered %s without a valid warrant! The criminal escaped!" % current_criminal["name"] if warrant_suspect.is_empty() else "BLUNDER: Warrant was for %s, but thief was %s! Escaped!" % [warrant_suspect["name"], current_criminal["name"]]
 		case_resolved.emit(false, msg)

@@ -1,10 +1,13 @@
-[gd_scene load_steps=6 format=3 uid="uid://b8f4m9q3p5x1"]
+[gd_scene load_steps=8 format=3 uid="uid://b8f4m9q3p5x1"]
 
 [ext_resource type="Script" path="res://scripts/city_hub.gd" id="1_hub"]
 [ext_resource type="Script" path="res://scripts/weather_overlay.gd" id="2_weather"]
 [ext_resource type="Script" path="res://scripts/inspect_overlay.gd" id="3_inspect"]
 [ext_resource type="Script" path="res://scripts/radio_overlay.gd" id="4_radio"]
 [ext_resource type="Script" path="res://scripts/chase_overlay.gd" id="5_chase"]
+[ext_resource type="Script" path="res://scripts/trap_overlay.gd" id="6_trap"]
+[ext_resource type="Script" path="res://scripts/museum_overlay.gd" id="7_museum"]
+
 
 [node name="CityHub" type="Control"]
 layout_mode = 3
@@ -657,4 +660,136 @@ offset_top = 58.0
 offset_right = 400.0
 offset_bottom = 74.0
 color = Color(0.2, 0.9, 0.4, 1)
+
+[node name="TrapOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("6_trap")
+
+[node name="AlertBox" type="Panel" parent="TrapOverlay"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 60.0
+offset_right = 450.0
+offset_bottom = 180.0
+
+[node name="AlertLabel" type="Label" parent="TrapOverlay/AlertBox"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 410.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(1, 0.25, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "⚡ V.I.L.E. AMBUSH! ⚡"
+horizontal_alignment = 1
+
+[node name="DescLabel" type="Label" parent="TrapOverlay/AlertBox"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 32.0
+offset_right = 410.0
+offset_bottom = 54.0
+theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 8
+text = "Henchman detonated smoke canisters!"
+autowrap_mode = 2
+
+[node name="ActionHint" type="Label" parent="TrapOverlay/AlertBox"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 58.0
+offset_right = 410.0
+offset_bottom = 74.0
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 8
+text = "PRESS [B] TO VAULT CLEAR!"
+horizontal_alignment = 1
+
+[node name="TimerBg" type="ColorRect" parent="TrapOverlay/AlertBox"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 84.0
+offset_right = 400.0
+offset_bottom = 98.0
+color = Color(0.12, 0.15, 0.22, 1)
+
+[node name="TimerBar" type="ColorRect" parent="TrapOverlay/AlertBox"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 84.0
+offset_right = 400.0
+offset_bottom = 98.0
+color = Color(0.2, 0.9, 0.4, 1)
+
+[node name="MuseumOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("7_museum")
+
+[node name="TopBar" type="Panel" parent="MuseumOverlay"]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 40.0
+
+[node name="TitleLabel" type="Label" parent="MuseumOverlay/TopBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 4.0
+offset_right = 468.0
+offset_bottom = 20.0
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 9
+text = "★ ACME EVIDENCE VAULT & WORLD TREASURE HALL ★"
+
+[node name="SummaryLabel" type="Label" parent="MuseumOverlay/TopBar"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 22.0
+offset_right = 468.0
+offset_bottom = 36.0
+theme_override_colors/font_color = Color(0.35, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 8
+text = "RECOVERED: 0 / 12 RELICS"
+
+[node name="Scroll" type="ScrollContainer" parent="MuseumOverlay"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 44.0
+offset_right = 468.0
+offset_bottom = 286.0
+follow_focus = true
+
+[node name="ItemList" type="VBoxContainer" parent="MuseumOverlay/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="BottomBar" type="Panel" parent="MuseumOverlay"]
+layout_mode = 0
+offset_top = 288.0
+offset_right = 480.0
+offset_bottom = 320.0
+
+[node name="HintBar" type="Label" parent="MuseumOverlay/BottomBar"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 472.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
+theme_override_font_sizes/font_size = 8
+text = "UP/DOWN: BROWSE EXHIBITS | [B / ESC] RETURN"
+horizontal_alignment = 1
+
 

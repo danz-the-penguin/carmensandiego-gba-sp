@@ -219,6 +219,21 @@ class GBASoundEngine {
     this.playTone(280, 0.15, "triangle", 0.35);
   }
 
+  siren() {
+    this.init();
+    const tones = [784, 988, 784, 988];
+    tones.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 0.08, "sawtooth", 0.3), idx * 80);
+    });
+  }
+
+  gadget() {
+    this.init();
+    const tones = [440, 660, 880, 1320];
+    tones.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 0.06, "sine", 0.35), idx * 50);
+    });
+  }
 
   // --- Background GBA Spy Mystery Theme ---
 

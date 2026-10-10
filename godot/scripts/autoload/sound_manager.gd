@@ -24,7 +24,10 @@ var wav_static: AudioStreamWAV
 var wav_radio_lock: AudioStreamWAV
 var wav_ping: AudioStreamWAV
 var wav_whoosh: AudioStreamWAV
+var wav_siren: AudioStreamWAV
+var wav_gadget: AudioStreamWAV
 var wav_bgm: AudioStreamWAV
+
 
 func _ready() -> void:
 	sfx_player = AudioStreamPlayer.new()
@@ -73,8 +76,11 @@ func _cache_all_sounds() -> void:
 	wav_radio_lock = _load_override("radio_lock", _create_radio_lock_wav())
 	wav_ping = _load_override("ping", _create_ping_wav())
 	wav_whoosh = _load_override("whoosh", _create_whoosh_wav())
+	wav_siren = _load_override("siren", _create_siren_wav())
+	wav_gadget = _load_override("gadget", _create_gadget_wav())
 	
 	wav_bgm = _load_override("bgm", _create_detective_bgm())
+
 	bgm_player.stream = wav_bgm
 	start_bgm()
 
@@ -215,6 +221,9 @@ func play_static() -> void: play_sfx(wav_static)
 func play_radio_lock() -> void: play_sfx(wav_radio_lock)
 func play_ping() -> void: play_sfx(wav_ping)
 func play_whoosh() -> void: play_sfx(wav_whoosh)
+func play_siren() -> void: play_sfx(wav_siren)
+func play_gadget() -> void: play_sfx(wav_gadget)
+
 
 func _create_impact_wav() -> AudioStreamWAV:
 	var wav := AudioStreamWAV.new()
@@ -333,4 +342,45 @@ func _create_whoosh_wav() -> AudioStreamWAV:
 		data[i] = int(clampi(int(128 + noise * 110.0), 0, 255))
 	wav.data = data
 	return wav
+
+func _create_siren_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.35
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	var phase := 0.0
+	for i in range(sample_count):
+		var t := float(i) / float(sample_count)
+		var freq := 650.0 if (t < 0.5) else 820.0
+		phase = fmod(phase + (freq / wav.mix_rate), 1.0)
+		var env := sin(t * PI)
+		var val := (1.0 if phase < 0.5 else -1.0) * env * 0.7
+		data[i] = int(clampi(int(128 + val * 120.0), 0, 255))
+	wav.data = data
+	return wav
+
+func _create_gadget_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.28
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	var phase := 0.0
+	for i in range(sample_count):
+		var t := float(i) / float(sample_count)
+		var freq := 800.0 + sin(t * TAU * 4.0) * 400.0
+		phase = fmod(phase + (freq / wav.mix_rate), 1.0)
+		var env := exp(-t * 4.0)
+		var val := sin(phase * TAU) * env * 0.8
+		data[i] = int(clampi(int(128 + val * 120.0), 0, 255))
+	wav.data = data
+	return wav
+
 

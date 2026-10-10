@@ -23,6 +23,9 @@ extends Control
 @onready var inspect_overlay: Control = $InspectOverlay
 @onready var radio_overlay: Control = $RadioOverlay
 @onready var chase_overlay: Control = $ChaseOverlay
+@onready var trap_overlay: Control = $TrapOverlay
+@onready var museum_overlay: Control = $MuseumOverlay
+
 
 
 @onready var subscreen_panel: Panel = $SubscreenOverlay
@@ -97,6 +100,9 @@ func _ready() -> void:
 	radio_overlay.radio_intercept_solved.connect(_on_radio_solved)
 	radio_overlay.radio_closed.connect(_on_overlay_closed)
 	chase_overlay.chase_completed.connect(_on_chase_completed)
+	trap_overlay.trap_resolved.connect(_on_trap_resolved)
+	museum_overlay.museum_closed.connect(_on_overlay_closed)
+
 
 	GameManager.city_changed.connect(_on_city_changed)
 	GameManager.time_updated.connect(_on_time_updated)
@@ -143,7 +149,7 @@ func _process(delta: float) -> void:
 		portrait_rect.position.y = 12.0
 
 func _input(event: InputEvent) -> void:
-	if flight_overlay.visible or inspect_overlay.visible or radio_overlay.visible or chase_overlay.visible:
+	if flight_overlay.visible or inspect_overlay.visible or radio_overlay.visible or chase_overlay.visible or trap_overlay.visible or museum_overlay.visible:
 		return
 
 	if is_case_ended:
@@ -177,6 +183,20 @@ func _input(event: InputEvent) -> void:
 		else:
 			open_crime_computer()
 		return
+
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_G:
+			if subscreen_panel.visible and subscreen_mode == "gadgets":
+				close_subscreen()
+			else:
+				open_gadgets()
+			return
+		elif event.keycode in [KEY_V, KEY_M]:
+			if museum_overlay.visible:
+				museum_overlay.close_museum()
+			else:
+				open_museum()
+			return
 
 	if subscreen_panel.visible:
 		if event.is_action_pressed("ui_up"):
@@ -216,6 +236,7 @@ func _input(event: InputEvent) -> void:
 			elif event.keycode in [KEY_6, KEY_Y, KEY_I]:
 				_activate_menu_slot(5)
 				return
+
 
 		if event.is_action_pressed("ui_left"):
 			current_menu_index = (current_menu_index - 1) if (current_menu_index % 3 > 0) else (current_menu_index + 2)
@@ -439,18 +460,124 @@ func _refresh_computer_labels() -> void:
 func open_dossier() -> void:
 	subscreen_mode = "dossier"
 	subscreen_title.text = "DETECTIVE DOSSIER & CASE NOTES"
-	var items: Array[String] = []
+	var items: Array[Dictionary] = []
 	var warrant_txt = "WARRANT: %s" % (GameManager.warrant_suspect["name"] if not GameManager.warrant_suspect.is_empty() else "NONE ISSUED")
-	items.append("★ " + warrant_txt)
-	items.append("★ STOLEN TREASURE: %s" % GameManager.current_treasure)
-	items.append("--- GATHERED WITNESS CLUES ---")
+	items.append({"action": "none", "text": "★ " + warrant_txt})
+	items.append({"action": "none", "text": "★ STOLEN TREASURE: %s" % GameManager.current_treasure})
+	items.append({"action": "gadgets", "text": "⚡ [G] ACME GADGET BELT (Deploy Tactical Gadgets)"})
+	items.append({"action": "museum", "text": "🏛 [M] EVIDENCE HALL & MUSEUM (Recovered Relics)"})
+	items.append({"action": "none", "text": "--- GATHERED WITNESS CLUES ---"})
 	if GameManager.clues_gathered.is_empty():
-		items.append("No clues gathered yet. Question local witnesses in town!")
+		items.append({"action": "none", "text": "No clues gathered yet. Question local witnesses in town!"})
 	else:
 		for c in GameManager.clues_gathered:
-			items.append(c)
+			items.append({"action": "none", "text": c})
 	subscreen_data = items
-	_populate_subscreen(items)
+	var labels: Array[String] = []
+	for it in items:
+		labels.append(it["text"])
+	_populate_subscreen(labels)
+
+func open_museum() -> void:
+	subscreen_panel.visible = false
+	museum_overlay.open_museum()
+
+func open_gadgets() -> void:
+	subscreen_mode = "gadgets"
+	subscreen_title.text = "ACME TACTICAL GADGET INVENTORY"
+	var g = GameManager.gadget_charges
+	subscreen_data = [
+		{"id": "gps_tracer", "name": "GPS MICRO-TRACER", "charges": g.get("gps_tracer", 0), "desc": "Satellite beacon ping reveals suspect flight destination."},
+		{"id": "uv_light", "name": "UV BLACKLIGHT SCANNER", "charges": g.get("uv_light", 0), "desc": "Fluorescent beam uncovers hidden physical evidence."},
+		{"id": "lockpick", "name": "ELECTRONIC LOCKPICK", "charges": g.get("lockpick", 0), "desc": "Bypasses transit security locks (+3 Hours recovered)."},
+		{"id": "polygraph", "name": "POCKET POLYGRAPH", "charges": g.get("polygraph", 0), "desc": "Voice stress test extracts confirmed suspect trait."},
+		{"id": "back", "name": "◀ CLOSE GADGET BELT", "charges": -1, "desc": "Return to active case operations."}
+	]
+	var labels: Array[String] = []
+	for item in subscreen_data:
+		if item["id"] == "back":
+			labels.append(item["name"])
+		else:
+			labels.append("⚡ %s [%d BATTERY]\n   %s" % [item["name"], item["charges"], item["desc"]])
+	_populate_subscreen(labels)
+
+func _use_gadget(gadget_id: String) -> void:
+	if gadget_id == "back":
+		close_subscreen()
+		return
+
+	var charges: int = GameManager.gadget_charges.get(gadget_id, 0)
+	if charges <= 0:
+		SoundManager.play_cancel()
+		show_dialog("[ACME GEAR]", "BATTERY DEPLETED! No charges remaining. Gadgets recharge automatically on your next case assignment.", "chief")
+		close_subscreen()
+		return
+
+	GameManager.gadget_charges[gadget_id] = charges - 1
+	SoundManager.play_gadget()
+	flash_screen(Color(0.2, 0.8, 1.0, 0.7), 0.25)
+	shake_screen(2.5, 0.2)
+	close_subscreen()
+
+	match gadget_id:
+		"gps_tracer":
+			var trail = GameManager.current_trail
+			var curr_id = GameManager.current_city_id
+			var idx = trail.find(curr_id)
+			if idx != -1 and idx < trail.size() - 1:
+				var next_id = trail[idx + 1]
+				var next_name = Database.CITIES[next_id]["name"]
+				var next_country = Database.CITIES[next_id]["country"].to_upper()
+				var intel = "[GPS SATELLITE FIX] Micro-tracer transponder tracked to %s, %s!" % [next_name, next_country]
+				if not GameManager.clues_gathered.has(intel):
+					GameManager.clues_gathered.append(intel)
+				GameManager.clue_found.emit(intel)
+				show_dialog("[GPS TRACER]", "Satellite link confirmed! Transponder signals indicate suspect boarded a flight bound for %s (%s)!" % [next_name, next_country], "chief")
+			elif idx == trail.size() - 1:
+				show_dialog("[GPS TRACER]", "SIGNAL MAXIMUM! Suspect is hiding in THIS city right now! Obtain a warrant and corner them!", "chief")
+			else:
+				show_dialog("[GPS TRACER]", "Signal out of range! The suspect did not transit through this city. You are off the trail!", "chief")
+
+		"uv_light":
+			var suspect = GameManager.current_criminal
+			var traits = [
+				"suspect left hair strands dyed %s" % suspect.get("hair", "Unknown"),
+				"tire tread residue matches a %s" % suspect.get("vehicle", "Unknown"),
+				"metallic scrape matches a %s" % suspect.get("feature", "Unknown")
+			]
+			var picked: String = traits.pick_random()
+			var intel = "[UV SCAN] Blacklight revealed fluorescent residue: %s!" % picked
+			if not GameManager.clues_gathered.has(intel):
+				GameManager.clues_gathered.append(intel)
+			GameManager.clue_found.emit(intel)
+			show_dialog("[UV BLACKLIGHT]", "High-intensity ultraviolet sweep detected trace forensic residue: %s!" % picked, "curator")
+
+		"lockpick":
+			GameManager.hours_left = mini(GameManager.current_rank.get("deadline_hours", 48), GameManager.hours_left + 3)
+			GameManager.broadcast_time()
+			show_dialog("[ACME LOCKPICK]", "Electronic decoder bypassed VIP customs gates and tarmac security! Saved +3 Hours on the investigation clock!", "chief")
+
+		"polygraph":
+			var suspect = GameManager.current_criminal
+			var traits = [
+				"witness confirms suspect has a %s" % suspect.get("feature", "Ruby Ring"),
+				"polygraph analysis confirms suspect is into %s" % suspect.get("hobby", "Tennis"),
+				"voice stress pattern confirms suspect is %s" % suspect.get("sex", "Female")
+			]
+			var picked: String = traits.pick_random()
+			var intel = "[POLYGRAPH INTEL] Lie detector cross-examination: %s!" % picked
+			if not GameManager.clues_gathered.has(intel):
+				GameManager.clues_gathered.append(intel)
+			GameManager.clue_found.emit(intel)
+			show_dialog("[POCKET POLYGRAPH]", "Biometric sensors detected elevated perspiration and voice tremor: %s!" % picked, "chief")
+
+func _on_trap_resolved(success: bool, bonus_clue: String) -> void:
+	if success and bonus_clue != "":
+		var city_name = Database.CITIES[GameManager.current_city_id]["name"]
+		var full = "[%s INTEL] %s" % [city_name, bonus_clue]
+		if not GameManager.clues_gathered.has(full):
+			GameManager.clues_gathered.append(full)
+		GameManager.clue_found.emit(full)
 
 func _populate_subscreen(labels: Array, reset_idx: bool = true) -> void:
 	if reset_idx:
@@ -518,7 +645,18 @@ func _confirm_subscreen(idx: int) -> void:
 				_cycle_filter(idx)
 				_refresh_computer_labels()
 		"dossier":
+			if idx < subscreen_data.size() and subscreen_data[idx] is Dictionary:
+				var act = subscreen_data[idx].get("action", "none")
+				if act == "gadgets":
+					open_gadgets()
+					return
+				elif act == "museum":
+					open_museum()
+					return
 			close_subscreen()
+		"gadgets":
+			if idx < subscreen_data.size() and subscreen_data[idx] is Dictionary:
+				_use_gadget(subscreen_data[idx].get("id", "back"))
 
 func _handle_investigation(place_index: int) -> void:
 	var city = Database.CITIES[GameManager.current_city_id]
@@ -535,6 +673,13 @@ func _handle_investigation(place_index: int) -> void:
 	# Spend 2 hours
 	if not GameManager.spend_hours(2):
 		return
+
+	# 22% chance of V.I.L.E. Ambush / Trap hazard on non-final cities
+	if randf() < 0.22 and GameManager.current_city_id != GameManager.current_trail[-1]:
+		trap_overlay.trigger_random_trap()
+		await trap_overlay.trap_resolved
+		if is_case_ended:
+			return
 
 	var clue_text := ""
 	if GameManager.current_clues.has(GameManager.current_city_id):

@@ -750,6 +750,8 @@
     <kbd>X</kbd> / <kbd>Esc</kbd> = [B] Back &nbsp;|&nbsp; 
     <kbd>Q</kbd> = [L] Dossier &nbsp;|&nbsp; 
     <kbd>E</kbd> = [R] Crime Comp &nbsp;|&nbsp; 
+    <kbd>G</kbd> = [⚡] Gadgets &nbsp;|&nbsp; 
+    <kbd>V</kbd> = [🏛] Museum &nbsp;|&nbsp; 
     <kbd>B</kbd> = [☼] SP Light &nbsp;|&nbsp; 
     <kbd>M</kbd> = [♫] Music
   </div>
@@ -908,6 +910,8 @@
     <button class="tool-btn" id="btn-toggle-bgm">Music: ON</button>
     <button class="tool-btn" id="btn-quick-dossier">[L] Notes</button>
     <button class="tool-btn" id="btn-quick-computer">[R] Crime Computer</button>
+    <button class="tool-btn" id="btn-quick-gadgets">⚡ [G] Gadgets</button>
+    <button class="tool-btn" id="btn-quick-museum">🏛 [V] Museum Vault</button>
     <button class="tool-btn" id="btn-quick-radio">[X] Wire Radio</button>
     <button class="tool-btn" id="btn-quick-inspect">[Y] Search Scene</button>
   </div>
@@ -963,6 +967,14 @@
 
     document.getElementById("btn-quick-dossier").addEventListener("click", () => engine.handleTriggerL());
     document.getElementById("btn-quick-computer").addEventListener("click", () => engine.handleTriggerR());
+    document.getElementById("btn-quick-gadgets").addEventListener("click", () => {
+      if (engine.subscreenMode === "gadgets") engine.closeSubscreen();
+      else engine.openGadgets();
+    });
+    document.getElementById("btn-quick-museum").addEventListener("click", () => {
+      if (engine.subscreenMode === "museum") engine.closeSubscreen();
+      else engine.openMuseum();
+    });
     document.getElementById("btn-quick-radio").addEventListener("click", () => engine.openRadioIntercept());
     document.getElementById("btn-quick-inspect").addEventListener("click", () => engine.openCrimeSceneInspection());
 
@@ -1017,6 +1029,14 @@
       } else if (k === "y" || k === "i" || k === "6") {
         e.preventDefault();
         engine.openCrimeSceneInspection();
+      } else if (k === "g") {
+        e.preventDefault();
+        if (engine.subscreenMode === "gadgets") engine.closeSubscreen();
+        else engine.openGadgets();
+      } else if (k === "v") {
+        e.preventDefault();
+        if (engine.subscreenMode === "museum") engine.closeSubscreen();
+        else engine.openMuseum();
       } else if (k === "b") {
         e.preventDefault();
         btnLight.classList.add("pressed");

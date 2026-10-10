@@ -344,16 +344,17 @@ const CITIES: Dictionary = {
 }
 
 const TREASURES: Array[Dictionary] = [
-	{"name": "THE CROWN JEWELS", "city": "london"},
-	{"name": "THE MONA LISA", "city": "paris"},
-	{"name": "THE ROSETTA STONE", "city": "london"},
-	{"name": "TUTANKHAMUN'S GOLD MASK", "city": "cairo"},
-	{"name": "THE JADE EMPEROR STATUE", "city": "beijing"},
-	{"name": "THE COLOSSEUM KEYSTONE", "city": "rome"},
-	{"name": "THE GOLDEN BOOMERANG", "city": "sydney"},
-	{"name": "THE AZTEC SUN STONE", "city": "mexicocity"},
-	{"name": "THE SACRED EVEREST PRAYER WHEEL", "city": "kathmandu"},
-	{"name": "THE IMPERIAL FABERGE EGG", "city": "moscow"},
-	{"name": "THE RIFT VALLEY DIAMOND", "city": "nairobi"},
-	{"name": "THE STATUE OF LIBERTY TORCH", "city": "newyork"}
+	{"name": "THE CROWN JEWELS", "city": "london", "lore": "Historic ceremonial regalia of the British monarchy, housed in the Tower of London.", "value": "$50,000,000"},
+	{"name": "THE MONA LISA", "city": "paris", "lore": "Leonardo da Vinci's enigmatic masterpiece, stolen from the Louvre museum salon.", "value": "$860,000,000"},
+	{"name": "THE ROSETTA STONE", "city": "london", "lore": "Ancient granodiorite stele that unlocked Egyptian hieroglyphic translation.", "value": "$120,000,000"},
+	{"name": "TUTANKHAMUN'S GOLD MASK", "city": "cairo", "lore": "Solid gold burial mask discovered in KV62 by Howard Carter in 1925.", "value": "$400,000,000"},
+	{"name": "THE JADE EMPEROR STATUE", "city": "beijing", "lore": "Carved nephrite sacred figure representing the supreme deity of Taoism.", "value": "$65,000,000"},
+	{"name": "THE COLOSSEUM KEYSTONE", "city": "rome", "lore": "Ancient travertine stone carved with the original imperial Roman arch insignia.", "value": "$45,000,000"},
+	{"name": "THE GOLDEN BOOMERANG", "city": "sydney", "lore": "Indigenous ceremonial throwing weapon inlaid with rare Australian gold leaf.", "value": "$18,000,000"},
+	{"name": "THE AZTEC SUN STONE", "city": "mexicocity", "lore": "Late Postclassic basalt calendar monolith celebrating the fifth cosmic sun.", "value": "$95,000,000"},
+	{"name": "THE SACRED EVEREST PRAYER WHEEL", "city": "kathmandu", "lore": "Engraved brass Buddhist cylinder blessed by ancient Himalayan monks.", "value": "$22,000,000"},
+	{"name": "THE IMPERIAL FABERGE EGG", "city": "moscow", "lore": "Jeweled Easter egg crafted by Peter Carl Fabergé for Tsar Alexander III.", "value": "$35,000,000"},
+	{"name": "THE RIFT VALLEY DIAMOND", "city": "nairobi", "lore": "Flawless uncut 300-carat blue diamond unearthed in the Kenyan volcanic rift.", "value": "$150,000,000"},
+	{"name": "THE STATUE OF LIBERTY TORCH", "city": "newyork", "lore": "The original 1886 gilded copper torch gifted to America by the people of France.", "value": "$80,000,000"}
 ]
+
