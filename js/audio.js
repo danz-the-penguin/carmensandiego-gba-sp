@@ -9,12 +9,15 @@ class GBASoundEngine {
     this.ctx = null;
     this.masterGain = null;
     this.bgmGain = null;
+    this.ambientGain = null;
     this.sfxGain = null;
     this.bgmEnabled = true;
     this.sfxEnabled = true;
     this.isPlayingBGM = false;
     this.bgmTimer = null;
+    this.ambientTimer = null;
     this.currentStep = 0;
+    this.currentRegion = "americas";
   }
 
   init() {
@@ -39,8 +42,12 @@ class GBASoundEngine {
     this.sfxGain.connect(this.masterGain);
 
     this.bgmGain = this.ctx.createGain();
-    this.bgmGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+    this.bgmGain.gain.setValueAtTime(0.28, this.ctx.currentTime);
     this.bgmGain.connect(this.masterGain);
+
+    this.ambientGain = this.ctx.createGain();
+    this.ambientGain.gain.setValueAtTime(0.16, this.ctx.currentTime);
+    this.ambientGain.connect(this.masterGain);
   }
 
   // --- Sound Effects ---
@@ -235,35 +242,75 @@ class GBASoundEngine {
     });
   }
 
-  // --- Background GBA Spy Mystery Theme ---
+  getRegionForCity(cityId) {
+    const id = (cityId || "").toLowerCase();
+    if (["london", "paris", "rome", "athens", "moscow", "reykjavik"].includes(id)) return "europe";
+    if (["tokyo", "beijing", "kathmandu"].includes(id)) return "asia";
+    if (["rio", "mexicocity"].includes(id)) return "latin";
+    if (["cairo", "nairobi"].includes(id)) return "africa_mideast";
+    return "americas";
+  }
 
-  startBGM() {
-    if (this.isPlayingBGM || !this.bgmEnabled) return;
+  // --- Dynamic Regional Musical Motifs ---
+
+  startBGM(region = null) {
+    if (region) this.currentRegion = region;
+    if (!this.bgmEnabled) return;
     this.init();
     if (!this.ctx) return;
+
+    if (this.isPlayingBGM && this.bgmTimer) {
+      clearTimeout(this.bgmTimer);
+      this.bgmTimer = null;
+    }
 
     this.isPlayingBGM = true;
     this.currentStep = 0;
 
-    // GBA Carmen Spy Theme (Funk bassline + Brass/Lead synth)
-    const bass = [
-      146.8, 0, 146.8, 174.6, 196.0, 0, 174.6, 146.8,
-      130.8, 0, 130.8, 146.8, 174.6, 0, 164.8, 130.8
-    ];
+    let bass = [];
+    let lead = [];
+    let leadWave = "square";
+    let stepMs = 155;
 
-    const lead = [
-      293.7, 0, 349.2, 392.0, 440.0, 0, 392.0, 349.2,
-      261.6, 0, 329.6, 349.2, 392.0, 440.0, 415.3, 293.7
-    ];
-
-    const stepMs = 155;
+    switch (this.currentRegion) {
+      case "europe":
+        stepMs = 165;
+        leadWave = "square";
+        bass = [220.0, 0, 164.8, 0, 174.6, 0, 146.8, 0, 164.8, 0, 164.8, 0, 220.0, 0, 220.0, 0];
+        lead = [440.0, 523.3, 659.3, 523.3, 493.9, 0, 415.3, 493.9, 440.0, 523.3, 659.3, 880.0, 659.3, 0, 523.3, 440.0];
+        break;
+      case "asia":
+        stepMs = 145;
+        leadWave = "square";
+        bass = [220.0, 0, 220.0, 0, 146.8, 0, 146.8, 0, 164.8, 0, 164.8, 0, 220.0, 0, 220.0, 0];
+        lead = [440.0, 523.3, 587.3, 659.3, 784.0, 659.3, 587.3, 523.3, 587.3, 659.3, 784.0, 880.0, 784.0, 659.3, 523.3, 440.0];
+        break;
+      case "latin":
+        stepMs = 150;
+        leadWave = "triangle";
+        bass = [146.8, 0, 146.8, 220.0, 196.0, 0, 196.0, 146.8, 130.8, 0, 130.8, 196.0, 220.0, 0, 220.0, 146.8];
+        lead = [349.2, 440.0, 523.3, 440.0, 392.0, 493.9, 587.3, 493.9, 329.6, 392.0, 523.3, 392.0, 277.2, 329.6, 440.0, 329.6];
+        break;
+      case "africa_mideast":
+        stepMs = 155;
+        leadWave = "sawtooth";
+        bass = [146.8, 146.8, 155.6, 146.8, 196.0, 196.0, 185.0, 155.6, 146.8, 146.8, 155.6, 146.8, 220.0, 220.0, 185.0, 146.8];
+        lead = [293.7, 311.1, 370.0, 392.0, 440.0, 392.0, 370.0, 311.1, 392.0, 440.0, 466.2, 440.0, 370.0, 392.0, 370.0, 311.1];
+        break;
+      default:
+        stepMs = 155;
+        leadWave = "triangle";
+        bass = [146.8, 0, 146.8, 174.6, 196.0, 0, 174.6, 146.8, 130.8, 0, 130.8, 146.8, 174.6, 0, 164.8, 130.8];
+        lead = [293.7, 0, 349.2, 392.0, 440.0, 0, 392.0, 349.2, 261.6, 0, 329.6, 349.2, 392.0, 440.0, 415.3, 293.7];
+        break;
+    }
 
     const tick = () => {
       if (!this.isPlayingBGM) return;
 
       const step = this.currentStep % 16;
 
-      // Bass channel (sawtooth + lowpass feel)
+      // Bass channel
       const bFreq = bass[step];
       if (bFreq > 0 && this.bgmEnabled) {
         this.playTone(bFreq, 0.14, "sawtooth", 0.18, -0.3);
@@ -271,13 +318,21 @@ class GBASoundEngine {
 
       // Lead melody
       const lFreq = lead[step];
-      if (lFreq > 0 && this.bgmEnabled && step % 2 === 0) {
-        this.playTone(lFreq, 0.11, "square", 0.14, 0.3);
+      if (lFreq > 0 && this.bgmEnabled) {
+        this.playTone(lFreq, 0.11, leadWave, 0.14, 0.3);
       }
 
-      // Snare / Hi-hat
-      if ((step === 4 || step === 12) && this.bgmEnabled) {
-        this.playDrum(0.06, 0.12);
+      // Regional Percussion
+      if (this.bgmEnabled) {
+        if (this.currentRegion === "latin") {
+          if (step % 4 === 0 || step % 4 === 3) this.playDrum(0.04, 0.08);
+        } else if (this.currentRegion === "asia") {
+          if (step % 8 === 4) this.playTone(880, 0.03, "square", 0.12);
+        } else if (this.currentRegion === "africa_mideast") {
+          if (step % 4 === 0 || step % 8 === 6) this.playDrum(0.06, 0.13);
+        } else {
+          if (step === 4 || step === 12) this.playDrum(0.06, 0.12);
+        }
       }
 
       this.currentStep++;
@@ -285,6 +340,7 @@ class GBASoundEngine {
     };
 
     tick();
+    this.startAmbientFoley(this.currentRegion);
   }
 
   stopBGM() {
@@ -293,16 +349,59 @@ class GBASoundEngine {
       clearTimeout(this.bgmTimer);
       this.bgmTimer = null;
     }
+    this.stopAmbientFoley();
   }
 
   toggleBGM() {
     this.bgmEnabled = !this.bgmEnabled;
     if (this.bgmEnabled) {
-      this.startBGM();
+      this.startBGM(this.currentRegion);
     } else {
       this.stopBGM();
     }
     return this.bgmEnabled;
+  }
+
+  // --- Ambient Environmental Foley ---
+
+  startAmbientFoley(region) {
+    if (!this.bgmEnabled) return;
+    this.init();
+    if (!this.ctx || !this.ambientGain) return;
+    this.stopAmbientFoley();
+
+    const playFoleyPulse = () => {
+      if (!this.bgmEnabled || !this.ctx) return;
+      try {
+        switch (region) {
+          case "europe":
+            this.playTone(1800 + Math.random() * 400, 0.04, "sine", 0.04);
+            break;
+          case "asia":
+            this.playTone(2400 + Math.random() * 600, 0.06, "triangle", 0.03);
+            break;
+          case "latin":
+            this.playDrum(0.25, 0.06);
+            break;
+          case "africa_mideast":
+            this.playDrum(0.20, 0.07);
+            break;
+          default:
+            this.playTone(140 + Math.random() * 40, 0.25, "triangle", 0.04);
+            break;
+        }
+      } catch (e) {}
+      this.ambientTimer = setTimeout(playFoleyPulse, 2400 + Math.random() * 1800);
+    };
+
+    this.ambientTimer = setTimeout(playFoleyPulse, 1000);
+  }
+
+  stopAmbientFoley() {
+    if (this.ambientTimer) {
+      clearTimeout(this.ambientTimer);
+      this.ambientTimer = null;
+    }
   }
 
   playDrum(duration = 0.05, volume = 0.1) {

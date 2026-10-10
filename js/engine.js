@@ -226,6 +226,10 @@ class GBACarmenGameEngine {
     this.renderer.drawCitySkyline(city.skyline, this.hourOfDay);
     this.updateTimeDisplay();
 
+    // Adapt dynamic regional music and ambient foley
+    const region = this.audio.getRegionForCity(this.currentCityId);
+    this.audio.startBGM(region);
+
     // Check if player arrived in final city or cold trail
     const trail = this.currentCase.trail;
     if (!trail.includes(this.currentCityId)) {

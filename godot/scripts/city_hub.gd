@@ -297,6 +297,7 @@ func _highlight_bbcode(text: String) -> String:
 
 func _on_city_changed(city_data: Dictionary) -> void:
 	_update_city_view(city_data)
+	SoundManager.play_city_theme(city_data["id"])
 	var trail = GameManager.current_trail
 	var city_id = city_data["id"]
 	if not trail.has(city_id):
