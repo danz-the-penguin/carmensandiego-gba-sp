@@ -7,6 +7,7 @@ var current_subscene: Node = null
 func _ready() -> void:
 	GameManager.case_started.connect(_on_case_started)
 	GameManager.case_resolved.connect(_on_case_resolved)
+	GameManager.title_requested.connect(load_title_screen)
 	load_title_screen()
 
 func load_title_screen() -> void:
@@ -17,8 +18,9 @@ func _on_case_started() -> void:
 	_switch_scene(preload("res://scenes/city_hub.tscn").instantiate())
 
 func _on_case_resolved(is_victory: bool, message: String) -> void:
-	await get_tree().create_timer(5.0).timeout
-	load_title_screen()
+	await get_tree().create_timer(8.0).timeout
+	if GameManager.current_state in [GameManager.State.ARREST, GameManager.State.GAMEOVER]:
+		load_title_screen()
 
 func _switch_scene(new_scene: Node) -> void:
 	if current_subscene:

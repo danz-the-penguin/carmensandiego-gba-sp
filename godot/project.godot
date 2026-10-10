@@ -33,20 +33,16 @@ window/size/viewport_height=320
 window/size/window_width_override=960
 window/size/window_height_override=640
 window/stretch/mode="viewport"
-window/stretch/aspect="keep"
 window/stretch/scale_mode="integer"
 
 [gui]
 
-theme/custom="res://assets/retro_theme.tres"
-theme/custom_font="res://assets/fonts/PressStart2P.ttf"
+fonts/dynamic_fonts/use_oversampling=false
 theme/default_font_antialiasing=0
 theme/default_font_hinting=0
 theme/default_font_subpixel_positioning=0
-theme/default_font_multichannel_signed_distance_field=false
-theme/default_font_generate_mipmaps=false
-fonts/dynamic_fonts/use_oversampling=false
-common/snap_controls_to_pixels=true
+theme/custom="res://assets/retro_theme.tres"
+theme/custom_font="res://assets/fonts/PressStart2P.ttf"
 
 [input]
 

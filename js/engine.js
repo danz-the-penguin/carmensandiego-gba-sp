@@ -131,11 +131,15 @@ class GBACarmenGameEngine {
       const nextCity = trail[i + 1];
       const nextData = CITIES_DATA[nextCity];
 
+      const pronounSubj = criminal.sex === "Female" ? "She" : "He";
+      const pronounPoss = criminal.sex === "Female" ? "her" : "his";
+      const pronounObj = criminal.sex === "Female" ? "her" : "him";
+
       const suspectTraits = [
-        `Witness saw suspect with striking ${criminal.hair.toUpperCase()} HAIR.`,
-        `Suspect sped off in a sleek ${criminal.vehicle.toUpperCase()}.`,
-        `Witness heard them talking about playing ${criminal.hobby.toUpperCase()}.`,
-        `Remarkable trait: suspect had a ${criminal.feature.toUpperCase()}!`
+        `Witness reported ${pronounSubj.toLowerCase()} had striking ${criminal.hair.toUpperCase()} hair.`,
+        `${pronounSubj} sped off in a sleek ${criminal.vehicle.toUpperCase()}.`,
+        `Witness heard ${pronounObj} talking about playing ${criminal.hobby.toUpperCase()}.`,
+        `${pronounSubj} was seen wearing a ${criminal.feature.toUpperCase()}!`
       ];
 
       const geoClues = [
@@ -397,14 +401,28 @@ class GBACarmenGameEngine {
 
       this.audio.clueFound();
       const fullClue = `${placeOpt.data.witness}: ${clueText}`;
-      this.cluesGathered.push(`[${CITIES_DATA[this.currentCityId].name}] ${clueText}`);
-      this.typewrite(fullClue, () => {
-        this.setDialog(fullClue);
-      });
+      const entry = `[${CITIES_DATA[this.currentCityId].name}] ${clueText}`;
+      if (!this.cluesGathered.includes(entry)) {
+        this.cluesGathered.push(entry);
+      }
 
       // If at final city and investigating, check for arrest
-      if (this.currentCityId === this.currentCase.finalCity && placeOpt.index === 0) {
-        setTimeout(() => this.attemptArrest(), 1800);
+      if (this.currentCityId === this.currentCase.finalCity) {
+        if (!this.warrantSuspect) {
+          const warnClue = `${fullClue} - WARNING: Suspect cornered! Secure a warrant via Crime Computer [R] before arresting!`;
+          this.typewrite(warnClue, () => {
+            this.setDialog(warnClue);
+          });
+        } else {
+          this.typewrite(fullClue, () => {
+            this.setDialog(fullClue);
+          });
+          setTimeout(() => this.attemptArrest(), 1800);
+        }
+      } else {
+        this.typewrite(fullClue, () => {
+          this.setDialog(fullClue);
+        });
       }
     } else if (this.subscreenMode === "depart") {
       const flightOpt = this.subscreenOptions[this.subscreenIndex];

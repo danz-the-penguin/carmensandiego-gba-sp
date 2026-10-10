@@ -109,7 +109,7 @@ const CITIES: Dictionary = {
 		"flag": "a Union Jack with red and white crosses",
 		"language": "English with Queen's accent",
 		"landmark": "Big Ben and Tower Bridge",
-		"connections": ["paris", "cairo", "reykjavik", "newyork"],
+		"connections": ["paris", "cairo", "reykjavik", "newyork", "rome", "moscow"],
 		"places": [
 			{"name": "BANK OF ENGLAND", "witness": "Bank Teller"},
 			{"name": "HEATHROW AIRPORT", "witness": "Flight Attendant"},
@@ -124,7 +124,7 @@ const CITIES: Dictionary = {
 		"flag": "a blue, white, and red vertical tricolor",
 		"language": "French, greeting with 'Bonjour!'",
 		"landmark": "the iron spire of the Eiffel Tower",
-		"connections": ["london", "rome", "cairo", "athens"],
+		"connections": ["london", "rome", "cairo", "athens", "moscow"],
 		"places": [
 			{"name": "BANK OF FRANCE", "witness": "Bank Cashier"},
 			{"name": "ORLY AIRPORT", "witness": "Customs Officer"},
@@ -139,7 +139,7 @@ const CITIES: Dictionary = {
 		"flag": "green, white, and red vertical bands",
 		"language": "Italian, shouting 'Mamma Mia!'",
 		"landmark": "the stone arches of the ancient Colosseum",
-		"connections": ["paris", "athens", "cairo", "london"],
+		"connections": ["london", "paris", "athens", "cairo"],
 		"places": [
 			{"name": "BANCA D'ITALIA", "witness": "Money Broker"},
 			{"name": "FIUMICINO AIRPORT", "witness": "Ticket Agent"},
@@ -169,7 +169,7 @@ const CITIES: Dictionary = {
 		"flag": "red, white, and black with a golden eagle",
 		"language": "Arabic, praising the Nile river",
 		"landmark": "the Great Pyramids and Sphinx",
-		"connections": ["london", "paris", "nairobi", "tokyo", "rome"],
+		"connections": ["london", "paris", "rome", "athens", "nairobi"],
 		"places": [
 			{"name": "BAZAAR MONEY CHANGER", "witness": "Spice Merchant"},
 			{"name": "CAIRO INTERNATIONAL", "witness": "Dispatcher"},
@@ -199,7 +199,7 @@ const CITIES: Dictionary = {
 		"flag": "a red circle on a white field (Hinomaru)",
 		"language": "Japanese, bowing with 'Arigato'",
 		"landmark": "Mount Fuji and Tokyo Tower",
-		"connections": ["beijing", "sydney", "cairo", "sanfrancisco"],
+		"connections": ["beijing", "sydney", "sanfrancisco", "kathmandu"],
 		"places": [
 			{"name": "BANK OF JAPAN", "witness": "Currency Clerk"},
 			{"name": "NARITA AIRPORT", "witness": "Station Master"},
@@ -259,7 +259,7 @@ const CITIES: Dictionary = {
 		"flag": "thirteen red & white stripes with fifty stars",
 		"language": "fast-paced American English",
 		"landmark": "Statue of Liberty and Empire State Building",
-		"connections": ["london", "sanfrancisco", "mexicocity", "rio"],
+		"connections": ["london", "sanfrancisco", "mexicocity", "rio", "reykjavik"],
 		"places": [
 			{"name": "WALL STREET BANK", "witness": "Stockbroker"},
 			{"name": "JFK AIRPORT", "witness": "Taxi Driver"},
@@ -289,7 +289,7 @@ const CITIES: Dictionary = {
 		"flag": "vertical green, white, and red stripes with an eagle",
 		"language": "Spanish, saying 'Por favor' and 'Gracias'",
 		"landmark": "the Sun and Moon pyramids of Teotihuacan",
-		"connections": ["newyork", "sanfrancisco", "rio", "paris"],
+		"connections": ["newyork", "sanfrancisco", "rio", "reykjavik"],
 		"places": [
 			{"name": "BANCO DE MEXICO", "witness": "Mariachi Musician"},
 			{"name": "BENITO JUAREZ AIRPORT", "witness": "Zocalo Merchant"},
@@ -304,7 +304,7 @@ const CITIES: Dictionary = {
 		"flag": "green with a yellow rhombus and celestial blue globe",
 		"language": "Portuguese, humming samba beats",
 		"landmark": "Christ the Redeemer and Sugarloaf Mountain",
-		"connections": ["mexicocity", "newyork", "nairobi", "london"],
+		"connections": ["newyork", "mexicocity", "nairobi", "reykjavik"],
 		"places": [
 			{"name": "BANCO DO BRASIL", "witness": "Samba Dancer"},
 			{"name": "GALEAO AIRPORT", "witness": "Beach Vendor"},
@@ -319,7 +319,7 @@ const CITIES: Dictionary = {
 		"flag": "three horizontal stripes of white, blue, and red",
 		"language": "Russian, raising a glass saying 'Za zdorovye!'",
 		"landmark": "onion domes of Saint Basil's Cathedral and Red Square",
-		"connections": ["beijing", "london", "paris", "reykjavik"],
+		"connections": ["beijing", "paris", "reykjavik", "london"],
 		"places": [
 			{"name": "GUM ARCADE BANK", "witness": "Matryoshka Vendor"},
 			{"name": "SHEREMETYEVO AIRPORT", "witness": "Metro Attendant"},
@@ -334,7 +334,7 @@ const CITIES: Dictionary = {
 		"flag": "a blue field with a red cross outlined in white",
 		"language": "Icelandic, recounting ancient Viking sagas",
 		"landmark": "cascading geysers and dancing Northern Lights",
-		"connections": ["london", "newyork", "moscow", "paris"],
+		"connections": ["london", "newyork", "moscow", "mexicocity", "rio"],
 		"places": [
 			{"name": "LANDSBANKI", "witness": "Geologist"},
 			{"name": "KEFLAVIK AIRPORT", "witness": "Harbor Fisher"},

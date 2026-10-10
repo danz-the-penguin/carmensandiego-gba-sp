@@ -34,6 +34,9 @@ var subscreen_data: Array = []
 
 var is_typing: bool = false
 var typewriter_timer: float = 0.0
+var is_case_ended: bool = false
+var _alert_regexes: Array[RegEx] = []
+var _trait_regexes: Array[RegEx] = []
 
 const FILTER_SEX = ["ANY", "Female", "Male"]
 const FILTER_HAIR = ["ANY", "Red", "Black", "Blonde", "Brown"]
@@ -74,10 +77,15 @@ func _ready() -> void:
 	GameManager.case_resolved.connect(_on_case_resolved)
 
 	if Database.CITIES.has(GameManager.current_city_id):
-		_on_city_changed(Database.CITIES[GameManager.current_city_id])
+		_update_city_view(Database.CITIES[GameManager.current_city_id])
 	GameManager.broadcast_time()
 	_update_trail_heat()
 	_update_menu_highlight()
+
+	# Display opening ACME briefing
+	var start_city = Database.CITIES.get(GameManager.current_city_id, {})
+	var city_name = start_city.get("name", "the city")
+	show_dialog("[ACME CHIEF]", "URGENT BRIEFING: %s was stolen from %s! You have %d hours to track down the suspect and secure a warrant!" % [GameManager.current_treasure, city_name, GameManager.hours_left], "chief")
 
 func _process(delta: float) -> void:
 	if is_typing:
@@ -85,15 +93,26 @@ func _process(delta: float) -> void:
 		if typewriter_timer >= 0.02:
 			typewriter_timer = 0.0
 			var total = dialog_label.get_total_character_count()
-			if dialog_label.visible_characters < total:
-				dialog_label.visible_characters += 1
-				if dialog_label.visible_characters % 2 == 0:
-					SoundManager.play_text_blip()
-			else:
-				is_typing = false
+			if total > 0:
+				if dialog_label.visible_characters < total:
+					dialog_label.visible_characters += 1
+					if dialog_label.visible_characters % 2 == 0:
+						SoundManager.play_text_blip()
+				else:
+					is_typing = false
 
 func _input(event: InputEvent) -> void:
-	if GameManager.current_state in [GameManager.State.ARREST, GameManager.State.GAMEOVER]:
+	if flight_overlay.visible:
+		return
+
+	if is_case_ended:
+		if is_typing:
+			if event.is_action_pressed("gba_a") or event.is_action_pressed("ui_accept") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed):
+				dialog_label.visible_characters = -1
+				is_typing = false
+		else:
+			if event.is_action_pressed("gba_a") or event.is_action_pressed("ui_accept") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed):
+				GameManager.return_to_title()
 		return
 
 	# Fast-forward typewriter if still animating
@@ -104,10 +123,18 @@ func _input(event: InputEvent) -> void:
 			return
 
 	if event.is_action_pressed("gba_l"):
-		open_dossier()
+		SoundManager.play_shoulder()
+		if subscreen_panel.visible and subscreen_mode == "dossier":
+			close_subscreen()
+		else:
+			open_dossier()
 		return
 	if event.is_action_pressed("gba_r"):
-		open_crime_computer()
+		SoundManager.play_shoulder()
+		if subscreen_panel.visible and subscreen_mode == "computer":
+			close_subscreen()
+		else:
+			open_crime_computer()
 		return
 
 	if subscreen_panel.visible:
@@ -119,6 +146,11 @@ func _input(event: InputEvent) -> void:
 			subscreen_index = posmod(subscreen_index + 1, subscreen_data.size())
 			SoundManager.play_cursor()
 			_update_subscreen_selection()
+		elif (event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right")) and subscreen_mode == "computer" and subscreen_index < 5:
+			var dir = -1 if event.is_action_pressed("ui_left") else 1
+			_cycle_filter(subscreen_index, dir)
+			_refresh_computer_labels()
+			SoundManager.play_cursor()
 		elif event.is_action_pressed("gba_a") or event.is_action_pressed("ui_accept"):
 			_confirm_subscreen(subscreen_index)
 		elif event.is_action_pressed("gba_b") or event.is_action_pressed("ui_cancel"):
@@ -141,17 +173,19 @@ func show_dialog(speaker: String, text: String, portrait_id: String = "chief") -
 	portrait_rect.texture = portrait_tex
 	dialog_label.text = _highlight_bbcode(text)
 	dialog_label.visible_characters = 0
+	var vscroll = dialog_label.get_v_scroll_bar()
+	if vscroll:
+		vscroll.value = 0
 	is_typing = true
 	typewriter_timer = 0.0
 
-func _highlight_bbcode(text: String) -> String:
-	var result = text
-	# Highlight alert keywords
-	var alert_words = ["ARREST", "WARRANT", "MATCH!", "MATCH CONFIRMED!", "ALERT:", "TIME EXPIRED!", "CASE SOLVED!", "CORNERED"]
+func _init_highlight_regexes() -> void:
+	if not _alert_regexes.is_empty():
+		return
+	var alert_words = ["ARREST", "WARRANT", "MATCH CONFIRMED", "ALERT", "TIME EXPIRED", "CASE SOLVED", "CORNERED", "WARNING"]
 	for w in alert_words:
-		result = result.replace(w, "[color=#f87171][b]%s[/b][/color]" % w)
+		_alert_regexes.append(RegEx.create_from_string("(?i)\\b" + w + "\\b"))
 
-	# Highlight suspect features / physical traits
 	var traits = [
 		"Ruby Ring", "Tattoo", "Monocle", "Gold Watch", "Gold Locket", "Eyepatch", "Scar", "Cane",
 		"Convertible", "Motorcycle", "Limousine",
@@ -159,12 +193,22 @@ func _highlight_bbcode(text: String) -> String:
 		"Red", "Black", "Blonde", "Brown"
 	]
 	for t in traits:
-		result = result.replace(t, "[color=#fbbf24][b]%s[/b][/color]" % t)
-		result = result.replace(t.to_upper(), "[color=#fbbf24][b]%s[/b][/color]" % t.to_upper())
+		_trait_regexes.append(RegEx.create_from_string("(?i)\\b" + t + "\\b"))
 
+func _highlight_bbcode(text: String) -> String:
+	_init_highlight_regexes()
+	var result = text
+	for r in _alert_regexes:
+		result = r.sub(result, "[color=#f87171][b]$0[/b][/color]", true)
+	for r in _trait_regexes:
+		result = r.sub(result, "[color=#fbbf24][b]$0[/b][/color]", true)
 	return result
 
 func _on_city_changed(city_data: Dictionary) -> void:
+	_update_city_view(city_data)
+	show_dialog("[ACME DISPATCH]", "Arrived in %s. Check transit connections or question local witnesses." % city_data["name"], "chief")
+
+func _update_city_view(city_data: Dictionary) -> void:
 	city_title_label.text = "%s, %s" % [city_data["name"], city_data["country"].to_upper()]
 	city_landmark_label.text = "LANDMARK: %s" % city_data["landmark"]
 	city_status_label.text = "LOC: %s" % city_data["name"]
@@ -184,7 +228,6 @@ func _on_city_changed(city_data: Dictionary) -> void:
 		sky_rect.color = CITY_PALETTES.get(city_data["id"], Color(0.08, 0.11, 0.19))
 
 	_update_trail_heat()
-	show_dialog("[ACME DISPATCH]", "Arrived in %s. Check transit connections or question local witnesses." % city_data["name"], "chief")
 
 func _update_trail_heat() -> void:
 	if GameManager.current_trail.is_empty():
@@ -207,11 +250,12 @@ func _on_clue_found(clue: String) -> void:
 	pass
 
 func _on_case_resolved(is_victory: bool, message: String) -> void:
+	is_case_ended = true
 	subscreen_panel.visible = false
 	var criminal_id = GameManager.current_criminal.get("id", "carmen")
 	var speaker = "[SUSPECT: %s]" % GameManager.current_criminal.get("name", "SUSPECT") if is_victory else "[ACME DISPATCH]"
 	var portrait_id = criminal_id if is_victory else "chief"
-	show_dialog(speaker, message, portrait_id)
+	show_dialog(speaker, message + "\n\n[color=#38bdf8][b][PRESS A / SPACE TO CONTINUE][/b][/color]", portrait_id)
 
 func _update_menu_highlight() -> void:
 	for i in range(action_buttons.size()):
@@ -374,14 +418,21 @@ func _handle_investigation(place_index: int) -> void:
 
 	SoundManager.play_clue()
 	var full_clue := "[%s] %s" % [city["name"], clue_text]
-	GameManager.clues_gathered.append(full_clue)
+	if not GameManager.clues_gathered.has(full_clue):
+		GameManager.clues_gathered.append(full_clue)
 	GameManager.clue_found.emit(full_clue)
-
-	show_dialog("[WITNESS: %s]" % witness_role.to_upper(), clue_text, portrait_id)
 
 	# Check if final hideout reached
 	if GameManager.current_city_id == GameManager.current_trail[-1]:
-		GameManager.attempt_arrest()
+		if GameManager.warrant_suspect.is_empty():
+			var warn_text = "%s\n\n[color=#f87171][b]WARNING: Suspect spotted nearby! You do NOT have an arrest warrant yet! Open Crime Computer [R] and secure a warrant before arresting![/b][/color]" % clue_text
+			show_dialog("[WITNESS: %s]" % witness_role.to_upper(), warn_text, portrait_id)
+		else:
+			show_dialog("[ACME DISPATCH]", "WARRANT VERIFIED FOR %s! Closing in on the hideout for the arrest..." % GameManager.warrant_suspect["name"], "chief")
+			await get_tree().create_timer(1.8).timeout
+			GameManager.attempt_arrest()
+	else:
+		show_dialog("[WITNESS: %s]" % witness_role.to_upper(), clue_text, portrait_id)
 
 func _handle_departure(dest_id: String) -> void:
 	var orig_name = Database.CITIES[GameManager.current_city_id]["name"]
@@ -396,22 +447,22 @@ func _handle_departure(dest_id: String) -> void:
 
 	GameManager.travel_to(dest_id)
 
-func _cycle_filter(filter_slot: int) -> void:
+func _cycle_filter(filter_slot: int, dir: int = 1) -> void:
 	var f = GameManager.computer_filters
 	match filter_slot:
-		0: f["sex"] = _get_next_filter(FILTER_SEX, f["sex"])
-		1: f["hair"] = _get_next_filter(FILTER_HAIR, f["hair"])
-		2: f["vehicle"] = _get_next_filter(FILTER_VEHICLE, f["vehicle"])
-		3: f["hobby"] = _get_next_filter(FILTER_HOBBY, f["hobby"])
-		4: f["feature"] = _get_next_filter(FILTER_FEATURE, f["feature"])
+		0: f["sex"] = _get_next_filter(FILTER_SEX, f["sex"], dir)
+		1: f["hair"] = _get_next_filter(FILTER_HAIR, f["hair"], dir)
+		2: f["vehicle"] = _get_next_filter(FILTER_VEHICLE, f["vehicle"], dir)
+		3: f["hobby"] = _get_next_filter(FILTER_HOBBY, f["hobby"], dir)
+		4: f["feature"] = _get_next_filter(FILTER_FEATURE, f["feature"], dir)
 
-func _get_next_filter(options: Array, current_val: String) -> String:
+func _get_next_filter(options: Array, current_val: String, dir: int = 1) -> String:
 	var idx = 0
 	for i in range(options.size()):
 		if options[i].to_lower() == current_val.to_lower():
 			idx = i
 			break
-	var next_idx = (idx + 1) % options.size()
+	var next_idx = posmod(idx + dir, options.size())
 	return "" if options[next_idx] == "ANY" else options[next_idx]
 
 func _compute_warrant() -> void:
@@ -436,7 +487,11 @@ func _compute_warrant() -> void:
 	if matches.size() == 1:
 		GameManager.warrant_suspect = matches[0]
 		SoundManager.play_warrant()
-		show_dialog("[CRIME COMPUTER]", "MATCH CONFIRMED! ARREST WARRANT ISSUED FOR %s!" % GameManager.warrant_suspect["name"], GameManager.warrant_suspect["id"])
+		GameManager.warrant_issued.emit(GameManager.warrant_suspect["name"])
+		if GameManager.current_city_id == GameManager.current_trail[-1]:
+			show_dialog("[CRIME COMPUTER]", "MATCH CONFIRMED! ARREST WARRANT ISSUED FOR %s!\nSuspect is cornered here! Investigate the hideout to arrest them!" % GameManager.warrant_suspect["name"], GameManager.warrant_suspect["id"])
+		else:
+			show_dialog("[CRIME COMPUTER]", "MATCH CONFIRMED! ARREST WARRANT ISSUED FOR %s!" % GameManager.warrant_suspect["name"], GameManager.warrant_suspect["id"])
 	elif matches.size() == 0:
 		SoundManager.play_cancel()
 		show_dialog("[CRIME COMPUTER]", "No suspects match those traits! Check witness clues and reset filters.", "chief")

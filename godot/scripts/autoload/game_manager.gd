@@ -8,6 +8,7 @@ signal clue_found(clue_text: String)
 signal warrant_issued(suspect_name: String)
 signal case_resolved(is_victory: bool, message: String)
 signal light_mode_changed(mode_name: String)
+signal title_requested
 
 enum State { TITLE, BRIEFING, CITY_HUB, DOSSIER, CRIME_COMPUTER, ARREST, GAMEOVER }
 
@@ -110,6 +111,10 @@ func start_new_case() -> void:
 
 	# 4. Generate city clues
 	current_clues.clear()
+	var pronoun_subj = "She" if current_criminal["sex"] == "Female" else "He"
+	var pronoun_poss = "her" if current_criminal["sex"] == "Female" else "his"
+	var pronoun_obj = "her" if current_criminal["sex"] == "Female" else "him"
+
 	for i in range(current_trail.size() - 1):
 		var this_city: String = current_trail[i]
 		var next_city: String = current_trail[i + 1]
@@ -124,10 +129,10 @@ func start_new_case() -> void:
 		geo_clues.shuffle()
 
 		var trait_clues: Array[String] = [
-			"Suspect had striking " + current_criminal["hair"].to_upper() + " hair.",
-			"Suspect fled in a " + current_criminal["vehicle"].to_upper() + ".",
-			"Suspect talked about playing " + current_criminal["hobby"].to_upper() + ".",
-			"Suspect was wearing a " + current_criminal["feature"].to_upper() + "!"
+			"%s had striking %s hair." % [pronoun_subj, current_criminal["hair"].to_upper()],
+			"%s was seen driving off in a %s." % [pronoun_subj, current_criminal["vehicle"].to_upper()],
+			"Heard %s talking about playing %s." % [pronoun_obj, current_criminal["hobby"].to_upper()],
+			"%s was spotted wearing a %s!" % [pronoun_subj, current_criminal["feature"].to_upper()]
 		]
 
 		current_clues[this_city] = [
@@ -178,7 +183,6 @@ func broadcast_time() -> void:
 	time_updated.emit(hours_left, DAYS[day_index], time_str)
 
 func travel_to(destination_id: String) -> void:
-	SoundManager.play_travel()
 	if not spend_hours(4):
 		return
 	current_city_id = destination_id
@@ -197,12 +201,16 @@ func investigate_place(place_index: int) -> void:
 
 	SoundManager.play_clue()
 	var full_clue := "[%s] %s" % [Database.CITIES[current_city_id]["name"], clue_text]
-	clues_gathered.append(full_clue)
+	if not clues_gathered.has(full_clue):
+		clues_gathered.append(full_clue)
 	clue_found.emit(full_clue)
 
 	# If final hideout reached
-	if current_city_id == current_trail[-1]:
+	if current_city_id == current_trail[-1] and not warrant_suspect.is_empty():
 		attempt_arrest()
+
+func return_to_title() -> void:
+	title_requested.emit()
 
 func attempt_arrest() -> void:
 	current_state = State.ARREST

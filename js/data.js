@@ -105,7 +105,7 @@ const CITIES_DATA = {
     geography: "an island nation bordered by the North Sea and English Channel",
     landmark: "Big Ben and Tower Bridge",
     funFact: "a city famous for double-decker buses and high tea",
-    connections: ["paris", "cairo", "reykjavik", "newyork"],
+    connections: ["paris", "cairo", "reykjavik", "newyork", "rome", "moscow"],
     places: [
       { type: "bank", name: "BANK OF ENGLAND", witness: "Bank Teller" },
       { type: "airport", name: "HEATHROW AIRPORT", witness: "Flight Attendant" },
@@ -123,7 +123,7 @@ const CITIES_DATA = {
     geography: "a country bordered by the Bay of Biscay and the Alps",
     landmark: "the iron spire of the Eiffel Tower",
     funFact: "a romantic capital along the river Seine",
-    connections: ["london", "rome", "cairo", "athens"],
+    connections: ["london", "rome", "cairo", "athens", "moscow"],
     places: [
       { type: "bank", name: "BANK OF FRANCE", witness: "Bank Cashier" },
       { type: "airport", name: "ORLY AIRPORT", witness: "Customs Officer" },
@@ -141,7 +141,7 @@ const CITIES_DATA = {
     geography: "a boot-shaped peninsula jutting into the Mediterranean",
     landmark: "the ancient stone arches of the Colosseum",
     funFact: "a city surrounded by seven historic hills",
-    connections: ["paris", "athens", "cairo", "london"],
+    connections: ["london", "paris", "athens", "cairo"],
     places: [
       { type: "bank", name: "BANCA D'ITALIA", witness: "Money Changer" },
       { type: "airport", name: "FIUMICINO AIRPORT", witness: "Ticket Agent" },
@@ -177,7 +177,7 @@ const CITIES_DATA = {
     geography: "the northeast corner of Africa bordered by the Sahara Desert",
     landmark: "the Great Pyramids and the silent Sphinx",
     funFact: "the historic land of pharaohs and papyrus scrolls",
-    connections: ["london", "paris", "nairobi", "tokyo", "rome"],
+    connections: ["london", "paris", "rome", "athens", "nairobi"],
     places: [
       { type: "bank", name: "BAZAAR MONEY CHANGER", witness: "Spice Merchant" },
       { type: "airport", name: "CAIRO INTERNATIONAL", witness: "Flight Dispatcher" },
@@ -213,7 +213,7 @@ const CITIES_DATA = {
     geography: "a Pacific island archipelago famous for volcanic hot springs",
     landmark: "the snow-crowned peak of Mount Fuji and Tokyo Tower",
     funFact: "a futuristic metropolis of bullet trains and neon lights",
-    connections: ["beijing", "sydney", "cairo", "sanfrancisco"],
+    connections: ["beijing", "sydney", "sanfrancisco", "kathmandu"],
     places: [
       { type: "bank", name: "BANK OF JAPAN", witness: "Currency Broker" },
       { type: "airport", name: "NARITA AIRPORT", witness: "Station Master" },
@@ -285,7 +285,7 @@ const CITIES_DATA = {
     geography: "the bustling Atlantic seaboard of North America",
     landmark: "the torch-bearing Statue of Liberty and Empire State Building",
     funFact: "the Big Apple, famous for Broadway theaters and yellow cabs",
-    connections: ["london", "sanfrancisco", "mexicocity", "rio"],
+    connections: ["london", "sanfrancisco", "mexicocity", "rio", "reykjavik"],
     places: [
       { type: "bank", name: "WALL STREET BANK", witness: "Stockbroker" },
       { type: "airport", name: "JFK INTERNATIONAL", witness: "Taxi Driver" },
@@ -321,7 +321,7 @@ const CITIES_DATA = {
     geography: "a high volcanic plateau surrounded by the Sierra Madre",
     landmark: "the Sun and Moon pyramids of ancient Teotihuacan",
     funFact: "built over the ancient Aztec capital of Tenochtitlan",
-    connections: ["newyork", "sanfrancisco", "rio", "paris"],
+    connections: ["newyork", "sanfrancisco", "rio", "reykjavik"],
     places: [
       { type: "bank", name: "BANCO DE MEXICO", witness: "Mariachi Musician" },
       { type: "airport", name: "BENITO JUAREZ AIRPORT", witness: "Zocalo Merchant" },
@@ -339,7 +339,7 @@ const CITIES_DATA = {
     geography: "the tropical Atlantic coast of South America bordering the Amazon",
     landmark: "the towering Christ the Redeemer atop Corcovado mountain",
     funFact: "home to the world's most vibrant Carnival celebration",
-    connections: ["mexicocity", "newyork", "nairobi", "london"],
+    connections: ["newyork", "mexicocity", "nairobi", "reykjavik"],
     places: [
       { type: "bank", name: "BANCO DO BRASIL", witness: "Samba Dancer" },
       { type: "airport", name: "GALEAO AIRPORT", witness: "Beach Vendor" },
@@ -357,7 +357,7 @@ const CITIES_DATA = {
     geography: "the vast northern Eurasian plain between Europe and Siberia",
     landmark: "the swirling candy-colored onion domes of Saint Basil's Cathedral",
     funFact: "the historic Red Square and deep ornate subway stations",
-    connections: ["beijing", "london", "paris", "reykjavik"],
+    connections: ["beijing", "paris", "reykjavik", "london"],
     places: [
       { type: "bank", name: "GUM ARCADE BANK", witness: "Matryoshka Vendor" },
       { type: "airport", name: "SHEREMETYEVO AIRPORT", witness: "Metro Attendant" },
@@ -375,7 +375,7 @@ const CITIES_DATA = {
     geography: "a sub-Arctic volcanic island warmed by geothermal hot springs",
     landmark: "cascading geysers and the dancing emerald Northern Lights",
     funFact: "the northernmost capital in the world, heated by the Earth itself",
-    connections: ["london", "newyork", "moscow", "paris"],
+    connections: ["london", "newyork", "moscow", "mexicocity", "rio"],
     places: [
       { type: "bank", name: "LANDSBANKI", witness: "Geologist" },
       { type: "airport", name: "KEFLAVIK AIRPORT", witness: "Harbor Fisher" },
