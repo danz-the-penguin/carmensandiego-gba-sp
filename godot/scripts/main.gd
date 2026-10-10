@@ -5,6 +5,12 @@ extends Control
 var current_subscene: Node = null
 
 func _ready() -> void:
+	# Ensure modern retro 960x640 integer scaling (2x GBA) on launch
+	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_WINDOWED:
+		DisplayServer.window_set_size(Vector2i(960, 640))
+		var screen_rect = DisplayServer.screen_get_usable_rect()
+		DisplayServer.window_set_position(screen_rect.position + (screen_rect.size - Vector2i(960, 640)) / 2)
+
 	GameManager.case_started.connect(_on_case_started)
 	GameManager.case_resolved.connect(_on_case_resolved)
 	GameManager.title_requested.connect(load_title_screen)

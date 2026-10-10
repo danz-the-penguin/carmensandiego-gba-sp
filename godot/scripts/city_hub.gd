@@ -191,7 +191,7 @@ func _input(event: InputEvent) -> void:
 			else:
 				open_gadgets()
 			return
-		elif event.keycode in [KEY_V, KEY_M]:
+		elif event.keycode == KEY_V:
 			if museum_overlay.visible:
 				museum_overlay.close_museum()
 			else:
@@ -593,14 +593,14 @@ func _populate_subscreen(labels: Array, reset_idx: bool = true) -> void:
 		btn.text = txt_str
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.add_theme_font_size_override("font_size", 8)
+		btn.add_theme_font_size_override("font_size", 9)
 		
-		# Audit: Dynamically compute height based on line count and text length
-		# A line at 440px width fits ~42 chars of 8px bitmap font.
-		var explicit_lines = txt_str.count("\n") + 1
-		var wrap_lines = ceili(float(txt_str.length()) / 42.0)
-		var total_lines = maxi(explicit_lines, wrap_lines)
-		var btn_height = maxi(34, total_lines * 15 + 14)
+		# Bulletproof multiline calculation: count lines across linebreaks and wrapping
+		var lines = txt_str.split("\n")
+		var visual_lines = 0
+		for l in lines:
+			visual_lines += maxi(1, ceili(float(l.length()) / 38.0))
+		var btn_height = maxi(36, visual_lines * 16 + 14)
 		btn.custom_minimum_size = Vector2(0, btn_height)
 
 		var click_idx = i
@@ -778,6 +778,19 @@ func _trigger_dramatic_arrest() -> void:
 		# 4. Fanfare & promotion resolution after 0.8s
 		await get_tree().create_timer(0.8).timeout
 		GameManager.cases_solved += 1
+		var found_rec = false
+		for rec in GameManager.recovered_treasures:
+			if rec is Dictionary and rec.get("name") == GameManager.current_treasure:
+				found_rec = true
+				break
+		if not found_rec:
+			GameManager.recovered_treasures.append({
+				"name": GameManager.current_treasure,
+				"thief": criminal.get("name", "V.I.L.E. Operative"),
+				"city": GameManager.current_city_id,
+				"value": "$10,000,000",
+				"lore": "Historic treasure safely restored to ACME vault."
+			})
 		GameManager.save_profile()
 		GameManager.update_rank()
 		SoundManager.play_victory()

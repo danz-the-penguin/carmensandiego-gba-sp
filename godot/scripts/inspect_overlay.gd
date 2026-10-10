@@ -177,8 +177,8 @@ func _show_clue(h: Dictionary) -> void:
 	clue_title.text = "★ EVIDENCE RECOVERED: %s ★" % h["name"]
 	clue_desc.text = "%s\n\n[color=#34d399]ACME bonus: +2 hours saved on investigation timeline![/color]" % h["clue"]
 	clue_hint.text = "PRESS [A] OR SPACE TO COLLECT EVIDENCE"
-	
-	GameManager.hours_left = mini(GameManager.deadline_hours, GameManager.hours_left + 2)
+	var max_h = GameManager.current_rank.get("deadline_hours", 48)
+	GameManager.hours_left = mini(max_h, GameManager.hours_left + 2)
 	GameManager.broadcast_time()
 	evidence_discovered.emit(h["clue"])
 

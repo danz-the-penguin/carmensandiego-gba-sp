@@ -739,9 +739,146 @@
     .tool-btn:hover {
       background: #334155;
     }
+
+    /* =====================================================================
+       MODERN RETRO DISPLAY OVERHAUL (Analogue Pocket / Retro Handheld Scale)
+       ===================================================================== */
+    body.modern-scale .top-controls-bar {
+      font-size: 9px;
+      max-width: 840px;
+      line-height: 2.0;
+    }
+
+    body.modern-scale .sp-console {
+      width: 760px;
+    }
+
+    body.modern-scale .sp-lid {
+      width: 750px;
+      height: 520px;
+      padding: 14px 20px 10px 20px;
+      border-radius: 24px 24px 8px 8px;
+    }
+
+    body.modern-scale .sp-screen-bezel {
+      width: 710px;
+      height: 485px;
+      padding: 8px 14px;
+    }
+
+    body.modern-scale .sp-nintendo-logo {
+      font-size: 9px;
+      margin-bottom: 3px;
+    }
+
+    body.modern-scale .screen-lcd {
+      width: 675px;
+      height: 450px; /* Exact 3:2 Aspect Ratio */
+    }
+
+    body.modern-scale #game-canvas {
+      height: 240px;
+    }
+
+    body.modern-scale .screen-lcd.fullscreen-title #game-canvas {
+      height: 450px;
+    }
+
+    body.modern-scale .game-content {
+      height: 210px;
+      padding: 8px 12px;
+      font-size: 10px;
+      gap: 6px;
+    }
+
+    body.modern-scale .status-bar {
+      padding: 6px 12px;
+      font-size: 10px;
+      border-radius: 3px;
+    }
+
+    body.modern-scale .dialog-area {
+      height: 102px;
+      max-height: 104px;
+      padding: 8px 12px;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    body.modern-scale .action-menu {
+      gap: 5px;
+    }
+
+    body.modern-scale .menu-item {
+      padding: 7px 10px;
+      font-size: 10px;
+    }
+
+    body.modern-scale .cursor-icon {
+      width: 5px;
+      height: 5px;
+    }
+
+    body.modern-scale .subscreen-overlay {
+      padding: 14px;
+      font-size: 10px;
+    }
+
+    body.modern-scale .subscreen-header {
+      font-size: 11px;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    body.modern-scale .subscreen-list {
+      gap: 6px;
+    }
+
+    body.modern-scale .subscreen-item {
+      padding: 8px 12px;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    body.modern-scale .sp-hinge-assembly {
+      width: 750px;
+    }
+
+    body.modern-scale .hinge-barrel-left,
+    body.modern-scale .hinge-barrel-right {
+      width: 140px;
+    }
+
+    body.modern-scale .hinge-center-gap {
+      width: 450px;
+    }
+
+    body.modern-scale .sp-base-deck {
+      width: 750px;
+      height: 300px;
+      padding: 14px 28px 24px 28px;
+      border-radius: 8px 8px 40px 40px;
+    }
+
+    body.modern-scale .sp-shoulder-l,
+    body.modern-scale .sp-shoulder-r {
+      width: 88px;
+      height: 22px;
+      font-size: 11px;
+    }
+
+    body.modern-scale .toolbar-container {
+      font-size: 8px;
+      margin-top: 18px;
+    }
+
+    body.modern-scale .tool-btn {
+      font-size: 8px;
+      padding: 6px 10px;
+    }
   </style>
 </head>
-<body>
+<body class="modern-scale">
 
   <div class="top-controls-bar">
     🎮 <strong>GAME BOY ADVANCE SP CONTROLS:</strong><br>
@@ -905,6 +1042,7 @@
   <!-- Settings Toolbar -->
   <div class="toolbar-container">
     <span>GBA SP OPTIONS:</span>
+    <button class="tool-btn" id="btn-toggle-scale">🖥️ Screen: Modern Retro</button>
     <button class="tool-btn" id="btn-sp-light-toolbar">☼ SP Light: AGS-101</button>
     <button class="tool-btn" id="btn-toggle-scanlines">Toggle Scanlines</button>
     <button class="tool-btn" id="btn-toggle-bgm">Music: ON</button>
@@ -1079,6 +1217,36 @@
       btnToggleBgm.textContent = active ? "Music: ON" : "Music: OFF";
     }
     btnToggleBgm.addEventListener("click", toggleBgmMusic);
+
+    // Toggle Modern Retro / Classic GBA Scale
+    const btnToggleScale = document.getElementById("btn-toggle-scale");
+    function setDisplayScale(isModern) {
+      if (isModern) {
+        document.body.classList.add("modern-scale");
+        btnToggleScale.textContent = "🖥️ Screen: Modern Retro";
+        try { localStorage.setItem("carmen_screen_scale", "modern"); } catch(e) {}
+      } else {
+        document.body.classList.remove("modern-scale");
+        btnToggleScale.textContent = "🖥️ Screen: Classic GBA";
+        try { localStorage.setItem("carmen_screen_scale", "classic"); } catch(e) {}
+      }
+    }
+
+    try {
+      const savedScale = localStorage.getItem("carmen_screen_scale");
+      if (savedScale === "classic") {
+        setDisplayScale(false);
+      } else {
+        setDisplayScale(true);
+      }
+    } catch(e) {
+      setDisplayScale(true);
+    }
+
+    btnToggleScale.addEventListener("click", () => {
+      const isCurrentlyModern = document.body.classList.contains("modern-scale");
+      setDisplayScale(!isCurrentlyModern);
+    });
   </script>
 </body>
 </html>

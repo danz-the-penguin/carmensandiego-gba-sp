@@ -348,8 +348,9 @@ class GBACarmenGameEngine {
       lead = `RECOVERED TRAVEL DOC: Boarding slip stamped for flight to ${nc.name} (${nc.landmark})!`;
     }
 
-    this.hoursLeft = Math.min(this.deadlineHours, this.hoursLeft + 2);
-    this.updateClock();
+    const maxH = (this.getRank() && this.getRank().deadlineHours) || 48;
+    this.hoursLeft = Math.min(maxH, this.hoursLeft + 2);
+    this.updateTimeDisplay();
     const entry = `[PHYSICAL EVIDENCE] ${lead}`;
     if (!this.cluesGathered.includes(entry)) {
       this.cluesGathered.push(entry);
@@ -1000,8 +1001,8 @@ class GBACarmenGameEngine {
     if (this.subscreenMode === "trap") {
       if (this.activeTrap && this.activeTrap.type === "smoke") {
         this.resolveTrap(true);
-        return;
       }
+      return;
     }
     if (this.subscreenMode) {
       this.closeSubscreen();
