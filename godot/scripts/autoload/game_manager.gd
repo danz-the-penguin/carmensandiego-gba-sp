@@ -8,16 +8,29 @@ signal clue_found(clue_text: String)
 signal warrant_issued(suspect_name: String)
 signal case_resolved(is_victory: bool, message: String)
 signal light_mode_changed(mode_name: String)
+signal shell_changed(shell_id: String, shell_data: Dictionary)
 signal title_requested
 
 enum State { TITLE, BRIEFING, CITY_HUB, DOSSIER, CRIME_COMPUTER, ARREST, GAMEOVER }
 
 var current_state: State = State.TITLE
 
-# Player Profile & Evidence Hall
+# Player Profile & Career Meta-Progression
 var cases_solved: int = 0
 var current_rank: Dictionary
 var recovered_treasures: Array = []
+var current_case_seed: String = "#ACME-1000"
+
+# Unlockable GBA SP Console Shell Customizations
+const SHELLS: Array[Dictionary] = [
+	{"id": "platinum", "name": "PLATINUM SILVER", "cases": 0, "color": Color("#c4cad8")},
+	{"id": "cobalt", "name": "COBALT BLUE", "cases": 1, "color": Color("#2563eb")},
+	{"id": "flame", "name": "FLAME RED", "cases": 3, "color": Color("#dc2626")},
+	{"id": "onyx", "name": "ONYX BLACK", "cases": 6, "color": Color("#1e293b")},
+	{"id": "gold", "name": "TRIBAL GOLD", "cases": 10, "color": Color("#f59e0b")},
+	{"id": "famicom", "name": "FAMICOM 20TH", "cases": 15, "color": Color("#831843")}
+]
+var current_shell_index: int = 0
 
 # Tactical ACME Gadgets Inventory (Replenished each case)
 var gadget_charges: Dictionary = {
@@ -59,12 +72,14 @@ func load_profile() -> void:
 	if cfg.load("user://detective_profile.cfg") == OK:
 		cases_solved = cfg.get_value("player", "cases_solved", 0)
 		recovered_treasures = cfg.get_value("player", "recovered_treasures", [])
+		current_shell_index = cfg.get_value("player", "current_shell_index", 0)
 	update_rank()
 
 func save_profile() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("player", "cases_solved", cases_solved)
 	cfg.set_value("player", "recovered_treasures", recovered_treasures)
+	cfg.set_value("player", "current_shell_index", current_shell_index)
 	cfg.save("user://detective_profile.cfg")
 
 
@@ -78,6 +93,23 @@ func update_rank() -> void:
 		if cases_solved >= r["required_cases"]:
 			current_rank = r
 
+func cycle_shell() -> Dictionary:
+	var unlocked: Array[int] = []
+	for i in range(SHELLS.size()):
+		if cases_solved >= SHELLS[i]["cases"]:
+			unlocked.append(i)
+	if unlocked.is_empty():
+		unlocked = [0]
+	var cur_pos = unlocked.find(current_shell_index)
+	if cur_pos == -1:
+		current_shell_index = unlocked[0]
+	else:
+		current_shell_index = unlocked[(cur_pos + 1) % unlocked.size()]
+	save_profile()
+	SoundManager.play_shoulder()
+	shell_changed.emit(SHELLS[current_shell_index]["id"], SHELLS[current_shell_index])
+	return SHELLS[current_shell_index]
+
 func cycle_light_mode() -> void:
 	light_mode_index = (light_mode_index + 1) % light_modes.size()
 	SoundManager.play_light()
@@ -86,6 +118,7 @@ func cycle_light_mode() -> void:
 # --- Procedural Case Generator ---
 func start_new_case() -> void:
 	update_rank()
+	current_case_seed = "#ACME-%04d" % randi_range(1000, 9999)
 	var hops: int = current_rank["hops"]
 	hours_left = current_rank["deadline_hours"]
 	day_index = 0
@@ -94,11 +127,16 @@ func start_new_case() -> void:
 	clues_gathered.clear()
 	computer_filters = {"sex": "", "hair": "", "vehicle": "", "hobby": "", "feature": ""}
 	
+	# Tactical Gadget Capacity Scales With Detective Rank
+	var base_uv = 2 + (1 if cases_solved >= 2 else 0) + (1 if cases_solved >= 8 else 0) + (1 if cases_solved >= 12 else 0)
+	var base_gps = 1 + (1 if cases_solved >= 5 else 0) + (1 if cases_solved >= 12 else 0)
+	var base_lock = 2 + (1 if cases_solved >= 2 else 0) + (1 if cases_solved >= 8 else 0) + (1 if cases_solved >= 12 else 0)
+	var base_poly = 2 + (1 if cases_solved >= 5 else 0) + (1 if cases_solved >= 12 else 0)
 	gadget_charges = {
-		"uv_light": 2,
-		"gps_tracer": 1,
-		"lockpick": 2,
-		"polygraph": 2
+		"uv_light": base_uv,
+		"gps_tracer": base_gps,
+		"lockpick": base_lock,
+		"polygraph": base_poly
 	}
 
 

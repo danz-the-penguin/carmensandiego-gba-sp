@@ -197,6 +197,10 @@ func _input(event: InputEvent) -> void:
 			else:
 				open_museum()
 			return
+		elif event.keycode == KEY_C:
+			var sh = GameManager.cycle_shell()
+			show_dialog("[GBA SP CHASSIS]", "Custom GBA SP Shell switched to %s! Saved to detective profile." % sh["name"], "chief")
+			return
 
 	if subscreen_panel.visible:
 		if event.is_action_pressed("ui_up"):
@@ -472,7 +476,11 @@ func open_dossier() -> void:
 	subscreen_title.text = "ACME CASEBOOK & DEDUCTION MATRIX [L]"
 	var items: Array[Dictionary] = []
 	var warrant_txt = "WARRANT: %s" % (GameManager.warrant_suspect["name"] if not GameManager.warrant_suspect.is_empty() else "NONE ISSUED")
+	var shell_data = GameManager.SHELLS[GameManager.current_shell_index]
+	var reg = SoundManager.get_region_for_city(GameManager.current_city_id).to_upper()
+	items.append({"action": "none", "text": "★ CASE SEED: %s | JURISDICTION: %s" % [GameManager.current_case_seed, reg]})
 	items.append({"action": "none", "text": "★ STATUS: %s | STOLEN: %s" % [warrant_txt, GameManager.current_treasure]})
+	items.append({"action": "cycle_shell", "text": "🎨 [C] GBA SP SHELL: %s (Click to Cycle)" % shell_data["name"]})
 	items.append({"action": "gadgets", "text": "⚡ [G] ACME GADGET BELT (Deploy GPS, UV, Polygraph, Lockpick)"})
 	items.append({"action": "museum", "text": "🏛 [M] EVIDENCE HALL & MUSEUM (Recovered Relics)"})
 	
@@ -739,6 +747,10 @@ func _confirm_subscreen(idx: int) -> void:
 				elif act == "museum":
 					open_museum()
 					return
+				elif act == "cycle_shell":
+					GameManager.cycle_shell()
+					open_dossier()
+					return
 				elif act == "load_suspect":
 					var s = subscreen_data[idx].get("suspect", {})
 					if not s.is_empty():
@@ -934,12 +946,16 @@ func _trigger_dramatic_arrest() -> void:
 func _handle_departure(dest_id: String) -> void:
 	var orig_name = Database.CITIES[GameManager.current_city_id]["name"]
 	var dest_name = Database.CITIES[dest_id]["name"]
+	var dest_reg = SoundManager.get_region_for_city(dest_id).to_upper()
 	flight_route.text = "%s ➔ %s" % [orig_name, dest_name]
-	flight_status.text = "TRACKING TRANSIT... CONNECTING TO LOCAL ACME OFFICE"
+	flight_status.text = "TRACKING TRANSIT... [REGIONAL VISA STAMP: %s DIVISION]" % dest_reg
 	flight_overlay.visible = true
 
 	SoundManager.play_travel()
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(0.6).timeout
+	SoundManager.play_impact()
+	shake_screen(2.5, 0.2)
+	await get_tree().create_timer(0.4).timeout
 	flight_overlay.visible = false
 
 	GameManager.travel_to(dest_id)

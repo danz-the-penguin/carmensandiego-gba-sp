@@ -31,6 +31,8 @@ class GBACarmenGameEngine {
     this.warrantSuspect = null;
     this.cluesGathered = [];
     this.computerFilters = { sex: null, hair: null, vehicle: null, hobby: null, feature: null };
+    this.currentCaseSeed = "#ACME-1000";
+    this.currentShellIndex = 0;
 
     // Navigation state
     this.menuIndex = 0; // 0=Investigate, 1=Depart, 2=Crime Comp, 3=Dossier
@@ -57,6 +59,8 @@ class GBACarmenGameEngine {
         if (saved) {
           const parsed = JSON.parse(saved);
           if (!parsed.recoveredTreasures) parsed.recoveredTreasures = [];
+          if (parsed.shellIndex !== undefined) this.currentShellIndex = parsed.shellIndex;
+          this.applyShellTheme();
           return parsed;
         }
       }
@@ -85,6 +89,43 @@ class GBACarmenGameEngine {
       }
     }
     return rank;
+  }
+
+  cycleShell() {
+    const cases = (this.profile && this.profile.casesSolved) || 0;
+    const unlocked = [];
+    if (typeof GBA_SHELLS !== "undefined") {
+      GBA_SHELLS.forEach((s, idx) => {
+        if (cases >= s.cases) unlocked.push(idx);
+      });
+    }
+    if (unlocked.length === 0) unlocked.push(0);
+
+    const curPos = unlocked.indexOf(this.currentShellIndex);
+    if (curPos === -1) {
+      this.currentShellIndex = unlocked[0];
+    } else {
+      this.currentShellIndex = unlocked[(curPos + 1) % unlocked.length];
+    }
+
+    if (this.profile) {
+      this.profile.shellIndex = this.currentShellIndex;
+      this.saveProfile();
+    }
+    this.audio.shoulderTrigger();
+    this.applyShellTheme();
+    return (typeof GBA_SHELLS !== "undefined" && GBA_SHELLS[this.currentShellIndex]) || { name: "PLATINUM SILVER" };
+  }
+
+  applyShellTheme() {
+    if (typeof document === "undefined") return;
+    const consoleEl = document.querySelector(".sp-console");
+    if (!consoleEl || typeof GBA_SHELLS === "undefined") return;
+    const shell = GBA_SHELLS[this.currentShellIndex] || GBA_SHELLS[0];
+    GBA_SHELLS.forEach((s) => consoleEl.classList.remove(`shell-${s.id}`));
+    if (shell.id !== "platinum") {
+      consoleEl.classList.add(`shell-${shell.id}`);
+    }
   }
 
   // --- Title Screen Loop ---
@@ -197,11 +238,18 @@ class GBACarmenGameEngine {
     this.warrantSuspect = null;
     this.cluesGathered = [];
     this.computerFilters = { sex: null, hair: null, vehicle: null, hobby: null, feature: null };
+    this.currentCaseSeed = "#ACME-" + Math.floor(1000 + Math.random() * 9000);
+
+    const solved = (this.profile && this.profile.casesSolved) || 0;
+    const baseUV = 2 + (solved >= 2 ? 1 : 0) + (solved >= 8 ? 1 : 0) + (solved >= 12 ? 1 : 0);
+    const baseGPS = 1 + (solved >= 5 ? 1 : 0) + (solved >= 12 ? 1 : 0);
+    const baseLock = 2 + (solved >= 2 ? 1 : 0) + (solved >= 8 ? 1 : 0) + (solved >= 12 ? 1 : 0);
+    const basePoly = 2 + (solved >= 5 ? 1 : 0) + (solved >= 12 ? 1 : 0);
     this.gadgetCharges = {
-      uv_light: 2,
-      gps_tracer: 1,
-      lockpick: 2,
-      polygraph: 2
+      uv_light: baseUV,
+      gps_tracer: baseGPS,
+      lockpick: baseLock,
+      polygraph: basePoly
     };
 
     // Go to briefing screen
@@ -417,8 +465,12 @@ class GBACarmenGameEngine {
       ? `★ WARRANT ISSUED: ${this.warrantSuspect.name}`
       : "WARRANT: NONE ISSUED YET";
 
+    const shell = (typeof GBA_SHELLS !== "undefined" ? GBA_SHELLS[this.currentShellIndex] : null) || { name: "PLATINUM SILVER" };
+    const reg = (this.audio && this.audio.getRegionForCity(this.currentCityId)) || "americas";
     const items = [
+      { title: `★ CASE SEED: ${this.currentCaseSeed} | JURISDICTION: ${reg.toUpperCase()}` },
       { title: `★ STATUS: ${warrantTitle} | STOLEN: ${this.currentCase.treasure}` },
+      { title: `🎨 [C] GBA SP SHELL: ${shell.name} (Click to Cycle)`, action: "cycle_shell" },
       { title: "⚡ [G] ACME GADGET BELT (Deploy GPS, UV, Polygraph, Lockpick)", action: "gadgets" },
       { title: "🏛 [V] EVIDENCE HALL & MUSEUM (Recovered Relics)", action: "museum" },
       { title: "--- 🎯 DEDUCTION MATRIX: SUSPECT PROBABILITY ---" }
@@ -814,6 +866,10 @@ class GBACarmenGameEngine {
       } else if (opt && opt.action === "museum") {
         this.openMuseum();
         return;
+      } else if (opt && opt.action === "cycle_shell") {
+        this.cycleShell();
+        this.openDossierSubscreen();
+        return;
       } else if (opt && opt.action === "load_suspect" && opt.suspect) {
         const s = opt.suspect;
         this.computerFilters = {
@@ -906,9 +962,10 @@ class GBACarmenGameEngine {
       if (!this.spendHours(4)) return;
 
       this.currentCityId = flightOpt.cityId;
+      const destReg = (this.audio && this.audio.getRegionForCity(this.currentCityId)) || "americas";
       this.audio.confirm();
       this.enterCityHub();
-      this.setDialog(`Arrived in ${CITIES_DATA[this.currentCityId].name}! Time to search for leads.`);
+      this.setDialog(`[ACME TRANSIT - ${destReg.toUpperCase()} DIVISION] Arrived in ${CITIES_DATA[this.currentCityId].name}! Regional passport stamp issued.`);
     } else if (this.subscreenMode === "computer_filter") {
       const filterOpt = this.subscreenOptions[this.subscreenIndex];
 

@@ -400,12 +400,22 @@ const TREASURES_DATA = [
   { name: "THE STATUE OF LIBERTY TORCH", city: "newyork", lore: "The original 1886 gilded copper torch gifted to America by the people of France.", value: "$80,000,000" }
 ];
 
+const GBA_SHELLS = [
+  { id: "platinum", name: "PLATINUM SILVER", cases: 0, color: "#c4cad8" },
+  { id: "cobalt", name: "COBALT BLUE", cases: 1, color: "#2563eb" },
+  { id: "flame", name: "FLAME RED", cases: 3, color: "#dc2626" },
+  { id: "onyx", name: "ONYX BLACK", cases: 6, color: "#1e293b" },
+  { id: "gold", name: "TRIBAL GOLD", cases: 10, color: "#f59e0b" },
+  { id: "famicom", name: "FAMICOM 20TH", cases: 15, color: "#831843" }
+];
+
 if (typeof window !== "undefined") {
   window.GAME_RANKS = GAME_RANKS;
   window.SUSPECTS_DATA = SUSPECTS_DATA;
   window.CITIES_DATA = CITIES_DATA;
   window.TREASURES_DATA = TREASURES_DATA;
+  window.GBA_SHELLS = GBA_SHELLS;
 }
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { GAME_RANKS, SUSPECTS_DATA, CITIES_DATA, TREASURES_DATA };
+  module.exports = { GAME_RANKS, SUSPECTS_DATA, CITIES_DATA, TREASURES_DATA, GBA_SHELLS };
 }

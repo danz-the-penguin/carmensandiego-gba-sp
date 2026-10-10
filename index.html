@@ -885,6 +885,44 @@
       font-size: 10px;
       padding: 10px 16px;
     }
+
+    /* Custom Unlockable GBA SP Console Shells */
+    .sp-console.shell-cobalt {
+      --sp-metal-light: #60a5fa;
+      --sp-metal-mid: #2563eb;
+      --sp-metal-dark: #1e3a8a;
+      --sp-metal-shadow: #172554;
+      --sp-hinge: #3b82f6;
+    }
+    .sp-console.shell-flame {
+      --sp-metal-light: #f87171;
+      --sp-metal-mid: #dc2626;
+      --sp-metal-dark: #991b1b;
+      --sp-metal-shadow: #450a0a;
+      --sp-hinge: #ef4444;
+    }
+    .sp-console.shell-onyx {
+      --sp-metal-light: #475569;
+      --sp-metal-mid: #1e293b;
+      --sp-metal-dark: #0f172a;
+      --sp-metal-shadow: #020617;
+      --sp-hinge: #334155;
+    }
+    .sp-console.shell-gold {
+      --sp-metal-light: #fcd34d;
+      --sp-metal-mid: #d97706;
+      --sp-metal-dark: #92400e;
+      --sp-metal-shadow: #78350f;
+      --sp-hinge: #f59e0b;
+    }
+    .sp-console.shell-famicom {
+      --sp-metal-light: #fb7185;
+      --sp-metal-mid: #9f1239;
+      --sp-metal-dark: #4c0519;
+      --sp-metal-shadow: #2a030c;
+      --sp-hinge: #fbbf24;
+      --sp-bezel: #fbbf24;
+    }
   </style>
 </head>
 <body class="modern-scale">
@@ -897,6 +935,7 @@
     <kbd>Q</kbd> = [L] Dossier &nbsp;|&nbsp; 
     <kbd>E</kbd> = [R] Crime Comp &nbsp;|&nbsp; 
     <kbd>G</kbd> = [⚡] Gadgets &nbsp;|&nbsp; 
+    <kbd>C</kbd> = [🎨] Shell &nbsp;|&nbsp; 
     <kbd>V</kbd> = [🏛] Museum &nbsp;|&nbsp; 
     <kbd>B</kbd> = [☼] SP Light &nbsp;|&nbsp; 
     <kbd>M</kbd> = [♫] Music
@@ -1180,6 +1219,10 @@
         e.preventDefault();
         if (engine.subscreenMode === "gadgets") engine.closeSubscreen();
         else engine.openGadgets();
+      } else if (k === "c") {
+        e.preventDefault();
+        const sh = engine.cycleShell();
+        engine.setDialog(`[GBA SP CHASSIS] Custom GBA SP Shell switched to ${sh.name}! Saved to profile.`);
       } else if (k === "v") {
         e.preventDefault();
         if (engine.subscreenMode === "museum") engine.closeSubscreen();
