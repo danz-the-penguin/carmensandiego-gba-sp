@@ -541,50 +541,141 @@ class GBAGraphicsRenderer {
 
   applyAtmosphere(cityId, hourOfDay) {
     const h = hourOfDay !== undefined ? hourOfDay : 12;
-    if (h >= 17 && h < 20) {
-      // Sunset glow
-      this.ctx.fillStyle = "rgba(249, 115, 22, 0.22)";
-      this.ctx.fillRect(0, 0, 240, 88);
-    } else if (h >= 20 || h < 6) {
-      // Night shadow & stars
-      this.ctx.fillStyle = "rgba(10, 15, 30, 0.50)";
-      this.ctx.fillRect(0, 0, 240, 88);
+    const isNight = h >= 20 || h < 6;
+    const isSunset = h >= 17 && h < 20;
+    const now = Date.now() * 0.002;
+
+    // Layer 1: Celestial Orb & Aurora
+    if (isNight) {
+      // Crescent Moon
       this.ctx.fillStyle = "#fef08a";
-      for (let i = 0; i < 18; i++) {
-        const sx = (i * 43) % 236 + 2;
-        const sy = (i * 23) % 36 + 2;
-        this.ctx.fillRect(sx, sy, 1, 1);
+      this.ctx.beginPath();
+      this.ctx.arc(210, 16, 7, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.fillStyle = "#0b0c1e";
+      this.ctx.beginPath();
+      this.ctx.arc(213, 14, 6, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Northern Aurora Ribbon for Reykjavik & Moscow
+      if (cityId === "reykjavik" || cityId === "moscow") {
+        this.ctx.strokeStyle = "rgba(52, 211, 153, 0.28)";
+        this.ctx.lineWidth = 4;
+        this.ctx.beginPath();
+        for (let x = 0; x <= 240; x += 20) {
+          const wy = 14 + Math.sin(x * 0.03 + now) * 5;
+          if (x === 0) this.ctx.moveTo(x, wy);
+          else this.ctx.lineTo(x, wy);
+        }
+        this.ctx.stroke();
       }
+    } else if (isSunset) {
+      // Amber Sunset Sun
+      this.ctx.fillStyle = "rgba(249, 115, 22, 0.85)";
+      this.ctx.beginPath();
+      this.ctx.arc(195, 22, 9, 0, Math.PI * 2);
+      this.ctx.fill();
+    } else {
+      // Golden Daylight Sun
+      this.ctx.fillStyle = "rgba(253, 224, 71, 0.85)";
+      this.ctx.beginPath();
+      this.ctx.arc(205, 16, 8, 0, Math.PI * 2);
+      this.ctx.fill();
     }
 
-    // Retro Weather
-    if (cityId === "london" || cityId === "tokyo") {
-      this.ctx.strokeStyle = "rgba(147, 197, 253, 0.45)";
+    // Layer 2: Kinetic Landmark Beacons & Lighting
+    if (cityId === "london") {
+      // Big Ben Illuminated Clock Face
+      const glow = 0.75 + 0.25 * Math.sin(now * 3);
+      this.ctx.fillStyle = `rgba(254, 240, 138, ${glow})`;
+      this.ctx.beginPath();
+      this.ctx.arc(76, 36, 4, 0, Math.PI * 2);
+      this.ctx.fill();
+      // Moving clock hand
+      this.ctx.strokeStyle = "#451a03";
       this.ctx.lineWidth = 1;
       this.ctx.beginPath();
-      for (let i = 0; i < 18; i++) {
-        const rx = (i * 37) % 240;
-        const ry = (i * 23) % 80;
+      this.ctx.moveTo(76, 36);
+      this.ctx.lineTo(76 + Math.cos(now * 0.8) * 3, 36 + Math.sin(now * 0.8) * 3);
+      this.ctx.stroke();
+      // Tower Bridge red marine strobe
+      const strobe = Math.floor(now * 2) % 2 === 0 ? "rgba(239, 68, 68, 0.9)" : "rgba(239, 68, 68, 0.2)";
+      this.ctx.fillStyle = strobe;
+      this.ctx.fillRect(160, 42, 2, 2);
+    } else if (cityId === "paris") {
+      // Eiffel Tower Sweeping Night Searchlight
+      const sweep = Math.sin(now * 1.2) * 0.8 - Math.PI / 2;
+      this.ctx.fillStyle = isNight ? "rgba(254, 240, 138, 0.20)" : "rgba(254, 240, 138, 0.10)";
+      this.ctx.beginPath();
+      this.ctx.moveTo(120, 24);
+      this.ctx.lineTo(120 + Math.cos(sweep - 0.15) * 55, 24 + Math.sin(sweep - 0.15) * 55);
+      this.ctx.lineTo(120 + Math.cos(sweep + 0.15) * 55, 24 + Math.sin(sweep + 0.15) * 55);
+      this.ctx.closePath();
+      this.ctx.fill();
+    } else if (cityId === "tokyo") {
+      // Flashing Tokyo Neons (Cyan & Magenta)
+      const p1 = 0.5 + 0.5 * Math.sin(now * 4);
+      const p2 = 0.5 + 0.5 * Math.cos(now * 3.5);
+      this.ctx.fillStyle = `rgba(56, 189, 248, ${p1})`;
+      this.ctx.fillRect(135, 42, 6, 4);
+      this.ctx.fillStyle = `rgba(244, 63, 94, ${p2})`;
+      this.ctx.fillRect(172, 38, 7, 5);
+      // Tokyo Tower red beacon
+      const beacon = Math.floor(now * 2.5) % 2 === 0 ? "rgba(239, 68, 68, 0.9)" : "rgba(239, 68, 68, 0.2)";
+      this.ctx.fillStyle = beacon;
+      this.ctx.fillRect(156, 30, 2, 2);
+    } else if (cityId === "newyork") {
+      // Empire State Building Spire Beacon
+      const blink = (now % 1.5 < 0.3) ? "rgba(239, 68, 68, 0.95)" : "rgba(239, 68, 68, 0.2)";
+      this.ctx.fillStyle = blink;
+      this.ctx.fillRect(116, 24, 2, 2);
+    }
+
+    // Layer 3: Retro Weather Particles
+    if (cityId === "london" || cityId === "tokyo") {
+      this.ctx.strokeStyle = "rgba(147, 197, 253, 0.50)";
+      this.ctx.lineWidth = 1;
+      this.ctx.beginPath();
+      for (let i = 0; i < 22; i++) {
+        const rx = (i * 37 + now * 40) % 240;
+        const ry = (i * 23 + now * 90) % 80;
         this.ctx.moveTo(rx, ry);
-        this.ctx.lineTo(rx - 3, ry + 6);
+        this.ctx.lineTo(rx - 3, ry + 7);
       }
       this.ctx.stroke();
     } else if (cityId === "moscow" || cityId === "reykjavik") {
-      this.ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
-      for (let i = 0; i < 16; i++) {
-        const sx = (i * 39) % 240;
-        const sy = (i * 19) % 85;
+      this.ctx.fillStyle = "rgba(255, 255, 255, 0.80)";
+      for (let i = 0; i < 18; i++) {
+        const sx = (i * 39 + Math.sin(now + i) * 8) % 240;
+        const sy = (i * 19 + now * 25) % 85;
         this.ctx.fillRect(sx, sy, 2, 2);
       }
     } else if (cityId === "cairo") {
-      this.ctx.fillStyle = "rgba(251, 191, 36, 0.45)";
-      for (let i = 0; i < 14; i++) {
-        const sx = (i * 47) % 240;
-        const sy = (i * 29) % 80;
+      this.ctx.fillStyle = "rgba(251, 191, 36, 0.50)";
+      for (let i = 0; i < 16; i++) {
+        const sx = (i * 47 + now * 65) % 240;
+        const sy = (i * 29 + Math.sin(now * 2 + i) * 4) % 80;
         this.ctx.fillRect(sx, sy, 2, 1);
       }
     }
-  }
+
+    // Layer 4: Shimmering Water Reflections for coastal/river cities
+    const waterCities = ["london", "paris", "sydney", "rio", "sanfrancisco", "newyork"];
+    if (waterCities.includes(cityId)) {
+      this.ctx.fillStyle = "rgba(10, 25, 47, 0.65)";
+      this.ctx.fillRect(0, 80, 240, 8);
+      this.ctx.strokeStyle = "rgba(56, 189, 248, 0.35)";
+      this.ctx.lineWidth = 1;
+      for (let y = 82; y < 88; y += 2) {
+        this.ctx.beginPath();
+        for (let x = 0; x < 240; x += 18) {
+          const wx = x + Math.sin(now * 3 + y) * 4;
+          this.ctx.moveTo(wx, y);
+          this.ctx.lineTo(wx + 8, y);
+        }
+        this.ctx.stroke();
+      }
+    }
 
   drawGradientSky(c1, c2, c3) {
     const sky = this.ctx.createLinearGradient(0, 0, 0, 82);
