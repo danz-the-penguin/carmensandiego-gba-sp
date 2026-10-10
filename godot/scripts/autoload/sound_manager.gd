@@ -38,22 +38,35 @@ func _input(event: InputEvent) -> void:
 		if event.keycode == KEY_M:
 			toggle_bgm()
 
+func _load_override(sound_name: String, fallback: AudioStream) -> AudioStream:
+	var path_wav = "res://assets/audio/%s.wav" % sound_name
+	var path_ogg = "res://assets/audio/%s.ogg" % sound_name
+	if ResourceLoader.exists(path_wav):
+		var res = load(path_wav)
+		if res is AudioStream:
+			return res
+	elif ResourceLoader.exists(path_ogg):
+		var res = load(path_ogg)
+		if res is AudioStream:
+			return res
+	return fallback
+
 func _cache_all_sounds() -> void:
-	wav_cursor = _create_tone_wav(440.0, 0.04, "square")
-	wav_confirm = _create_tone_wav(660.0, 0.07, "square")
-	wav_cancel = _create_tone_wav(260.0, 0.08, "square")
-	wav_blip = _create_tone_wav(900.0, 0.02, "triangle")
-	wav_shoulder = _create_tone_wav(700.0, 0.04, "triangle")
-	wav_light = _create_tone_wav(1000.0, 0.03, "square")
-	wav_clue = _create_tone_wav(587.3, 0.15, "square")
-	wav_travel = _create_tone_wav(150.0, 0.35, "noise")
-	wav_warrant = _create_tone_wav(880.0, 0.30, "square")
-	wav_victory = _create_tone_wav(1046.5, 0.45, "square")
-	wav_game_over = _create_tone_wav(196.0, 0.45, "triangle")
-	wav_impact = _create_impact_wav()
-	wav_cuffs = _create_cuffs_wav()
+	wav_cursor = _load_override("cursor", _create_tone_wav(440.0, 0.04, "square"))
+	wav_confirm = _load_override("confirm", _create_tone_wav(660.0, 0.07, "square"))
+	wav_cancel = _load_override("cancel", _create_tone_wav(260.0, 0.08, "square"))
+	wav_blip = _load_override("blip", _create_tone_wav(900.0, 0.02, "triangle"))
+	wav_shoulder = _load_override("shoulder", _create_tone_wav(700.0, 0.04, "triangle"))
+	wav_light = _load_override("light", _create_tone_wav(1000.0, 0.03, "square"))
+	wav_clue = _load_override("clue", _create_tone_wav(587.3, 0.15, "square"))
+	wav_travel = _load_override("travel", _create_tone_wav(150.0, 0.35, "noise"))
+	wav_warrant = _load_override("warrant", _create_tone_wav(880.0, 0.30, "square"))
+	wav_victory = _load_override("victory", _create_tone_wav(1046.5, 0.45, "square"))
+	wav_game_over = _load_override("game_over", _create_tone_wav(196.0, 0.45, "triangle"))
+	wav_impact = _load_override("impact", _create_impact_wav())
+	wav_cuffs = _load_override("cuffs", _create_cuffs_wav())
 	
-	wav_bgm = _create_detective_bgm()
+	wav_bgm = _load_override("bgm", _create_detective_bgm())
 	bgm_player.stream = wav_bgm
 	start_bgm()
 
