@@ -226,7 +226,7 @@ class GBAGraphicsRenderer {
   }
 
   // --- Vibrant 15-Bit GBA City Skylines ---
-  drawCitySkyline(cityId) {
+  drawCitySkyline(cityId, hourOfDay) {
     this.currentCityId = cityId;
     this.setResolution(240, 88);
     this.clear();
@@ -235,7 +235,7 @@ class GBAGraphicsRenderer {
       const img = new Image();
       img.src = `assets/cities/${cityId}.png`;
       img.onload = () => {
-        if (this.currentCityId === cityId) this.drawCitySkyline(cityId);
+        if (this.currentCityId === cityId) this.drawCitySkyline(cityId, hourOfDay);
       };
       this.cityImages[cityId] = img;
     }
@@ -243,6 +243,7 @@ class GBAGraphicsRenderer {
     if (raster && raster.complete && raster.naturalWidth > 0) {
       this.ctx.imageSmoothingEnabled = false;
       this.ctx.drawImage(raster, 0, 0, 240, 88);
+      this.applyAtmosphere(cityId, hourOfDay);
       return;
     }
 
@@ -534,6 +535,54 @@ class GBAGraphicsRenderer {
         this.ctx.fillStyle = "#334155";
         this.ctx.fillRect(0, 78, 240, 10);
         break;
+    }
+    this.applyAtmosphere(cityId, hourOfDay);
+  }
+
+  applyAtmosphere(cityId, hourOfDay) {
+    const h = hourOfDay !== undefined ? hourOfDay : 12;
+    if (h >= 17 && h < 20) {
+      // Sunset glow
+      this.ctx.fillStyle = "rgba(249, 115, 22, 0.22)";
+      this.ctx.fillRect(0, 0, 240, 88);
+    } else if (h >= 20 || h < 6) {
+      // Night shadow & stars
+      this.ctx.fillStyle = "rgba(10, 15, 30, 0.50)";
+      this.ctx.fillRect(0, 0, 240, 88);
+      this.ctx.fillStyle = "#fef08a";
+      for (let i = 0; i < 18; i++) {
+        const sx = (i * 43) % 236 + 2;
+        const sy = (i * 23) % 36 + 2;
+        this.ctx.fillRect(sx, sy, 1, 1);
+      }
+    }
+
+    // Retro Weather
+    if (cityId === "london" || cityId === "tokyo") {
+      this.ctx.strokeStyle = "rgba(147, 197, 253, 0.45)";
+      this.ctx.lineWidth = 1;
+      this.ctx.beginPath();
+      for (let i = 0; i < 18; i++) {
+        const rx = (i * 37) % 240;
+        const ry = (i * 23) % 80;
+        this.ctx.moveTo(rx, ry);
+        this.ctx.lineTo(rx - 3, ry + 6);
+      }
+      this.ctx.stroke();
+    } else if (cityId === "moscow" || cityId === "reykjavik") {
+      this.ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+      for (let i = 0; i < 16; i++) {
+        const sx = (i * 39) % 240;
+        const sy = (i * 19) % 85;
+        this.ctx.fillRect(sx, sy, 2, 2);
+      }
+    } else if (cityId === "cairo") {
+      this.ctx.fillStyle = "rgba(251, 191, 36, 0.45)";
+      for (let i = 0; i < 14; i++) {
+        const sx = (i * 47) % 240;
+        const sy = (i * 29) % 80;
+        this.ctx.fillRect(sx, sy, 2, 1);
+      }
     }
   }
 

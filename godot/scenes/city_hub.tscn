@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://b8f4m9q3p5x1"]
+[gd_scene load_steps=3 format=3 uid="uid://b8f4m9q3p5x1"]
 
 [ext_resource type="Script" path="res://scripts/city_hub.gd" id="1_hub"]
+[ext_resource type="Script" path="res://scripts/weather_overlay.gd" id="2_weather"]
 
 [node name="CityHub" type="Control"]
 layout_mode = 3
@@ -30,6 +31,13 @@ offset_right = 480.0
 offset_bottom = 144.0
 expand_mode = 1
 stretch_mode = 6
+
+[node name="WeatherOverlay" type="Control" parent="SkylineView"]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 144.0
+mouse_filter = 2
+script = ExtResource("2_weather")
 
 [node name="CityBanner" type="Panel" parent="SkylineView"]
 layout_mode = 0
@@ -296,4 +304,109 @@ offset_bottom = 146.0
 theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
 theme_override_font_sizes/font_size = 8
 text = "CONNECTING TO LOCAL ACME FIELD OFFICE..."
+horizontal_alignment = 1
+
+[node name="FlashOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0.9)
+
+[node name="ArrestOverlay" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Card" type="Panel" parent="ArrestOverlay"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 16.0
+offset_right = 460.0
+offset_bottom = 304.0
+
+[node name="Title" type="Label" parent="ArrestOverlay/Card"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 430.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(1, 0.25, 0.35, 1)
+theme_override_font_sizes/font_size = 11
+text = "★ SUSPECT CORNERED! ★"
+horizontal_alignment = 1
+
+[node name="SubTitle" type="Label" parent="ArrestOverlay/Card"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 30.0
+offset_right = 430.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(0.3, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 8
+text = "ACME APPREHENSION PROTOCOL INITIATED"
+horizontal_alignment = 1
+
+[node name="PortraitBox" type="Panel" parent="ArrestOverlay/Card"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 54.0
+offset_right = 124.0
+offset_bottom = 158.0
+
+[node name="Portrait" type="TextureRect" parent="ArrestOverlay/Card/PortraitBox"]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DetailsLabel" type="RichTextLabel" parent="ArrestOverlay/Card"]
+layout_mode = 0
+offset_left = 136.0
+offset_top = 54.0
+offset_right = 424.0
+offset_bottom = 174.0
+theme_override_font_sizes/normal_font_size = 8
+bbcode_enabled = true
+text = "Closing in on suspect..."
+
+[node name="StampLabel" type="Label" parent="ArrestOverlay/Card"]
+visible = false
+layout_mode = 0
+offset_left = 12.0
+offset_top = 184.0
+offset_right = 428.0
+offset_bottom = 214.0
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 12
+text = "★ APPREHENDED & CUFFED ★"
+horizontal_alignment = 1
+
+[node name="ContinueHint" type="Label" parent="ArrestOverlay/Card"]
+visible = false
+layout_mode = 0
+offset_left = 12.0
+offset_top = 236.0
+offset_right = 428.0
+offset_bottom = 256.0
+theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
+theme_override_font_sizes/font_size = 8
+text = "PRESS [A] OR SPACE TO CONTINUE"
 horizontal_alignment = 1

@@ -18,6 +18,8 @@ var wav_travel: AudioStreamWAV
 var wav_warrant: AudioStreamWAV
 var wav_victory: AudioStreamWAV
 var wav_game_over: AudioStreamWAV
+var wav_impact: AudioStreamWAV
+var wav_cuffs: AudioStreamWAV
 var wav_bgm: AudioStreamWAV
 
 func _ready() -> void:
@@ -48,6 +50,8 @@ func _cache_all_sounds() -> void:
 	wav_warrant = _create_tone_wav(880.0, 0.30, "square")
 	wav_victory = _create_tone_wav(1046.5, 0.45, "square")
 	wav_game_over = _create_tone_wav(196.0, 0.45, "triangle")
+	wav_impact = _create_impact_wav()
+	wav_cuffs = _create_cuffs_wav()
 	
 	wav_bgm = _create_detective_bgm()
 	bgm_player.stream = wav_bgm
@@ -184,3 +188,46 @@ func play_travel() -> void: play_sfx(wav_travel)
 func play_warrant() -> void: play_sfx(wav_warrant)
 func play_victory() -> void: play_sfx(wav_victory)
 func play_game_over() -> void: play_sfx(wav_game_over)
+func play_impact() -> void: play_sfx(wav_impact)
+func play_cuffs() -> void: play_sfx(wav_cuffs)
+
+func _create_impact_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.35
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	var freq := 120.0
+	var phase := 0.0
+	for i in range(sample_count):
+		var t := float(i) / float(sample_count)
+		var env := pow(1.0 - t, 2.0)
+		var f := freq * (1.0 - t * 0.6)
+		phase = fmod(phase + (f / wav.mix_rate), 1.0)
+		var tone := (1.0 if phase < 0.5 else -1.0) * 0.7
+		var noise := randf_range(-1.0, 1.0) * (0.8 if t < 0.15 else 0.1)
+		var mix := (tone + noise) * env
+		data[i] = int(clampi(int(128 + mix * 120.0), 0, 255))
+	wav.data = data
+	return wav
+
+func _create_cuffs_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.22
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	for i in range(sample_count):
+		var t := float(i) / float(sample_count)
+		var click1 := 1.0 if (i < 300 or (i > 800 and i < 1200)) else 0.0
+		var env := pow(1.0 - t, 3.0)
+		var tone := sin(float(i) * 0.35) * click1 * env
+		data[i] = int(clampi(int(128 + tone * 120.0), 0, 255))
+	wav.data = data
+	return wav

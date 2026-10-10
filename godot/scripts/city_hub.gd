@@ -26,6 +26,14 @@ extends Control
 @onready var flight_route: Label = $FlightOverlay/RadarBox/FlightRoute
 @onready var flight_status: Label = $FlightOverlay/RadarBox/FlightStatus
 
+@onready var weather_overlay: Control = $SkylineView/WeatherOverlay
+@onready var flash_overlay: ColorRect = $FlashOverlay
+@onready var arrest_overlay: Panel = $ArrestOverlay
+@onready var arrest_portrait: TextureRect = $ArrestOverlay/Card/PortraitBox/Portrait
+@onready var arrest_details: RichTextLabel = $ArrestOverlay/Card/DetailsLabel
+@onready var arrest_stamp: Label = $ArrestOverlay/Card/StampLabel
+@onready var arrest_hint: Label = $ArrestOverlay/Card/ContinueHint
+
 var action_buttons: Array[Button] = []
 var current_menu_index: int = 0
 var subscreen_mode: String = ""
@@ -37,6 +45,10 @@ var typewriter_timer: float = 0.0
 var is_case_ended: bool = false
 var _alert_regexes: Array[RegEx] = []
 var _trait_regexes: Array[RegEx] = []
+
+var shake_timer: float = 0.0
+var shake_intensity: float = 0.0
+var original_pos: Vector2 = Vector2.ZERO
 
 const FILTER_SEX = ["ANY", "Female", "Male"]
 const FILTER_HAIR = ["ANY", "Red", "Black", "Blonde", "Brown"]
@@ -76,6 +88,8 @@ func _ready() -> void:
 	GameManager.clue_found.connect(_on_clue_found)
 	GameManager.case_resolved.connect(_on_case_resolved)
 
+	original_pos = position
+
 	if Database.CITIES.has(GameManager.current_city_id):
 		_update_city_view(Database.CITIES[GameManager.current_city_id])
 	GameManager.broadcast_time()
@@ -88,6 +102,12 @@ func _ready() -> void:
 	show_dialog("[ACME CHIEF]", "URGENT BRIEFING: %s was stolen from %s! You have %d hours to track down the suspect and secure a warrant!" % [GameManager.current_treasure, city_name, GameManager.hours_left], "chief")
 
 func _process(delta: float) -> void:
+	if shake_timer > 0.0:
+		shake_timer -= delta
+		position = original_pos + Vector2(randf_range(-shake_intensity, shake_intensity), randf_range(-shake_intensity, shake_intensity))
+		if shake_timer <= 0.0:
+			position = original_pos
+
 	if is_typing:
 		typewriter_timer += delta
 		if typewriter_timer >= 0.02:
@@ -98,8 +118,13 @@ func _process(delta: float) -> void:
 					dialog_label.visible_characters += 1
 					if dialog_label.visible_characters % 2 == 0:
 						SoundManager.play_text_blip()
+					# 2010s Handheld Talking Bob / Flap
+					portrait_rect.position.y = 11.0 if (dialog_label.visible_characters % 4 in [1, 2]) else 12.0
 				else:
 					is_typing = false
+					portrait_rect.position.y = 12.0
+	else:
+		portrait_rect.position.y = 12.0
 
 func _input(event: InputEvent) -> void:
 	if flight_overlay.visible:
@@ -223,11 +248,54 @@ func _update_city_view(city_data: Dictionary) -> void:
 		if tex is Texture2D:
 			skyline_sprite.texture = tex
 
-	var sky_rect = get_node_or_null("SkylineView/SkyBg")
-	if sky_rect is ColorRect:
-		sky_rect.color = CITY_PALETTES.get(city_data["id"], Color(0.08, 0.11, 0.19))
-
+	_apply_time_of_day_lighting(city_id)
 	_update_trail_heat()
+
+func _apply_time_of_day_lighting(city_id: String) -> void:
+	var h = GameManager.hour_of_day
+	var base_palette: Color = CITY_PALETTES.get(city_id, Color(0.10, 0.14, 0.22))
+	var sky_rect = get_node_or_null("SkylineView/SkyBg")
+	
+	var sky_color: Color
+	var sprite_tint: Color
+	
+	if h >= 6 and h < 11:
+		# Morning sunrise: golden-blue warmth
+		sky_color = base_palette.lerp(Color(0.24, 0.42, 0.68), 0.5)
+		sprite_tint = Color(1.0, 0.96, 0.88)
+	elif h >= 11 and h < 17:
+		# Crisp daylight: vibrant
+		sky_color = base_palette.lerp(Color(0.14, 0.35, 0.62), 0.4)
+		sprite_tint = Color(1.0, 1.0, 1.0)
+	elif h >= 17 and h < 20:
+		# Sunset / Twilight: deep amber/crimson dusk
+		sky_color = base_palette.lerp(Color(0.48, 0.18, 0.18), 0.6)
+		sprite_tint = Color(1.0, 0.78, 0.65)
+	else:
+		# Midnight / Night: deep midnight navy
+		sky_color = base_palette.lerp(Color(0.04, 0.06, 0.14), 0.7)
+		sprite_tint = Color(0.45, 0.52, 0.75)
+		
+	if sky_rect is ColorRect:
+		sky_rect.color = sky_color
+	if skyline_sprite:
+		skyline_sprite.modulate = sprite_tint
+		
+	if weather_overlay and weather_overlay.has_method("set_city_weather"):
+		weather_overlay.set_city_weather(city_id, h)
+
+func shake_screen(intensity: float = 3.0, duration: float = 0.25) -> void:
+	shake_intensity = intensity
+	shake_timer = duration
+
+func flash_screen(color: Color = Color.WHITE, duration: float = 0.15) -> void:
+	if not flash_overlay:
+		return
+	flash_overlay.color = color
+	flash_overlay.visible = true
+	var tw = create_tween()
+	tw.tween_property(flash_overlay, "modulate:a", 0.0, duration).from(1.0)
+	tw.tween_callback(func(): flash_overlay.visible = false)
 
 func _update_trail_heat() -> void:
 	if GameManager.current_trail.is_empty():
@@ -245,6 +313,7 @@ func _update_trail_heat() -> void:
 func _on_time_updated(hours: int, day_str: String, time_str: String) -> void:
 	clock_label.text = "%s %s" % [day_str, time_str]
 	hours_label.text = "%dH LEFT" % hours
+	_apply_time_of_day_lighting(GameManager.current_city_id)
 
 func _on_clue_found(clue: String) -> void:
 	pass
@@ -425,14 +494,69 @@ func _handle_investigation(place_index: int) -> void:
 	# Check if final hideout reached
 	if GameManager.current_city_id == GameManager.current_trail[-1]:
 		if GameManager.warrant_suspect.is_empty():
+			SoundManager.play_cancel()
+			shake_screen(2.0, 0.2)
 			var warn_text = "%s\n\n[color=#f87171][b]WARNING: Suspect spotted nearby! You do NOT have an arrest warrant yet! Open Crime Computer [R] and secure a warrant before arresting![/b][/color]" % clue_text
 			show_dialog("[WITNESS: %s]" % witness_role.to_upper(), warn_text, portrait_id)
 		else:
-			show_dialog("[ACME DISPATCH]", "WARRANT VERIFIED FOR %s! Closing in on the hideout for the arrest..." % GameManager.warrant_suspect["name"], "chief")
-			await get_tree().create_timer(1.8).timeout
-			GameManager.attempt_arrest()
+			_trigger_dramatic_arrest()
 	else:
 		show_dialog("[WITNESS: %s]" % witness_role.to_upper(), clue_text, portrait_id)
+
+func _trigger_dramatic_arrest() -> void:
+	var criminal = GameManager.current_criminal
+	var warrant = GameManager.warrant_suspect
+	var is_correct = (warrant.get("id") == criminal.get("id"))
+
+	# 1. Dramatic Impact Sting & Screen Flash + Shake
+	SoundManager.play_impact()
+	shake_screen(6.0, 0.45)
+	flash_screen(Color(1.0, 0.2, 0.2, 0.85), 0.25)
+
+	# 2. Show Arrest Overlay
+	subscreen_panel.visible = false
+	arrest_overlay.visible = true
+	arrest_stamp.visible = false
+	arrest_hint.visible = false
+
+	var portrait_id = criminal.get("id", "carmen")
+	arrest_portrait.texture = PortraitManager.get_portrait(portrait_id)
+	
+	if is_correct:
+		var quote = criminal.get("quote", "Curses! Foiled again!")
+		arrest_details.text = "[b]%s CORNERED![/b]\n\n\"%s\"\n\n[color=#fbbf24]Warrant verified. ACME tactical backup has surrounded the hideout![/color]" % [criminal.get("name", "SUSPECT"), quote]
+		
+		# 3. Metallic handcuffs snap after 1.1s
+		await get_tree().create_timer(1.1).timeout
+		SoundManager.play_cuffs()
+		shake_screen(3.5, 0.25)
+		arrest_stamp.text = "★ APPREHENDED & CUFFED ★"
+		arrest_stamp.visible = true
+
+		# 4. Fanfare & promotion resolution after 0.8s
+		await get_tree().create_timer(0.8).timeout
+		GameManager.cases_solved += 1
+		GameManager.save_profile()
+		GameManager.update_rank()
+		SoundManager.play_victory()
+		arrest_details.text += "\n\n[color=#34d399][b]CASE SOLVED![/b][/color] %s recovered!\n[color=#38bdf8]Rank: %s (%d solved)[/color]" % [GameManager.current_treasure, GameManager.current_rank["title"], GameManager.cases_solved]
+		arrest_hint.visible = true
+		is_case_ended = true
+		GameManager.current_state = GameManager.State.ARREST
+	else:
+		# Blunder! Warrant was for wrong suspect!
+		var quote = criminal.get("quote", "You'll never catch me!")
+		arrest_details.text = "[b]BLUNDER AT THE HIDEOUT![/b]\n\n\"%s\"\n\n[color=#f87171]Your warrant was for %s, but the thief was %s!\nWithout a valid warrant, the criminal slipped away into the shadows![/color]" % [quote, warrant.get("name", "UNKNOWN"), criminal.get("name", "SUSPECT")]
+		
+		await get_tree().create_timer(1.0).timeout
+		SoundManager.play_game_over()
+		shake_screen(3.0, 0.3)
+		arrest_stamp.text = "✖ CASE FAILED — SUSPECT ESCAPED ✖"
+		arrest_stamp.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+		arrest_stamp.visible = true
+		arrest_hint.visible = true
+		is_case_ended = true
+		GameManager.current_state = GameManager.State.GAMEOVER
 
 func _handle_departure(dest_id: String) -> void:
 	var orig_name = Database.CITIES[GameManager.current_city_id]["name"]

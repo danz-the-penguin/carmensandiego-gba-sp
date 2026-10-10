@@ -203,7 +203,7 @@ class GBACarmenGameEngine {
     this.state = "CITY_HUB";
     this.subscreenMode = null;
     const city = CITIES_DATA[this.currentCityId];
-    this.renderer.drawCitySkyline(city.skyline);
+    this.renderer.drawCitySkyline(city.skyline, this.hourOfDay);
     this.updateTimeDisplay();
 
     // Check if player arrived in final city
@@ -488,6 +488,11 @@ class GBACarmenGameEngine {
   attemptArrest() {
     this.state = "ARREST";
     const criminal = this.currentCase.criminal;
+    const lcd = document.getElementById("lcd-screen");
+    if (lcd) {
+      lcd.classList.add("screen-shake");
+      setTimeout(() => lcd.classList.remove("screen-shake"), 350);
+    }
 
     if (this.warrantSuspect && this.warrantSuspect.id === criminal.id) {
       this.audio.victory();

@@ -5,6 +5,8 @@
 # Build binaries and macOS DMGs (exceeds GitHub 100MB limit)
 build/
 *.dmg
+*.pck
+
 
 # OS artifacts
 .DS_Store
