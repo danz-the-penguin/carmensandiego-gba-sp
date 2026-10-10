@@ -226,10 +226,14 @@ class GBACarmenGameEngine {
     this.renderer.drawCitySkyline(city.skyline, this.hourOfDay);
     this.updateTimeDisplay();
 
-    // Check if player arrived in final city
-    if (this.currentCityId === this.currentCase.finalCity) {
+    // Check if player arrived in final city or cold trail
+    const trail = this.currentCase.trail;
+    if (!trail.includes(this.currentCityId)) {
+      this.audio.cancel();
+      this.setDialog(`[ACME ALERT: COLD TRAIL] Local Interpol branches in ${city.name} report ZERO suspect activity! You are off the trail! Use the ACME Casebook [L] or deploy GPS Tracer [G] to reacquire the target!`);
+    } else if (this.currentCityId === this.currentCase.finalCity) {
       this.audio.suspenseEncounter();
-      this.setDialog(`You are in ${city.name}! The suspect is near! Check your warrant before closing in!`);
+      this.setDialog(`[ACME DISPATCH: CORNERED!] Visual confirmation! Suspect is hiding in ${city.name} right now! Secure an arrest warrant [R] and investigate the hideout!`);
     } else {
       this.setDialog(`Arrived in ${city.name}. Question witnesses or check connections.`);
     }
@@ -410,19 +414,101 @@ class GBACarmenGameEngine {
       : "WARRANT: NONE ISSUED YET";
 
     const items = [
-      { title: warrantTitle },
-      { title: `★ STOLEN TREASURE: ${this.currentCase.treasure}` },
-      { title: "⚡ [G] ACME GADGET BELT (Deploy Gadgets)", action: "gadgets" },
+      { title: `★ STATUS: ${warrantTitle} | STOLEN: ${this.currentCase.treasure}` },
+      { title: "⚡ [G] ACME GADGET BELT (Deploy GPS, UV, Polygraph, Lockpick)", action: "gadgets" },
       { title: "🏛 [V] EVIDENCE HALL & MUSEUM (Recovered Relics)", action: "museum" },
-      { title: "--- GATHERED WITNESS CLUES ---" },
-      ...this.cluesGathered.map((c) => ({ title: `> ${c}` }))
+      { title: "--- 🎯 DEDUCTION MATRIX: SUSPECT PROBABILITY ---" }
     ];
 
+    const gatheredLower = this.cluesGathered.join(" ").toLowerCase();
+    const suspectScores = [];
+
+    SUSPECTS_DATA.forEach((s) => {
+      const matchedTraits = [];
+      const conflictTraits = [];
+
+      // Check sex
+      if (gatheredLower.includes("she ") || gatheredLower.includes("her ")) {
+        if (s.sex.toLowerCase() === "female") {
+          matchedTraits.push("Sex: Female");
+        } else {
+          conflictTraits.push("Sex (Male)");
+        }
+      } else if (gatheredLower.includes("he ") || gatheredLower.includes("him ") || gatheredLower.includes("his ")) {
+        if (s.sex.toLowerCase() === "male") {
+          matchedTraits.push("Sex: Male");
+        } else {
+          conflictTraits.push("Sex (Female)");
+        }
+      }
+
+      // Check hair
+      if (gatheredLower.includes(s.hair.toLowerCase() + " hair") || gatheredLower.includes("dyed " + s.hair.toLowerCase())) {
+        matchedTraits.push("Hair: " + s.hair);
+      } else if (gatheredLower.includes("red hair") || gatheredLower.includes("black hair") || gatheredLower.includes("blonde hair") || gatheredLower.includes("brown hair")) {
+        conflictTraits.push("Hair");
+      }
+
+      // Check vehicle
+      if (gatheredLower.includes(s.vehicle.toLowerCase())) {
+        matchedTraits.push("Vehicle: " + s.vehicle);
+      } else if (gatheredLower.includes("convertible") || gatheredLower.includes("motorcycle") || gatheredLower.includes("limousine")) {
+        conflictTraits.push("Vehicle");
+      }
+
+      // Check hobby
+      if (gatheredLower.includes(s.hobby.toLowerCase())) {
+        matchedTraits.push("Hobby: " + s.hobby);
+      }
+
+      // Check feature
+      if (gatheredLower.includes(s.feature.toLowerCase())) {
+        matchedTraits.push("Feature: " + s.feature);
+      }
+
+      let score = matchedTraits.length * 25;
+      if (conflictTraits.length > 0) score = 0;
+
+      suspectScores.push({
+        suspect: s,
+        score: score,
+        matched: matchedTraits,
+        conflict: conflictTraits
+      });
+    });
+
+    suspectScores.sort((a, b) => b.score - a.score);
+
+    suspectScores.forEach((entry) => {
+      const s = entry.suspect;
+      const score = entry.score;
+      const prefix = score >= 50 ? "★" : (score > 0 ? "●" : "✖");
+      let note = "";
+      if (score > 0) {
+        note = `[${score}% MATCH] ${entry.matched.join(", ")} (Click to load in Crime Comp)`;
+      } else if (entry.conflict.length > 0) {
+        note = `[ELIMINATED] Conflicts: ${entry.conflict.join(", ")}`;
+      } else {
+        note = `[POSSIBLE] No direct clues yet`;
+      }
+      items.push({
+        title: `${prefix} ${s.name} - ${note}`,
+        action: "load_suspect",
+        suspect: s
+      });
+    });
+
+    items.push({ title: "--- 📑 ACTIVE CLUE & INTERCEPT LOG ---" });
     if (this.cluesGathered.length === 0) {
-      items.push({ title: "No clues gathered yet. Question witnesses in town!" });
+      items.push({ title: "No clues gathered yet. Question witnesses or scan crime scenes!" });
+    } else {
+      this.cluesGathered.forEach((c) => {
+        items.push({ title: `> ${c}` });
+      });
     }
 
-    this.renderSubscreen("CASE DOSSIER & GEAR [L]", items);
+    this.subscreenOptions = items;
+    this.renderSubscreen("ACME CASEBOOK & DEDUCTION MATRIX [L]", items);
   }
 
   openGadgets() {
@@ -724,6 +810,17 @@ class GBACarmenGameEngine {
       } else if (opt && opt.action === "museum") {
         this.openMuseum();
         return;
+      } else if (opt && opt.action === "load_suspect" && opt.suspect) {
+        const s = opt.suspect;
+        this.computerFilters = {
+          sex: s.sex || null,
+          hair: s.hair || null,
+          vehicle: s.vehicle || null,
+          hobby: s.hobby || null,
+          feature: s.feature || null
+        };
+        this.openCrimeComputerSubscreen();
+        return;
       }
       this.closeSubscreen();
       return;
@@ -744,17 +841,26 @@ class GBACarmenGameEngine {
       // Spend 2 hours
       if (!this.spendHours(2)) return;
 
+      const isCold = !this.currentCase.trail.includes(this.currentCityId);
       let clueText = "";
-      if (this.currentCase.trail.includes(this.currentCityId)) {
+      if (isCold) {
+        clueText = `COLD TRAIL! Local authorities in ${CITIES_DATA[this.currentCityId].name} confirm zero suspect activity matching V.I.L.E. Backtrack to your previous city!`;
+      } else {
         const cityClues = this.currentCase.clues[this.currentCityId];
         clueText = cityClues[placeOpt.index % cityClues.length];
-      } else {
-        const deadEnds = [
-          `"Nobody matching that description was seen here! You've lost the trail!"`,
-          `"Never heard of them. Maybe check other international transit hubs?"`,
-          `"A dead end, detective! No suspicious sightings reported in this city."`
-        ];
-        clueText = deadEnds[placeOpt.index % deadEnds.length];
+
+        // Cross-examination & double agent breakdown mechanic (28% chance on valid clues)
+        if (Math.random() < 0.28) {
+          const s = this.currentCase.criminal;
+          const traitsList = [
+            `Confessed: 'They drove off in a flashy ${s.vehicle}!'`,
+            `Broke down during cross-examination: 'I saw ${s.hair} hair under their disguise!'`,
+            `Admitted under pressure: 'They wouldn't stop talking about ${s.hobby}!'`,
+            `Slipped up: 'They definitely wore a ${s.feature}!'`
+          ];
+          const bonus = traitsList[Math.floor(Math.random() * traitsList.length)];
+          clueText += `\n\n⚡ CROSS-EXAMINATION SUCCESS: Witness cracked under intense questioning: "${bonus}"`;
+        }
       }
 
       this.audio.clueFound();

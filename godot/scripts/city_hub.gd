@@ -297,7 +297,16 @@ func _highlight_bbcode(text: String) -> String:
 
 func _on_city_changed(city_data: Dictionary) -> void:
 	_update_city_view(city_data)
-	show_dialog("[ACME DISPATCH]", "Arrived in %s. Check transit connections or question local witnesses." % city_data["name"], "chief")
+	var trail = GameManager.current_trail
+	var city_id = city_data["id"]
+	if not trail.has(city_id):
+		SoundManager.play_cancel()
+		show_dialog("[ACME ALERT: COLD TRAIL]", "WARNING: Local Interpol branches in %s report ZERO suspect activity! You are off the trail! Use the ACME Casebook [L] or deploy GPS Tracer [G] to reacquire the target!" % city_data["name"], "chief")
+	elif city_id == trail[-1]:
+		SoundManager.play_impact()
+		show_dialog("[ACME DISPATCH: CORNERED!]", "ATTENTION GUMSHOE: Visual confirmation! Suspect is hiding in THIS city right now! Obtain an arrest warrant [R] and investigate the hideout!", "chief")
+	else:
+		show_dialog("[ACME DISPATCH]", "Arrived in %s. Check transit connections or question local witnesses." % city_data["name"], "chief")
 
 func _update_city_view(city_data: Dictionary) -> void:
 	city_title_label.text = "%s, %s" % [city_data["name"], city_data["country"].to_upper()]
@@ -459,19 +468,95 @@ func _refresh_computer_labels() -> void:
 
 func open_dossier() -> void:
 	subscreen_mode = "dossier"
-	subscreen_title.text = "DETECTIVE DOSSIER & CASE NOTES"
+	subscreen_title.text = "ACME CASEBOOK & DEDUCTION MATRIX [L]"
 	var items: Array[Dictionary] = []
 	var warrant_txt = "WARRANT: %s" % (GameManager.warrant_suspect["name"] if not GameManager.warrant_suspect.is_empty() else "NONE ISSUED")
-	items.append({"action": "none", "text": "★ " + warrant_txt})
-	items.append({"action": "none", "text": "★ STOLEN TREASURE: %s" % GameManager.current_treasure})
-	items.append({"action": "gadgets", "text": "⚡ [G] ACME GADGET BELT (Deploy Tactical Gadgets)"})
+	items.append({"action": "none", "text": "★ STATUS: %s | STOLEN: %s" % [warrant_txt, GameManager.current_treasure]})
+	items.append({"action": "gadgets", "text": "⚡ [G] ACME GADGET BELT (Deploy GPS, UV, Polygraph, Lockpick)"})
 	items.append({"action": "museum", "text": "🏛 [M] EVIDENCE HALL & MUSEUM (Recovered Relics)"})
-	items.append({"action": "none", "text": "--- GATHERED WITNESS CLUES ---"})
+	
+	# SECTION 1: SUSPECT DEDUCTION PROBABILITY MATRIX
+	items.append({"action": "none", "text": "--- 🎯 DEDUCTION MATRIX: SUSPECT PROBABILITY ---"})
+	
+	var gathered_lower = ""
+	for c in GameManager.clues_gathered:
+		gathered_lower += " " + c.to_lower()
+		
+	var suspect_scores = []
+	for s in Database.SUSPECTS:
+		var matched_traits = []
+		var conflict_traits = []
+		
+		# Check sex
+		if gathered_lower.contains("she ") or gathered_lower.contains("her "):
+			if s["sex"].to_lower() == "female":
+				matched_traits.append("Sex: Female")
+			else:
+				conflict_traits.append("Sex (Male)")
+		elif gathered_lower.contains("he ") or gathered_lower.contains("him ") or gathered_lower.contains("his "):
+			if s["sex"].to_lower() == "male":
+				matched_traits.append("Sex: Male")
+			else:
+				conflict_traits.append("Sex (Female)")
+				
+		# Check hair
+		if gathered_lower.contains(s["hair"].to_lower() + " hair") or gathered_lower.contains("dyed " + s["hair"].to_lower()):
+			matched_traits.append("Hair: " + s["hair"])
+		elif (gathered_lower.contains("red hair") or gathered_lower.contains("black hair") or gathered_lower.contains("blonde hair") or gathered_lower.contains("brown hair")):
+			conflict_traits.append("Hair")
+			
+		# Check vehicle
+		if gathered_lower.contains(s["vehicle"].to_lower()):
+			matched_traits.append("Vehicle: " + s["vehicle"])
+		elif (gathered_lower.contains("convertible") or gathered_lower.contains("motorcycle") or gathered_lower.contains("limousine")):
+			conflict_traits.append("Vehicle")
+			
+		# Check hobby
+		if gathered_lower.contains(s["hobby"].to_lower()):
+			matched_traits.append("Hobby: " + s["hobby"])
+			
+		# Check feature
+		if gathered_lower.contains(s["feature"].to_lower()):
+			matched_traits.append("Feature: " + s["feature"])
+			
+		var score = matched_traits.size() * 25
+		if not conflict_traits.is_empty():
+			score = 0
+			
+		suspect_scores.append({
+			"suspect": s,
+			"score": score,
+			"matched": matched_traits,
+			"conflict": conflict_traits
+		})
+		
+	suspect_scores.sort_custom(func(a, b): return a["score"] > b["score"])
+	
+	for entry in suspect_scores:
+		var s = entry["suspect"]
+		var score = entry["score"]
+		var prefix = "★" if score >= 50 else ("●" if score > 0 else "✖")
+		var note = ""
+		if score > 0:
+			note = "[%d%% MATCH] %s (Click to load in Crime Comp)" % [score, ", ".join(entry["matched"])]
+		elif not entry["conflict"].is_empty():
+			note = "[ELIMINATED] Conflicts: %s" % ", ".join(entry["conflict"])
+		else:
+			note = "[POSSIBLE] No direct clues yet"
+		items.append({
+			"action": "load_suspect",
+			"suspect": s,
+			"text": "%s %s - %s" % [prefix, s["name"].to_upper(), note]
+		})
+		
+	# SECTION 2: GATHERED WITNESS CLUES ARCHIVE
+	items.append({"action": "none", "text": "--- 📑 ACTIVE CLUE & INTERCEPT LOG ---"})
 	if GameManager.clues_gathered.is_empty():
-		items.append({"action": "none", "text": "No clues gathered yet. Question local witnesses in town!"})
+		items.append({"action": "none", "text": "No clues logged yet. Question witnesses or scan crime scenes!"})
 	else:
 		for c in GameManager.clues_gathered:
 			items.append({"action": "none", "text": c})
+			
 	subscreen_data = items
 	var labels: Array[String] = []
 	for it in items:
@@ -653,6 +738,16 @@ func _confirm_subscreen(idx: int) -> void:
 				elif act == "museum":
 					open_museum()
 					return
+				elif act == "load_suspect":
+					var s = subscreen_data[idx].get("suspect", {})
+					if not s.is_empty():
+						GameManager.computer_filters["sex"] = s.get("sex", "")
+						GameManager.computer_filters["hair"] = s.get("hair", "")
+						GameManager.computer_filters["vehicle"] = s.get("vehicle", "")
+						GameManager.computer_filters["hobby"] = s.get("hobby", "")
+						GameManager.computer_filters["feature"] = s.get("feature", "")
+						open_crime_computer()
+						return
 			close_subscreen()
 		"gadgets":
 			if idx < subscreen_data.size() and subscreen_data[idx] is Dictionary:
@@ -681,12 +776,27 @@ func _handle_investigation(place_index: int) -> void:
 		if is_case_ended:
 			return
 
+	var is_cold = not GameManager.current_trail.has(GameManager.current_city_id)
 	var clue_text := ""
-	if GameManager.current_clues.has(GameManager.current_city_id):
+	if is_cold:
+		clue_text = "COLD TRAIL! Local authorities confirm no suspicious international travel matching V.I.L.E. here. Backtrack to the previous city!"
+	elif GameManager.current_clues.has(GameManager.current_city_id):
 		var city_clues: Array = GameManager.current_clues[GameManager.current_city_id]
 		clue_text = city_clues[place_index % city_clues.size()]
 	else:
 		clue_text = "Nobody matching that description was seen here! You've lost the trail!"
+
+	# Cross-examination & double agent breakdown mechanic (28% chance on valid clues)
+	if not is_cold and randf() < 0.28:
+		var s = GameManager.current_criminal
+		var traits_list = [
+			"Confessed: 'They drove off in a flashy %s!'" % s.get("vehicle", "limousine"),
+			"Broke down during cross-examination: 'I saw %s hair under their disguise!'" % s.get("hair", "brown"),
+			"Admitted under pressure: 'They wouldn't stop talking about %s!'" % s.get("hobby", "tennis"),
+			"Slipped up: 'They definitely wore a %s!'" % s.get("feature", "ruby ring")
+		]
+		var bonus_trait: String = traits_list.pick_random()
+		clue_text += "\n\n[color=#38bdf8][b]⚡ CROSS-EXAMINATION SUCCESS:[/b] Witness cracked under intense questioning: \"%s\"[/color]" % bonus_trait
 
 	SoundManager.play_clue()
 	var full_clue := "[%s] %s" % [city["name"], clue_text]
