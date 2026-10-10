@@ -14,15 +14,10 @@ func _ready() -> void:
 func _apply_window_scale() -> void:
 	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_WINDOWED:
 		var screen_rect = DisplayServer.screen_get_usable_rect()
-		# Pick optimal large size based on user's monitor resolution:
-		# If monitor height >= 1000px: 1440x960 (3x integer)
-		# If monitor height >= 850px: 1200x800 (2.5x modern retro)
-		# Otherwise: 960x640 (2x)
-		var target_size = Vector2i(960, 640)
-		if screen_rect.size.y >= 1050 and screen_rect.size.x >= 1500:
-			target_size = Vector2i(1440, 960)
-		elif screen_rect.size.y >= 850 and screen_rect.size.x >= 1250:
-			target_size = Vector2i(1200, 800)
+		# Standard 1280x720 HD 16:9 window scale
+		var target_size = Vector2i(1280, 720)
+		if screen_rect.size.y >= 1200 and screen_rect.size.x >= 2000:
+			target_size = Vector2i(1920, 1080)
 		
 		DisplayServer.window_set_size(target_size)
 		DisplayServer.window_set_position(screen_rect.position + (screen_rect.size - target_size) / 2)
@@ -38,11 +33,11 @@ func _input(event: InputEvent) -> void:
 				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_F1:
-			_set_window_size(Vector2i(960, 640))
+			_set_window_size(Vector2i(1280, 720))
 		elif event.keycode == KEY_F2:
-			_set_window_size(Vector2i(1200, 800))
+			_set_window_size(Vector2i(1920, 1080))
 		elif event.keycode == KEY_F3:
-			_set_window_size(Vector2i(1440, 960))
+			_set_window_size(Vector2i(2560, 1440))
 
 func _set_window_size(target_size: Vector2i) -> void:
 	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_WINDOWED:

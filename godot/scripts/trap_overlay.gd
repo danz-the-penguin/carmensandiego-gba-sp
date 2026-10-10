@@ -40,8 +40,8 @@ func trigger_trap(type: String) -> void:
 	# Initialize smoke particles if smoke trap
 	smoke_particles.clear()
 	if trap_type == "smoke":
-		for i in range(40):
-			smoke_particles.append(Vector2(randf_range(0, 480), randf_range(40, 280)))
+		for i in range(70):
+			smoke_particles.append(Vector2(randf_range(0, 1280), randf_range(50, 670)))
 			
 	_setup_trap_ui()
 	queue_redraw()
@@ -168,11 +168,11 @@ func _draw() -> void:
 	if trap_type == "smoke":
 		# Render thick smoke cloud circles
 		for pt in smoke_particles:
-			draw_circle(pt, randf_range(16.0, 32.0), Color(0.25, 0.22, 0.32, 0.45))
+			draw_circle(pt, randf_range(32.0, 68.0), Color(0.25, 0.22, 0.32, 0.45))
 	elif trap_type == "blackout":
 		# Render blackout darkness with red emergency strobe
-		draw_rect(Rect2(0, 32, 480, 256), Color(0.01, 0.01, 0.02, 0.94))
-		draw_rect(Rect2(20, 40, 440, 240), Color(0.8, 0.1, 0.1, 0.15 * flicker_val))
+		draw_rect(Rect2(0, 48, 1280, 624), Color(0.01, 0.01, 0.02, 0.94))
+		draw_rect(Rect2(40, 60, 1200, 600), Color(0.8, 0.1, 0.1, 0.15 * flicker_val))
 	elif trap_type == "decoy":
 		# Shady vignette overlay
-		draw_rect(Rect2(0, 32, 480, 256), Color(0.12, 0.08, 0.04, 0.7))
+		draw_rect(Rect2(0, 48, 1280, 624), Color(0.12, 0.08, 0.04, 0.7))

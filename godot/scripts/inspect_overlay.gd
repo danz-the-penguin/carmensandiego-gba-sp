@@ -5,9 +5,9 @@ signal inspection_closed
 signal evidence_discovered(clue_text: String)
 
 var active: bool = false
-var lens_pos: Vector2 = Vector2(240, 160)
-var lens_radius: float = 28.0
-var move_speed: float = 190.0
+var lens_pos: Vector2 = Vector2(640, 360)
+var lens_radius: float = 42.0
+var move_speed: float = 360.0
 var ping_timer: float = 0.0
 
 var hotspots: Array[Dictionary] = []
@@ -31,7 +31,7 @@ func start_inspection(city_id: String, place_name: String) -> void:
 	current_place_name = place_name
 	active = true
 	visible = true
-	lens_pos = Vector2(240, 160)
+	lens_pos = Vector2(640, 360)
 	clue_dialog_active = false
 	if clue_card:
 		clue_card.visible = false
@@ -64,7 +64,7 @@ func _generate_hotspots(city_id: String) -> void:
 		dest_clue_text = "Hidden ledger confirms suspect was seen in %s!" % Database.CITIES[city_id]["name"]
 	
 	hotspots.append({
-		"pos": Vector2(randf_range(80, 200), randf_range(70, 240)),
+		"pos": Vector2(randf_range(160, 560), randf_range(120, 580)),
 		"name": "DISCARDED TRAVEL DOCUMENT",
 		"clue": dest_clue_text,
 		"found": false
@@ -81,7 +81,7 @@ func _generate_hotspots(city_id: String) -> void:
 	trait_clue_text = chosen_trait["text"]
 
 	hotspots.append({
-		"pos": Vector2(randf_range(280, 410), randf_range(70, 240)),
+		"pos": Vector2(randf_range(720, 1120), randf_range(120, 580)),
 		"name": chosen_trait["name"],
 		"clue": trait_clue_text,
 		"found": false
@@ -107,8 +107,8 @@ func _process(delta: float) -> void:
 		
 	if move_dir != Vector2.ZERO:
 		lens_pos += move_dir.normalized() * move_speed * delta
-		lens_pos.x = clampf(lens_pos.x, 32.0, 448.0)
-		lens_pos.y = clampf(lens_pos.y, 42.0, 280.0)
+		lens_pos.x = clampf(lens_pos.x, 60.0, 1220.0)
+		lens_pos.y = clampf(lens_pos.y, 70.0, 630.0)
 		
 	# Proximity audio ping
 	var nearest_dist := 999.0
@@ -118,14 +118,14 @@ func _process(delta: float) -> void:
 			if d < nearest_dist:
 				nearest_dist = d
 				
-	if nearest_dist < 60.0:
+	if nearest_dist < 120.0:
 		ping_timer -= delta
-		var interval = clampf(nearest_dist / 140.0, 0.08, 0.45)
+		var interval = clampf(nearest_dist / 280.0, 0.08, 0.45)
 		if ping_timer <= 0.0:
 			SoundManager.play_ping()
 			ping_timer = interval
 			
-	if nearest_dist <= 22.0:
+	if nearest_dist <= 36.0:
 		hint_bar.text = "★ EVIDENCE DETECTED! PRESS [A] OR SPACE TO EXAMINE ★"
 	else:
 		hint_bar.text = "D-PAD: MOVE LENS | [A] EXAMINE SPOT | [B] RETURN"
@@ -139,8 +139,8 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if not clue_dialog_active:
 			lens_pos = event.position
-			lens_pos.x = clampf(lens_pos.x, 32.0, 448.0)
-			lens_pos.y = clampf(lens_pos.y, 42.0, 280.0)
+			lens_pos.x = clampf(lens_pos.x, 60.0, 1220.0)
+			lens_pos.y = clampf(lens_pos.y, 70.0, 630.0)
 			queue_redraw()
 			
 	if event.is_action_pressed("ui_cancel") or (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_B or event.keycode == KEY_ESCAPE)):
@@ -161,7 +161,7 @@ func _input(event: InputEvent) -> void:
 
 func _try_examine() -> void:
 	for h in hotspots:
-		if not h["found"] and lens_pos.distance_to(h["pos"]) <= 24.0:
+		if not h["found"] and lens_pos.distance_to(h["pos"]) <= 42.0:
 			h["found"] = true
 			SoundManager.play_confirm()
 			_show_clue(h)
@@ -199,41 +199,41 @@ func _draw() -> void:
 		
 	# Draw Crime Scene Backdrop Props
 	# Room floor & tiles
-	draw_rect(Rect2(0, 32, 480, 256), Color(0.06, 0.08, 0.12, 0.96))
+	draw_rect(Rect2(0, 48, 1280, 624), Color(0.06, 0.08, 0.12, 0.96))
 	# Perspective grid lines
-	for y in range(50, 280, 30):
-		draw_line(Vector2(0, y), Vector2(480, y), Color(0.10, 0.14, 0.20, 0.5), 1.0)
-	for x in range(30, 480, 45):
-		draw_line(Vector2(x, 32), Vector2(x, 288), Color(0.10, 0.14, 0.20, 0.3), 1.0)
+	for y in range(70, 660, 48):
+		draw_line(Vector2(0, y), Vector2(1280, y), Color(0.10, 0.14, 0.20, 0.5), 1.0)
+	for x in range(50, 1280, 80):
+		draw_line(Vector2(x, 48), Vector2(x, 672), Color(0.10, 0.14, 0.20, 0.3), 1.0)
 		
 	# Furniture / Props silhouette
 	# Desk / Counter
-	draw_rect(Rect2(40, 160, 140, 70), Color(0.12, 0.15, 0.24, 0.9))
-	draw_rect(Rect2(44, 164, 132, 8), Color(0.18, 0.24, 0.35, 1.0))
+	draw_rect(Rect2(80, 360, 340, 180), Color(0.12, 0.15, 0.24, 0.9))
+	draw_rect(Rect2(86, 368, 328, 16), Color(0.18, 0.24, 0.35, 1.0))
 	# Safe / Cabinet
-	draw_rect(Rect2(340, 70, 90, 140), Color(0.10, 0.12, 0.18, 0.95))
-	draw_rect(Rect2(375, 130, 20, 20), Color(0.25, 0.30, 0.40, 1.0))
+	draw_rect(Rect2(880, 160, 240, 340), Color(0.10, 0.12, 0.18, 0.95))
+	draw_rect(Rect2(970, 300, 48, 48), Color(0.25, 0.30, 0.40, 1.0))
 	# Archive Boxes
-	draw_rect(Rect2(210, 210, 60, 45), Color(0.16, 0.13, 0.10, 0.9))
-	draw_rect(Rect2(275, 220, 50, 35), Color(0.18, 0.15, 0.12, 0.9))
+	draw_rect(Rect2(520, 460, 140, 90), Color(0.16, 0.13, 0.10, 0.9))
+	draw_rect(Rect2(680, 480, 120, 70), Color(0.18, 0.15, 0.12, 0.9))
 
 	# Draw Clue Hotspots (Subtle shimmering glints if not yet found)
 	for h in hotspots:
 		if not h["found"]:
 			var d = lens_pos.distance_to(h["pos"])
-			if d <= 36.0:
+			if d <= 60.0:
 				# Sparkle glint when lens is nearby!
-				draw_circle(h["pos"], 4.0, Color(1.0, 0.9, 0.4, 0.85))
-				draw_line(h["pos"] - Vector2(6, 0), h["pos"] + Vector2(6, 0), Color(1.0, 1.0, 0.8), 1.5)
-				draw_line(h["pos"] - Vector2(0, 6), h["pos"] + Vector2(0, 6), Color(1.0, 1.0, 0.8), 1.5)
+				draw_circle(h["pos"], 6.0, Color(1.0, 0.9, 0.4, 0.85))
+				draw_line(h["pos"] - Vector2(10, 0), h["pos"] + Vector2(10, 0), Color(1.0, 1.0, 0.8), 2.0)
+				draw_line(h["pos"] - Vector2(0, 10), h["pos"] + Vector2(0, 10), Color(1.0, 1.0, 0.8), 2.0)
 		else:
 			# Discovered marker
-			draw_circle(h["pos"], 3.0, Color(0.2, 0.8, 0.4, 0.6))
+			draw_circle(h["pos"], 5.0, Color(0.2, 0.8, 0.4, 0.6))
 
 	# Draw Magnifying Glass Reticle
 	var is_locked := false
 	for h in hotspots:
-		if not h["found"] and lens_pos.distance_to(h["pos"]) <= 22.0:
+		if not h["found"] and lens_pos.distance_to(h["pos"]) <= 36.0:
 			is_locked = true
 			break
 			
@@ -243,17 +243,17 @@ func _draw() -> void:
 	# Lens glass fill
 	draw_circle(lens_pos, lens_radius, Color(0.1, 0.35, 0.55, 0.25))
 	# Rim
-	draw_arc(lens_pos, lens_radius, 0.0, TAU, 32, rim_color, 2.0)
-	draw_arc(lens_pos, lens_radius - 2.0, 0.0, TAU, 32, Color(0.08, 0.12, 0.2, 0.7), 1.0)
+	draw_arc(lens_pos, lens_radius, 0.0, TAU, 32, rim_color, 2.5)
+	draw_arc(lens_pos, lens_radius - 3.0, 0.0, TAU, 32, Color(0.08, 0.12, 0.2, 0.7), 1.2)
 	
 	# Crosshairs
-	draw_line(lens_pos - Vector2(lens_radius * 0.7, 0), lens_pos - Vector2(4, 0), crosshair_color, 1.5)
-	draw_line(lens_pos + Vector2(4, 0), lens_pos + Vector2(lens_radius * 0.7, 0), crosshair_color, 1.5)
-	draw_line(lens_pos - Vector2(0, lens_radius * 0.7), lens_pos - Vector2(0, 4), crosshair_color, 1.5)
-	draw_line(lens_pos + Vector2(0, 4), lens_pos + Vector2(0, lens_radius * 0.7), crosshair_color, 1.5)
+	draw_line(lens_pos - Vector2(lens_radius * 0.7, 0), lens_pos - Vector2(6, 0), crosshair_color, 2.0)
+	draw_line(lens_pos + Vector2(6, 0), lens_pos + Vector2(lens_radius * 0.7, 0), crosshair_color, 2.0)
+	draw_line(lens_pos - Vector2(0, lens_radius * 0.7), lens_pos - Vector2(0, 6), crosshair_color, 2.0)
+	draw_line(lens_pos + Vector2(0, 6), lens_pos + Vector2(0, lens_radius * 0.7), crosshair_color, 2.0)
 	
 	# Magnifier Handle
 	var handle_start = lens_pos + Vector2(lens_radius * 0.7, lens_radius * 0.7)
-	var handle_end = handle_start + Vector2(18.0, 18.0)
-	draw_line(handle_start, handle_end, rim_color, 3.5)
-	draw_line(handle_start + Vector2(2, 2), handle_end, Color(0.4, 0.2, 0.1), 2.0)
+	var handle_end = handle_start + Vector2(30.0, 30.0)
+	draw_line(handle_start, handle_end, rim_color, 4.5)
+	draw_line(handle_start + Vector2(3, 3), handle_end, Color(0.4, 0.2, 0.1), 2.5)

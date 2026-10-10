@@ -4,7 +4,7 @@ extends Control
 var active_weather: String = "clear"
 var is_night_time: bool = false
 var particles: Array = []
-var max_particles: int = 36
+var max_particles: int = 72
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
@@ -14,7 +14,7 @@ func _init_particles() -> void:
 	particles.clear()
 	for i in range(max_particles):
 		particles.append({
-			"pos": Vector2(randf_range(0, 480), randf_range(0, 144)),
+			"pos": Vector2(randf_range(0, 1280), randf_range(0, 320)),
 			"vel": Vector2.ZERO,
 			"phase": randf_range(0, TAU),
 			"speed": randf_range(0.8, 1.4)
@@ -41,7 +41,7 @@ func _process(delta: float) -> void:
 
 	var w_size = size
 	if w_size.x <= 0:
-		w_size = Vector2(480, 144)
+		w_size = Vector2(1280, 320)
 
 	for p in particles:
 		p["phase"] += delta * 2.5

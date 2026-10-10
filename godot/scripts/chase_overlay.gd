@@ -130,27 +130,27 @@ func _draw() -> void:
 		return
 
 	# Alleyway Silhouette & Parallax Brick Walls
-	draw_rect(Rect2(0, 32, 480, 256), Color(0.04, 0.05, 0.08, 0.95))
+	draw_rect(Rect2(0, 48, 1280, 624), Color(0.04, 0.05, 0.08, 0.95))
 	
 	# Streetlamps and brick mortar lines
-	for y in range(40, 220, 28):
-		draw_line(Vector2(0, y), Vector2(480, y), Color(0.12, 0.14, 0.20, 0.4), 1.0)
+	for y in range(80, 520, 50):
+		draw_line(Vector2(0, y), Vector2(1280, y), Color(0.12, 0.14, 0.20, 0.4), 1.5)
 	
 	# Cobblestones
-	draw_rect(Rect2(0, 220, 480, 68), Color(0.08, 0.10, 0.15))
-	for cx in range(0, 480, 32):
-		var stone_x = fmod(float(cx) - scroll_pos * 0.5, 480.0)
-		if stone_x < 0: stone_x += 480.0
-		draw_rect(Rect2(stone_x, 230, 28, 12), Color(0.12, 0.15, 0.22, 0.6))
+	draw_rect(Rect2(0, 520, 1280, 152), Color(0.08, 0.10, 0.15))
+	for cx in range(0, 1280, 64):
+		var stone_x = fmod(float(cx) - scroll_pos * 0.8, 1280.0)
+		if stone_x < 0: stone_x += 1280.0
+		draw_rect(Rect2(stone_x, 540, 56, 24), Color(0.12, 0.15, 0.22, 0.6))
 
 	# Fleeing Suspect Silhouette (Ahead in the distance)
-	var suspect_x := 320.0 + sin(scroll_pos * 0.05) * 20.0
-	var suspect_y := 170.0
-	draw_circle(Vector2(suspect_x, suspect_y - 20), 10.0, Color(0.75, 0.15, 0.2)) # Red coat silhouette
-	draw_rect(Rect2(suspect_x - 8, suspect_y - 12, 16, 24), Color(0.1, 0.1, 0.15))
+	var suspect_x := 880.0 + sin(scroll_pos * 0.05) * 40.0
+	var suspect_y := 430.0
+	draw_circle(Vector2(suspect_x, suspect_y - 36), 18.0, Color(0.75, 0.15, 0.2)) # Red coat silhouette
+	draw_rect(Rect2(suspect_x - 14, suspect_y - 20, 28, 44), Color(0.1, 0.1, 0.15))
 	
 	# Pursuing ACME Detective Shadow (Foreground)
-	var det_x := 120.0
-	var det_y := 185.0
-	draw_circle(Vector2(det_x, det_y - 24), 12.0, Color(0.2, 0.4, 0.7))
-	draw_rect(Rect2(det_x - 10, det_y - 14, 20, 28), Color(0.15, 0.2, 0.3))
+	var det_x := 320.0
+	var det_y := 460.0
+	draw_circle(Vector2(det_x, det_y - 42), 22.0, Color(0.2, 0.4, 0.7))
+	draw_rect(Rect2(det_x - 18, det_y - 24, 36, 52), Color(0.15, 0.2, 0.3))

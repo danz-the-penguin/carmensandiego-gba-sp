@@ -141,60 +141,60 @@ func _draw() -> void:
 		return
 
 	# CRT Oscilloscope Screen Frame (Upper area)
-	var crt_rect := Rect2(30, 36, 420, 110)
+	var crt_rect := Rect2(140, 60, 1000, 290)
 	draw_rect(crt_rect, Color(0.02, 0.05, 0.03, 0.95))
-	draw_rect(crt_rect, Color(0.12, 0.35, 0.18, 1.0), false, 2.0)
+	draw_rect(crt_rect, Color(0.12, 0.35, 0.18, 1.0), false, 2.5)
 	
 	# Oscilloscope Graticule grid lines
-	for x in range(50, 440, 35):
-		draw_line(Vector2(x, 38), Vector2(x, 144), Color(0.06, 0.18, 0.08, 0.6), 1.0)
-	for y in range(50, 140, 20):
-		draw_line(Vector2(32, y), Vector2(448, y), Color(0.06, 0.18, 0.08, 0.6), 1.0)
-	draw_line(Vector2(32, 91), Vector2(448, 91), Color(0.10, 0.28, 0.14, 0.9), 1.5)
+	for x in range(180, 1100, 70):
+		draw_line(Vector2(x, 65), Vector2(x, 345), Color(0.06, 0.18, 0.08, 0.6), 1.0)
+	for y in range(95, 330, 40):
+		draw_line(Vector2(145, y), Vector2(1135, y), Color(0.06, 0.18, 0.08, 0.6), 1.0)
+	draw_line(Vector2(145, 205), Vector2(1135, 205), Color(0.10, 0.28, 0.14, 0.9), 2.0)
 
 	# Dynamic Oscilloscope Sine Waveform
 	var diff = absf(current_freq - target_freq)
 	var points := PackedVector2Array()
-	var center_y := 91.0
+	var center_y := 205.0
 	var wave_color := Color(0.3, 1.0, 0.45) if is_locked else Color(0.2, 0.65, 0.35)
 	if diff <= 0.6 and not is_locked:
 		wave_color = Color(0.8, 0.9, 0.3)
 
 	var noise_factor = clampf(diff / 6.0, 0.0, 1.0) * (0.0 if is_locked else 1.0)
-	var amp = 32.0 * (1.0 - noise_factor * 0.4)
-	var freq_scale = 0.08 + (current_freq - 88.0) * 0.005
+	var amp = 70.0 * (1.0 - noise_factor * 0.4)
+	var freq_scale = 0.04 + (current_freq - 88.0) * 0.003
 
-	for px in range(35, 446, 3):
-		var t = float(px - 35)
+	for px in range(150, 1130, 4):
+		var t = float(px - 150)
 		var s = sin(t * freq_scale + wave_phase) * amp
-		var n = randf_range(-22.0, 22.0) * noise_factor
+		var n = randf_range(-35.0, 35.0) * noise_factor
 		var py = center_y + s + n
-		py = clampf(py, 42.0, 140.0)
+		py = clampf(py, 70.0, 340.0)
 		points.append(Vector2(px, py))
 
 	for i in range(points.size() - 1):
-		draw_line(points[i], points[i + 1], wave_color, 1.8)
+		draw_line(points[i], points[i + 1], wave_color, 2.4)
 
 	# Signal Strength LEDs (5 blocks)
 	var bars = 5 if is_locked else clampi(int((1.0 - clampf(diff / 4.0, 0.0, 1.0)) * 5.0), 0, 4)
 	for b in range(5):
-		var led_rect = Rect2(350 + b * 16, 42, 12, 8)
+		var led_rect = Rect2(990 + b * 24, 75, 18, 12)
 		var led_col = Color(0.2, 0.9, 0.35) if b < bars else Color(0.08, 0.18, 0.1)
 		draw_rect(led_rect, led_col)
 
 	# Radio Dial Bar (Middle area)
-	var dial_rect := Rect2(40, 158, 400, 24)
+	var dial_rect := Rect2(140, 360, 1000, 42)
 	draw_rect(dial_rect, Color(0.06, 0.08, 0.12, 0.95))
-	draw_rect(dial_rect, Color(0.25, 0.35, 0.50, 1.0), false, 1.5)
+	draw_rect(dial_rect, Color(0.25, 0.35, 0.50, 1.0), false, 2.0)
 
 	# Frequency Tick Marks
 	for f in range(88, 109, 2):
 		var ratio = float(f - 88) / 20.0
-		var tx = 40.0 + ratio * 400.0
-		draw_line(Vector2(tx, 160), Vector2(tx, 172), Color(0.5, 0.65, 0.8), 1.0)
+		var tx = 160.0 + ratio * 960.0
+		draw_line(Vector2(tx, 364), Vector2(tx, 386), Color(0.5, 0.65, 0.8), 1.5)
 
 	# Orange Tuning Needle
 	var needle_ratio = (current_freq - min_freq) / (max_freq - min_freq)
-	var needle_x = 40.0 + needle_ratio * 400.0
-	draw_line(Vector2(needle_x, 154), Vector2(needle_x, 186), Color(1.0, 0.35, 0.1), 2.5)
-	draw_line(Vector2(needle_x - 3, 154), Vector2(needle_x + 3, 154), Color(1.0, 0.7, 0.2), 2.0)
+	var needle_x = 160.0 + needle_ratio * 960.0
+	draw_line(Vector2(needle_x, 352), Vector2(needle_x, 410), Color(1.0, 0.35, 0.1), 3.5)
+	draw_line(Vector2(needle_x - 4, 352), Vector2(needle_x + 4, 352), Color(1.0, 0.7, 0.2), 2.5)

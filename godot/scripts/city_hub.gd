@@ -141,12 +141,12 @@ func _process(delta: float) -> void:
 					if dialog_label.visible_characters % 2 == 0:
 						SoundManager.play_text_blip()
 					# 2010s Handheld Talking Bob / Flap
-					portrait_rect.position.y = 11.0 if (dialog_label.visible_characters % 4 in [1, 2]) else 12.0
+					portrait_rect.position.y = 3.0 if (dialog_label.visible_characters % 4 in [1, 2]) else 4.0
 				else:
 					is_typing = false
-					portrait_rect.position.y = 12.0
+					portrait_rect.position.y = 4.0
 	else:
-		portrait_rect.position.y = 12.0
+		portrait_rect.position.y = 4.0
 
 func _input(event: InputEvent) -> void:
 	if flight_overlay.visible or inspect_overlay.visible or radio_overlay.visible or chase_overlay.visible or trap_overlay.visible or museum_overlay.visible:
@@ -593,14 +593,14 @@ func _populate_subscreen(labels: Array, reset_idx: bool = true) -> void:
 		btn.text = txt_str
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.add_theme_font_size_override("font_size", 9)
+		btn.add_theme_font_size_override("font_size", 11)
 		
 		# Bulletproof multiline calculation: count lines across linebreaks and wrapping
 		var lines = txt_str.split("\n")
 		var visual_lines = 0
 		for l in lines:
-			visual_lines += maxi(1, ceili(float(l.length()) / 38.0))
-		var btn_height = maxi(36, visual_lines * 16 + 14)
+			visual_lines += maxi(1, ceili(float(l.length()) / 85.0))
+		var btn_height = maxi(48, visual_lines * 22 + 20)
 		btn.custom_minimum_size = Vector2(0, btn_height)
 
 		var click_idx = i

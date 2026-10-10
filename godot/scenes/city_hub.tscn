@@ -20,73 +20,73 @@ script = ExtResource("1_hub")
 
 [node name="SkylineView" type="Control" parent="."]
 layout_mode = 0
-offset_right = 480.0
-offset_bottom = 136.0
+offset_right = 1280.0
+offset_bottom = 320.0
 
 [node name="SkyBg" type="ColorRect" parent="SkylineView"]
 layout_mode = 0
-offset_right = 480.0
-offset_bottom = 136.0
+offset_right = 1280.0
+offset_bottom = 320.0
 color = Color(0.08, 0.11, 0.19, 1)
 
 [node name="SkylineSprite" type="TextureRect" parent="SkylineView"]
 texture_filter = 1
 layout_mode = 0
-offset_top = 36.0
-offset_right = 480.0
-offset_bottom = 136.0
+offset_top = 56.0
+offset_right = 1280.0
+offset_bottom = 320.0
 expand_mode = 1
 stretch_mode = 6
 
 [node name="WeatherOverlay" type="Control" parent="SkylineView"]
 layout_mode = 0
-offset_right = 480.0
-offset_bottom = 136.0
+offset_right = 1280.0
+offset_bottom = 320.0
 mouse_filter = 2
 script = ExtResource("2_weather")
 
 [node name="CityBanner" type="Panel" parent="SkylineView"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 3.0
-offset_right = 472.0
-offset_bottom = 36.0
+offset_left = 20.0
+offset_top = 8.0
+offset_right = 1260.0
+offset_bottom = 54.0
 
 [node name="CityTitle" type="Label" parent="SkylineView/CityBanner"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 2.0
-offset_right = 456.0
-offset_bottom = 16.0
+offset_left = 16.0
+offset_top = 4.0
+offset_right = 1220.0
+offset_bottom = 24.0
 theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 12
 text = "LONDON, UNITED KINGDOM"
 
 [node name="CityLandmark" type="Label" parent="SkylineView/CityBanner"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 16.0
-offset_right = 456.0
-offset_bottom = 34.0
+offset_left = 16.0
+offset_top = 26.0
+offset_right = 1220.0
+offset_bottom = 46.0
 theme_override_colors/font_color = Color(0.68, 0.78, 0.92, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 10
 text = "LANDMARK: Big Ben and Tower Bridge"
 autowrap_mode = 2
 
 [node name="StatusBar" type="Panel" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 138.0
-offset_right = 472.0
-offset_bottom = 160.0
+offset_left = 20.0
+offset_top = 328.0
+offset_right = 1260.0
+offset_bottom = 376.0
 
 [node name="HBox" type="HBoxContainer" parent="StatusBar"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 6.0
-offset_right = -6.0
+offset_left = 16.0
+offset_right = -16.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -95,7 +95,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 1.35
 theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "LOC: LONDON"
 
 [node name="TrailLabel" type="Label" parent="StatusBar/HBox"]
@@ -103,7 +103,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.95
 theme_override_colors/font_color = Color(0.2, 0.88, 0.55, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "● HOT TRAIL"
 horizontal_alignment = 1
 
@@ -112,7 +112,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 1.0
 theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "TIME: MON 9AM"
 horizontal_alignment = 1
 
@@ -121,23 +121,23 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.75
 theme_override_colors/font_color = Color(1, 0.45, 0.45, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "40H LEFT"
 horizontal_alignment = 2
 
 [node name="DialogBox" type="Panel" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 162.0
-offset_right = 472.0
-offset_bottom = 266.0
+offset_left = 20.0
+offset_top = 384.0
+offset_right = 1260.0
+offset_bottom = 580.0
 
 [node name="PortraitFrame" type="Panel" parent="DialogBox"]
 layout_mode = 0
-offset_left = 6.0
-offset_top = 14.0
-offset_right = 72.0
-offset_bottom = 80.0
+offset_left = 16.0
+offset_top = 22.0
+offset_right = 166.0
+offset_bottom = 172.0
 
 [node name="Portrait" type="TextureRect" parent="DialogBox/PortraitFrame"]
 texture_filter = 1
@@ -145,10 +145,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 2.0
-offset_top = 2.0
-offset_right = -2.0
-offset_bottom = -2.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
 expand_mode = 1
@@ -156,76 +156,78 @@ stretch_mode = 5
 
 [node name="SpeakerLabel" type="Label" parent="DialogBox"]
 layout_mode = 0
-offset_left = 78.0
-offset_top = 4.0
-offset_right = 448.0
-offset_bottom = 20.0
+offset_left = 186.0
+offset_top = 16.0
+offset_right = 1220.0
+offset_bottom = 38.0
 theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 12
 text = "[ACME DISPATCH]"
 
 [node name="DialogLabel" type="RichTextLabel" parent="DialogBox"]
 layout_mode = 0
-offset_left = 78.0
-offset_top = 20.0
-offset_right = 448.0
-offset_bottom = 96.0
+offset_left = 186.0
+offset_top = 42.0
+offset_right = 1220.0
+offset_bottom = 184.0
 theme_override_colors/default_color = Color(0.92, 0.94, 0.98, 1)
-theme_override_font_sizes/normal_font_size = 9
+theme_override_font_sizes/normal_font_size = 12
 bbcode_enabled = true
 text = "Question witnesses or check transit connections."
-scroll_active = true
-scroll_following = true
+scroll_active = false
+scroll_following = false
 autowrap_mode = 2
 
 [node name="ActionMenu" type="GridContainer" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 268.0
-offset_right = 472.0
-offset_bottom = 316.0
+offset_left = 20.0
+offset_top = 588.0
+offset_right = 1260.0
+offset_bottom = 708.0
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
 columns = 3
 
 [node name="BtnInvestigate" type="Button" parent="ActionMenu"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 11
 text = "1. INVESTIGATE"
 
 [node name="BtnDepart" type="Button" parent="ActionMenu"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 11
 text = "2. DEPART [B]"
 
 [node name="BtnComputer" type="Button" parent="ActionMenu"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 11
 text = "3. COMPUTER [R]"
 
 [node name="BtnDossier" type="Button" parent="ActionMenu"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 11
 text = "4. DOSSIER [L]"
 
 [node name="BtnRadio" type="Button" parent="ActionMenu"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 11
 text = "5. RADIO [X]"
 
 [node name="BtnInspect" type="Button" parent="ActionMenu"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 11
 text = "6. INSPECT [Y]"
 
 
@@ -240,36 +242,36 @@ grow_vertical = 2
 
 [node name="Header" type="HBoxContainer" parent="SubscreenOverlay"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 8.0
-offset_right = 468.0
-offset_bottom = 28.0
+offset_left = 28.0
+offset_top = 16.0
+offset_right = 1252.0
+offset_bottom = 50.0
 
 [node name="TitleLabel" type="Label" parent="SubscreenOverlay/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 14
 text = "MENU"
 
 [node name="HintLabel" type="Label" parent="SubscreenOverlay/Header"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.7, 0.82, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "[B / ESC] BACK"
 
 [node name="Scroll" type="ScrollContainer" parent="SubscreenOverlay"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 32.0
-offset_right = 468.0
-offset_bottom = 312.0
+offset_left = 28.0
+offset_top = 58.0
+offset_right = 1252.0
+offset_bottom = 702.0
 follow_focus = true
 
 [node name="ItemList" type="VBoxContainer" parent="SubscreenOverlay/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 8
 
 [node name="FlightOverlay" type="Panel" parent="."]
 visible = false
@@ -282,52 +284,52 @@ grow_vertical = 2
 
 [node name="RadarBox" type="Panel" parent="FlightOverlay"]
 layout_mode = 0
-offset_left = 40.0
-offset_top = 70.0
-offset_right = 440.0
-offset_bottom = 250.0
+offset_left = 240.0
+offset_top = 140.0
+offset_right = 1040.0
+offset_bottom = 560.0
 
 [node name="FlightTitle" type="Label" parent="FlightOverlay/RadarBox"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 16.0
-offset_right = 390.0
-offset_bottom = 36.0
+offset_left = 20.0
+offset_top = 28.0
+offset_right = 780.0
+offset_bottom = 56.0
 theme_override_colors/font_color = Color(0.3, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 14
 text = "✈ ACME GLOBAL RADAR ✈"
 horizontal_alignment = 1
 
 [node name="FlightRoute" type="Label" parent="FlightOverlay/RadarBox"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 50.0
-offset_right = 390.0
-offset_bottom = 76.0
+offset_left = 20.0
+offset_top = 110.0
+offset_right = 780.0
+offset_bottom = 154.0
 theme_override_colors/font_color = Color(1, 0.88, 0.35, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 20
 text = "LONDON ➔ TOKYO"
 horizontal_alignment = 1
 
 [node name="FlightSubtext" type="Label" parent="FlightOverlay/RadarBox"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 88.0
-offset_right = 390.0
-offset_bottom = 108.0
+offset_left = 20.0
+offset_top = 200.0
+offset_right = 780.0
+offset_bottom = 230.0
 theme_override_colors/font_color = Color(0.7, 0.8, 0.95, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 12
 text = "TRANSIT TIME: -4 HOURS | TRACKING TRANSIT..."
 horizontal_alignment = 1
 
 [node name="FlightStatus" type="Label" parent="FlightOverlay/RadarBox"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 126.0
-offset_right = 390.0
-offset_bottom = 146.0
+offset_left = 20.0
+offset_top = 280.0
+offset_right = 780.0
+offset_bottom = 310.0
 theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 12
 text = "CONNECTING TO LOCAL ACME FIELD OFFICE..."
 horizontal_alignment = 1
 
@@ -353,39 +355,39 @@ grow_vertical = 2
 
 [node name="Card" type="Panel" parent="ArrestOverlay"]
 layout_mode = 0
-offset_left = 20.0
-offset_top = 16.0
-offset_right = 460.0
-offset_bottom = 304.0
+offset_left = 160.0
+offset_top = 50.0
+offset_right = 1120.0
+offset_bottom = 670.0
 
 [node name="Title" type="Label" parent="ArrestOverlay/Card"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 430.0
-offset_bottom = 28.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 940.0
+offset_bottom = 52.0
 theme_override_colors/font_color = Color(1, 0.25, 0.35, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 18
 text = "★ SUSPECT CORNERED! ★"
 horizontal_alignment = 1
 
 [node name="SubTitle" type="Label" parent="ArrestOverlay/Card"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 30.0
-offset_right = 430.0
-offset_bottom = 46.0
+offset_left = 20.0
+offset_top = 56.0
+offset_right = 940.0
+offset_bottom = 80.0
 theme_override_colors/font_color = Color(0.3, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 12
 text = "ACME APPREHENSION PROTOCOL INITIATED"
 horizontal_alignment = 1
 
 [node name="PortraitBox" type="Panel" parent="ArrestOverlay/Card"]
 layout_mode = 0
-offset_left = 20.0
-offset_top = 54.0
-offset_right = 124.0
-offset_bottom = 158.0
+offset_left = 40.0
+offset_top = 100.0
+offset_right = 220.0
+offset_bottom = 280.0
 
 [node name="Portrait" type="TextureRect" parent="ArrestOverlay/Card/PortraitBox"]
 texture_filter = 1
@@ -393,10 +395,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 2
 expand_mode = 1
@@ -404,35 +406,35 @@ stretch_mode = 5
 
 [node name="DetailsLabel" type="RichTextLabel" parent="ArrestOverlay/Card"]
 layout_mode = 0
-offset_left = 136.0
-offset_top = 54.0
-offset_right = 424.0
-offset_bottom = 174.0
-theme_override_font_sizes/normal_font_size = 9
+offset_left = 246.0
+offset_top = 100.0
+offset_right = 920.0
+offset_bottom = 380.0
+theme_override_font_sizes/normal_font_size = 12
 bbcode_enabled = true
 text = "Closing in on suspect..."
 
 [node name="StampLabel" type="Label" parent="ArrestOverlay/Card"]
 visible = false
 layout_mode = 0
-offset_left = 12.0
-offset_top = 184.0
-offset_right = 428.0
-offset_bottom = 214.0
+offset_left = 20.0
+offset_top = 430.0
+offset_right = 940.0
+offset_bottom = 475.0
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 18
 text = "★ APPREHENDED & CUFFED ★"
 horizontal_alignment = 1
 
 [node name="ContinueHint" type="Label" parent="ArrestOverlay/Card"]
 visible = false
 layout_mode = 0
-offset_left = 12.0
-offset_top = 236.0
-offset_right = 428.0
-offset_bottom = 256.0
+offset_left = 20.0
+offset_top = 530.0
+offset_right = 940.0
+offset_bottom = 565.0
 theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 12
 text = "PRESS [A] OR SPACE TO CONTINUE"
 horizontal_alignment = 1
 
@@ -448,73 +450,73 @@ script = ExtResource("3_inspect")
 
 [node name="TopBar" type="Panel" parent="InspectOverlay"]
 layout_mode = 0
-offset_right = 480.0
-offset_bottom = 32.0
+offset_right = 1280.0
+offset_bottom = 48.0
 
 [node name="StatusLabel" type="Label" parent="InspectOverlay/TopBar"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 8.0
-offset_right = 468.0
-offset_bottom = 24.0
+offset_left = 20.0
+offset_top = 12.0
+offset_right = 1260.0
+offset_bottom = 36.0
 theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 12
 text = "CRIME SCENE INVESTIGATION"
 
 [node name="BottomBar" type="Panel" parent="InspectOverlay"]
 layout_mode = 0
-offset_top = 288.0
-offset_right = 480.0
-offset_bottom = 320.0
+offset_top = 672.0
+offset_right = 1280.0
+offset_bottom = 720.0
 
 [node name="HintBar" type="Label" parent="InspectOverlay/BottomBar"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 472.0
-offset_bottom = 24.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 1264.0
+offset_bottom = 36.0
 theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "D-PAD: MOVE LENS | [A] EXAMINE SPOT | [B] RETURN"
 horizontal_alignment = 1
 
 [node name="ClueCard" type="Panel" parent="InspectOverlay"]
 visible = false
 layout_mode = 0
-offset_left = 30.0
-offset_top = 60.0
-offset_right = 450.0
-offset_bottom = 260.0
+offset_left = 240.0
+offset_top = 180.0
+offset_right = 1040.0
+offset_bottom = 540.0
 
 [node name="Title" type="Label" parent="InspectOverlay/ClueCard"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 12.0
-offset_right = 408.0
-offset_bottom = 32.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 780.0
+offset_bottom = 50.0
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 15
 text = "★ EVIDENCE RECOVERED ★"
 horizontal_alignment = 1
 
 [node name="Desc" type="RichTextLabel" parent="InspectOverlay/ClueCard"]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 44.0
-offset_right = 404.0
-offset_bottom = 144.0
-theme_override_font_sizes/normal_font_size = 9
+offset_left = 30.0
+offset_top = 70.0
+offset_right = 770.0
+offset_bottom = 250.0
+theme_override_font_sizes/normal_font_size = 12
 bbcode_enabled = true
 text = "Evidence description..."
 
 [node name="Hint" type="Label" parent="InspectOverlay/ClueCard"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 160.0
-offset_right = 408.0
-offset_bottom = 184.0
+offset_left = 20.0
+offset_top = 290.0
+offset_right = 780.0
+offset_bottom = 325.0
 theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "PRESS [A] OR SPACE TO COLLECT EVIDENCE"
 horizontal_alignment = 1
 
@@ -530,68 +532,68 @@ script = ExtResource("4_radio")
 
 [node name="TopBar" type="Panel" parent="RadioOverlay"]
 layout_mode = 0
-offset_right = 480.0
-offset_bottom = 32.0
+offset_right = 1280.0
+offset_bottom = 48.0
 
 [node name="TitleLabel" type="Label" parent="RadioOverlay/TopBar"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 8.0
-offset_right = 468.0
-offset_bottom = 24.0
+offset_left = 20.0
+offset_top = 12.0
+offset_right = 1260.0
+offset_bottom = 36.0
 theme_override_colors/font_color = Color(0.2, 0.9, 0.45, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 12
 text = "📻 ACME SURVEILLANCE RADIO RECEIVER"
 
 [node name="DialBox" type="Panel" parent="RadioOverlay"]
 layout_mode = 0
-offset_left = 40.0
-offset_top = 188.0
-offset_right = 440.0
-offset_bottom = 212.0
+offset_left = 140.0
+offset_top = 370.0
+offset_right = 1140.0
+offset_bottom = 422.0
 
 [node name="FreqLabel" type="Label" parent="RadioOverlay/DialBox"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 4.0
-offset_right = 392.0
-offset_bottom = 20.0
+offset_left = 16.0
+offset_top = 10.0
+offset_right = 984.0
+offset_bottom = 38.0
 theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 13
 text = "TUNING: 88.0 MHz"
 horizontal_alignment = 1
 
 [node name="TeletypeBox" type="Panel" parent="RadioOverlay"]
 layout_mode = 0
-offset_left = 30.0
-offset_top = 218.0
-offset_right = 450.0
-offset_bottom = 284.0
+offset_left = 140.0
+offset_top = 434.0
+offset_right = 1140.0
+offset_bottom = 650.0
 
 [node name="Text" type="RichTextLabel" parent="RadioOverlay/TeletypeBox"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 6.0
-offset_right = 412.0
-offset_bottom = 60.0
-theme_override_font_sizes/normal_font_size = 9
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 984.0
+offset_bottom = 200.0
+theme_override_font_sizes/normal_font_size = 12
 bbcode_enabled = true
 text = "Scanning..."
 
 [node name="BottomBar" type="Panel" parent="RadioOverlay"]
 layout_mode = 0
-offset_top = 288.0
-offset_right = 480.0
-offset_bottom = 320.0
+offset_top = 672.0
+offset_right = 1280.0
+offset_bottom = 720.0
 
 [node name="HintBar" type="Label" parent="RadioOverlay/BottomBar"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 472.0
-offset_bottom = 24.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 1264.0
+offset_bottom = 36.0
 theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "LEFT/RIGHT: TUNE DIAL | [B] CLOSE RECEIVER"
 horizontal_alignment = 1
 
@@ -607,62 +609,62 @@ script = ExtResource("5_chase")
 
 [node name="TopBar" type="Panel" parent="ChaseOverlay"]
 layout_mode = 0
-offset_right = 480.0
-offset_bottom = 32.0
+offset_right = 1280.0
+offset_bottom = 48.0
 
 [node name="TitleLabel" type="Label" parent="ChaseOverlay/TopBar"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 8.0
-offset_right = 468.0
-offset_bottom = 24.0
+offset_left = 20.0
+offset_top = 12.0
+offset_right = 1260.0
+offset_bottom = 36.0
 theme_override_colors/font_color = Color(1, 0.3, 0.35, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 12
 text = "★ FOOT CHASE: SUSPECT PURSUIT ★"
 
 [node name="PromptBox" type="Panel" parent="ChaseOverlay"]
 layout_mode = 0
-offset_left = 30.0
-offset_top = 60.0
-offset_right = 450.0
-offset_bottom = 150.0
+offset_left = 200.0
+offset_top = 140.0
+offset_right = 1080.0
+offset_bottom = 380.0
 
 [node name="PromptLabel" type="Label" parent="ChaseOverlay/PromptBox"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 410.0
-offset_bottom = 28.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 860.0
+offset_bottom = 54.0
 theme_override_colors/font_color = Color(1, 0.88, 0.3, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 15
 text = "⚡ OBSTACLE DETECTED! ⚡"
 horizontal_alignment = 1
 
 [node name="SubtextLabel" type="Label" parent="ChaseOverlay/PromptBox"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 32.0
-offset_right = 410.0
-offset_bottom = 48.0
+offset_left = 20.0
+offset_top = 68.0
+offset_right = 860.0
+offset_bottom = 100.0
 theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 13
 text = "PRESS [B] TO VAULT!"
 horizontal_alignment = 1
 
 [node name="TimerBg" type="ColorRect" parent="ChaseOverlay/PromptBox"]
 layout_mode = 0
-offset_left = 20.0
-offset_top = 58.0
-offset_right = 400.0
-offset_bottom = 74.0
+offset_left = 40.0
+offset_top = 150.0
+offset_right = 840.0
+offset_bottom = 186.0
 color = Color(0.12, 0.15, 0.22, 1)
 
 [node name="TimerBar" type="ColorRect" parent="ChaseOverlay/PromptBox"]
 layout_mode = 0
-offset_left = 20.0
-offset_top = 58.0
-offset_right = 400.0
-offset_bottom = 74.0
+offset_left = 40.0
+offset_top = 150.0
+offset_right = 840.0
+offset_bottom = 186.0
 color = Color(0.2, 0.9, 0.4, 1)
 
 [node name="TrapOverlay" type="Control" parent="."]
@@ -677,58 +679,58 @@ script = ExtResource("6_trap")
 
 [node name="AlertBox" type="Panel" parent="TrapOverlay"]
 layout_mode = 0
-offset_left = 30.0
-offset_top = 60.0
-offset_right = 450.0
-offset_bottom = 180.0
+offset_left = 200.0
+offset_top = 140.0
+offset_right = 1080.0
+offset_bottom = 400.0
 
 [node name="AlertLabel" type="Label" parent="TrapOverlay/AlertBox"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 410.0
-offset_bottom = 28.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 860.0
+offset_bottom = 54.0
 theme_override_colors/font_color = Color(1, 0.25, 0.35, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 15
 text = "⚡ V.I.L.E. AMBUSH! ⚡"
 horizontal_alignment = 1
 
 [node name="DescLabel" type="Label" parent="TrapOverlay/AlertBox"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 32.0
-offset_right = 410.0
-offset_bottom = 54.0
+offset_left = 20.0
+offset_top = 68.0
+offset_right = 860.0
+offset_bottom = 118.0
 theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 12
 text = "Henchman detonated smoke canisters!"
 autowrap_mode = 2
 
 [node name="ActionHint" type="Label" parent="TrapOverlay/AlertBox"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 58.0
-offset_right = 410.0
-offset_bottom = 74.0
+offset_left = 20.0
+offset_top = 130.0
+offset_right = 860.0
+offset_bottom = 160.0
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 13
 text = "PRESS [B] TO VAULT CLEAR!"
 horizontal_alignment = 1
 
 [node name="TimerBg" type="ColorRect" parent="TrapOverlay/AlertBox"]
 layout_mode = 0
-offset_left = 20.0
-offset_top = 84.0
-offset_right = 400.0
-offset_bottom = 98.0
+offset_left = 40.0
+offset_top = 190.0
+offset_right = 840.0
+offset_bottom = 222.0
 color = Color(0.12, 0.15, 0.22, 1)
 
 [node name="TimerBar" type="ColorRect" parent="TrapOverlay/AlertBox"]
 layout_mode = 0
-offset_left = 20.0
-offset_top = 84.0
-offset_right = 400.0
-offset_bottom = 98.0
+offset_left = 40.0
+offset_top = 190.0
+offset_right = 840.0
+offset_bottom = 222.0
 color = Color(0.2, 0.9, 0.4, 1)
 
 [node name="MuseumOverlay" type="Control" parent="."]
@@ -743,57 +745,55 @@ script = ExtResource("7_museum")
 
 [node name="TopBar" type="Panel" parent="MuseumOverlay"]
 layout_mode = 0
-offset_right = 480.0
-offset_bottom = 40.0
+offset_right = 1280.0
+offset_bottom = 64.0
 
 [node name="TitleLabel" type="Label" parent="MuseumOverlay/TopBar"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 4.0
-offset_right = 468.0
-offset_bottom = 20.0
+offset_left = 20.0
+offset_top = 8.0
+offset_right = 1260.0
+offset_bottom = 32.0
 theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 14
 text = "★ ACME EVIDENCE VAULT & WORLD TREASURE HALL ★"
 
 [node name="SummaryLabel" type="Label" parent="MuseumOverlay/TopBar"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 22.0
-offset_right = 468.0
-offset_bottom = 36.0
+offset_left = 20.0
+offset_top = 36.0
+offset_right = 1260.0
+offset_bottom = 58.0
 theme_override_colors/font_color = Color(0.35, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "RECOVERED: 0 / 12 RELICS"
 
 [node name="Scroll" type="ScrollContainer" parent="MuseumOverlay"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 44.0
-offset_right = 468.0
-offset_bottom = 286.0
+offset_left = 24.0
+offset_top = 74.0
+offset_right = 1256.0
+offset_bottom = 660.0
 follow_focus = true
 
 [node name="ItemList" type="VBoxContainer" parent="MuseumOverlay/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
+theme_override_constants/separation = 10
 
 [node name="BottomBar" type="Panel" parent="MuseumOverlay"]
 layout_mode = 0
-offset_top = 288.0
-offset_right = 480.0
-offset_bottom = 320.0
+offset_top = 672.0
+offset_right = 1280.0
+offset_bottom = 720.0
 
 [node name="HintBar" type="Label" parent="MuseumOverlay/BottomBar"]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 472.0
-offset_bottom = 24.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 1264.0
+offset_bottom = 36.0
 theme_override_colors/font_color = Color(0.4, 0.9, 0.55, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "UP/DOWN: BROWSE EXHIBITS | [B / ESC] RETURN"
 horizontal_alignment = 1
-
-

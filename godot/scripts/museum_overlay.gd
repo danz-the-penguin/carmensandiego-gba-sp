@@ -47,13 +47,13 @@ func _populate_relics() -> void:
 		panel.add_child(vbox)
 
 		var title_lbl = Label.new()
-		title_lbl.add_theme_font_size_override("font_size", 10)
+		title_lbl.add_theme_font_size_override("font_size", 12)
 		
 		var lore_lbl = RichTextLabel.new()
 		lore_lbl.bbcode_enabled = true
 		lore_lbl.fit_content = true
 		lore_lbl.scroll_active = false
-		lore_lbl.add_theme_font_size_override("normal_font_size", 9)
+		lore_lbl.add_theme_font_size_override("normal_font_size", 11)
 
 		if is_recovered:
 			title_lbl.text = "★ %s (RECOVERED)" % r["name"]
