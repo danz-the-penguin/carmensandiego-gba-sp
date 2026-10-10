@@ -784,12 +784,19 @@ func _trigger_dramatic_arrest() -> void:
 				found_rec = true
 				break
 		if not found_rec:
+			var t_lore = "Historic treasure safely restored to ACME vault."
+			var t_val = "$10,000,000"
+			for t in Database.TREASURES:
+				if t["name"] == GameManager.current_treasure:
+					t_lore = t.get("lore", t_lore)
+					t_val = t.get("value", t_val)
+					break
 			GameManager.recovered_treasures.append({
 				"name": GameManager.current_treasure,
 				"thief": criminal.get("name", "V.I.L.E. Operative"),
 				"city": GameManager.current_city_id,
-				"value": "$10,000,000",
-				"lore": "Historic treasure safely restored to ACME vault."
+				"value": t_val,
+				"lore": t_lore
 			})
 		GameManager.save_profile()
 		GameManager.update_rank()
