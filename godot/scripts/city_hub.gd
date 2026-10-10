@@ -302,7 +302,7 @@ func _on_city_changed(city_data: Dictionary) -> void:
 func _update_city_view(city_data: Dictionary) -> void:
 	city_title_label.text = "%s, %s" % [city_data["name"], city_data["country"].to_upper()]
 	city_landmark_label.text = "LANDMARK: %s" % city_data["landmark"]
-	city_status_label.text = "LOC: %s" % city_data["name"]
+	city_status_label.text = "%s" % city_data["name"]
 
 	# Load rasterized pixel-art city skyline if available
 	var city_id = city_data["id"]

@@ -65,9 +65,9 @@ text = "LONDON, UNITED KINGDOM"
 [node name="CityLandmark" type="Label" parent="SkylineView/CityBanner"]
 layout_mode = 0
 offset_left = 8.0
-offset_top = 17.0
+offset_top = 16.0
 offset_right = 456.0
-offset_bottom = 33.0
+offset_bottom = 34.0
 theme_override_colors/font_color = Color(0.68, 0.78, 0.92, 1)
 theme_override_font_sizes/font_size = 8
 text = "LANDMARK: Big Ben and Tower Bridge"
@@ -93,6 +93,7 @@ grow_vertical = 2
 [node name="CityLabel" type="Label" parent="StatusBar/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.35
 theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
 theme_override_font_sizes/font_size = 9
 text = "LOC: LONDON"
@@ -100,6 +101,7 @@ text = "LOC: LONDON"
 [node name="TrailLabel" type="Label" parent="StatusBar/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.95
 theme_override_colors/font_color = Color(0.2, 0.88, 0.55, 1)
 theme_override_font_sizes/font_size = 9
 text = "● HOT TRAIL"
@@ -108,6 +110,7 @@ horizontal_alignment = 1
 [node name="ClockLabel" type="Label" parent="StatusBar/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.0
 theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
 theme_override_font_sizes/font_size = 9
 text = "TIME: MON 9AM"
@@ -116,6 +119,7 @@ horizontal_alignment = 1
 [node name="HoursLabel" type="Label" parent="StatusBar/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.75
 theme_override_colors/font_color = Color(1, 0.45, 0.45, 1)
 theme_override_font_sizes/font_size = 9
 text = "40H LEFT"
@@ -154,7 +158,7 @@ stretch_mode = 5
 layout_mode = 0
 offset_left = 78.0
 offset_top = 4.0
-offset_right = 464.0
+offset_right = 448.0
 offset_bottom = 20.0
 theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
 theme_override_font_sizes/font_size = 9
@@ -164,8 +168,8 @@ text = "[ACME DISPATCH]"
 layout_mode = 0
 offset_left = 78.0
 offset_top = 20.0
-offset_right = 464.0
-offset_bottom = 98.0
+offset_right = 448.0
+offset_bottom = 96.0
 theme_override_colors/default_color = Color(0.92, 0.94, 0.98, 1)
 theme_override_font_sizes/normal_font_size = 9
 bbcode_enabled = true
@@ -187,7 +191,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 8
-text = "1. INVESTIGATE [A]"
+text = "1. INVESTIGATE"
 
 [node name="BtnDepart" type="Button" parent="ActionMenu"]
 layout_mode = 2
@@ -201,7 +205,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 8
-text = "3. CRIME COMP [R]"
+text = "3. COMPUTER [R]"
 
 [node name="BtnDossier" type="Button" parent="ActionMenu"]
 layout_mode = 2
@@ -215,14 +219,14 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 8
-text = "5. WIRE RADIO [X]"
+text = "5. RADIO [X]"
 
 [node name="BtnInspect" type="Button" parent="ActionMenu"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 8
-text = "6. SEARCH SCENE [Y]"
+text = "6. INSPECT [Y]"
 
 
 [node name="SubscreenOverlay" type="Panel" parent="."]

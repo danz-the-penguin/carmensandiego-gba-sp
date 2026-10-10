@@ -5,16 +5,51 @@ extends Control
 var current_subscene: Node = null
 
 func _ready() -> void:
-	# Ensure modern retro 960x640 integer scaling (2x GBA) on launch
-	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_WINDOWED:
-		DisplayServer.window_set_size(Vector2i(960, 640))
-		var screen_rect = DisplayServer.screen_get_usable_rect()
-		DisplayServer.window_set_position(screen_rect.position + (screen_rect.size - Vector2i(960, 640)) / 2)
-
+	_apply_window_scale()
 	GameManager.case_started.connect(_on_case_started)
 	GameManager.case_resolved.connect(_on_case_resolved)
 	GameManager.title_requested.connect(load_title_screen)
 	load_title_screen()
+
+func _apply_window_scale() -> void:
+	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_WINDOWED:
+		var screen_rect = DisplayServer.screen_get_usable_rect()
+		# Pick optimal large size based on user's monitor resolution:
+		# If monitor height >= 1000px: 1440x960 (3x integer)
+		# If monitor height >= 850px: 1200x800 (2.5x modern retro)
+		# Otherwise: 960x640 (2x)
+		var target_size = Vector2i(960, 640)
+		if screen_rect.size.y >= 1050 and screen_rect.size.x >= 1500:
+			target_size = Vector2i(1440, 960)
+		elif screen_rect.size.y >= 850 and screen_rect.size.x >= 1250:
+			target_size = Vector2i(1200, 800)
+		
+		DisplayServer.window_set_size(target_size)
+		DisplayServer.window_set_position(screen_rect.position + (screen_rect.size - target_size) / 2)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F11 or (event.keycode == KEY_F and (event.ctrl_pressed or event.meta_pressed)):
+			var mode = DisplayServer.window_get_mode()
+			if mode == DisplayServer.WINDOW_MODE_FULLSCREEN or mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN:
+				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+				_apply_window_scale()
+			else:
+				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_F1:
+			_set_window_size(Vector2i(960, 640))
+		elif event.keycode == KEY_F2:
+			_set_window_size(Vector2i(1200, 800))
+		elif event.keycode == KEY_F3:
+			_set_window_size(Vector2i(1440, 960))
+
+func _set_window_size(target_size: Vector2i) -> void:
+	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_WINDOWED:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	var screen_rect = DisplayServer.screen_get_usable_rect()
+	DisplayServer.window_set_size(target_size)
+	DisplayServer.window_set_position(screen_rect.position + (screen_rect.size - target_size) / 2)
 
 func load_title_screen() -> void:
 	GameManager.current_state = GameManager.State.TITLE
