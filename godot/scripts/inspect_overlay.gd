@@ -4,7 +4,7 @@ extends Control
 signal inspection_closed
 signal evidence_discovered(clue_text: String)
 
-enum Mode { SCENE_SEARCH, DOCUMENT_EXAMINE }
+enum Mode { SCENE_SEARCH, DOCUMENT_EXAMINE, LOCKPICK }
 
 var active: bool = false
 var current_mode: Mode = Mode.SCENE_SEARCH
@@ -19,6 +19,10 @@ var current_place_name: String = ""
 var clue_dialog_active: bool = false
 var active_clue_data: Dictionary = {}
 var active_doc_data: Dictionary = {}
+
+var lock_pins: Array[Dictionary] = []
+var selected_pin: int = 0
+var lock_completed: bool = false
 
 @onready var clue_card: Panel = $ClueCard
 @onready var clue_title: Label = $ClueCard/Title
@@ -95,6 +99,26 @@ func start_document_inspection(doc_data: Dictionary = {}) -> void:
 	hint_bar.text = "D-PAD: MOVE LOUPE | [A] / [U] TOGGLE UV BLACKLIGHT | [SPACE] COLLECT LEAD | [B] BACK"
 	queue_redraw()
 
+func start_lockpick() -> void:
+	current_mode = Mode.LOCKPICK
+	active = true
+	visible = true
+	clue_dialog_active = false
+	lock_completed = false
+	selected_pin = 0
+	if clue_card:
+		clue_card.visible = false
+	
+	lock_pins = [
+		{"target": 0.65, "height": 0.1, "solved": false},
+		{"target": 0.38, "height": 0.1, "solved": false},
+		{"target": 0.82, "height": 0.1, "solved": false},
+		{"target": 0.50, "height": 0.1, "solved": false}
+	]
+	status_label.text = "TACTICAL LOCKPICK TUMBLER SIMULATOR"
+	hint_bar.text = "◀/▶: SELECT TUMBLER PIN | ▲/▼: LIFT PIN TO SHEAR LINE | [B] BACK"
+	queue_redraw()
+
 func _generate_hotspots(city_id: String) -> void:
 	hotspots.clear()
 	var suspect = GameManager.current_criminal
@@ -144,6 +168,47 @@ func _process(delta: float) -> void:
 		return
 		
 	if clue_dialog_active:
+		return
+
+	if current_mode == Mode.LOCKPICK:
+		if lock_completed:
+			return
+		var lift_speed := 0.0
+		if Input.is_action_pressed("ui_up") or Input.is_key_pressed(KEY_UP) or Input.is_key_pressed(KEY_W):
+			lift_speed += 0.85
+		elif Input.is_action_pressed("ui_down") or Input.is_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_S):
+			lift_speed -= 0.85
+		else:
+			if not lock_pins[selected_pin]["solved"]:
+				lift_speed -= 0.22
+
+		var p = lock_pins[selected_pin]
+		if not p["solved"]:
+			p["height"] = clampf(p["height"] + lift_speed * delta, 0.05, 0.98)
+			if absf(p["height"] - p["target"]) <= 0.055:
+				p["solved"] = true
+				p["height"] = p["target"]
+				SoundManager.play_lock_click()
+				var all_done = true
+				for pin in lock_pins:
+					if not pin["solved"]:
+						all_done = false
+						break
+				if all_done and not lock_completed:
+					lock_completed = true
+					SoundManager.play_cuffs()
+					SoundManager.play_breakthrough()
+					GameManager.hours_left = mini(GameManager.hours_left + 4, 168)
+					GameManager.broadcast_time()
+					var msg = "[TACTICAL LOCKPICK SUCCESS] All 4 shear pins aligned! Cylinder turned and security gate bypassed (+4 Hours Bonus)!"
+					_show_clue({"name": "CYLINDER BYPASS COMPLETE", "clue": msg})
+					evidence_discovered.emit(msg)
+		var solved_count = 0
+		for pin in lock_pins:
+			if pin["solved"]: solved_count += 1
+		if not lock_completed:
+			hint_bar.text = "PIN %d/4 | PUSH UP/DOWN TO SHEAR LINE | PINS SET: %d/4 | [B] BACK" % [selected_pin + 1, solved_count]
+		queue_redraw()
 		return
 		
 	# D-Pad / Keyboard lens movement
@@ -211,6 +276,20 @@ func _input(event: InputEvent) -> void:
 			_close_inspection()
 		get_viewport().set_input_as_handled()
 		return
+
+	if current_mode == Mode.LOCKPICK:
+		if event.is_action_pressed("ui_left") or (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_LEFT or event.keycode == KEY_A)):
+			selected_pin = posmod(selected_pin - 1, 4)
+			SoundManager.play_cursor()
+			queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
+		elif event.is_action_pressed("ui_right") or (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_RIGHT or event.keycode == KEY_D)):
+			selected_pin = posmod(selected_pin + 1, 4)
+			SoundManager.play_cursor()
+			queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
 
 	if current_mode == Mode.DOCUMENT_EXAMINE:
 		if event is InputEventKey and event.pressed and not event.echo:
@@ -293,7 +372,10 @@ func _draw() -> void:
 	if not active:
 		return
 		
-	if current_mode == Mode.DOCUMENT_EXAMINE:
+	if current_mode == Mode.LOCKPICK:
+		_draw_lockpick_view()
+		return
+	elif current_mode == Mode.DOCUMENT_EXAMINE:
 		_draw_document_view()
 	else:
 		_draw_scene_search_view()
@@ -435,3 +517,69 @@ func _draw_magnifying_loupe() -> void:
 	var handle_end = handle_start + Vector2(30.0, 30.0)
 	draw_line(handle_start, handle_end, rim_color, 4.5)
 	draw_line(handle_start + Vector2(3, 3), handle_end, Color(0.4, 0.2, 0.1), 2.5)
+
+func _draw_lockpick_view() -> void:
+	# Background cylinder casing
+	draw_rect(Rect2(0, 48, 1280, 624), Color(0.06, 0.08, 0.12, 0.98))
+	
+	# Brass Lock Housing Plate
+	var casing_rect := Rect2(180, 90, 920, 490)
+	draw_rect(casing_rect, Color(0.18, 0.20, 0.28, 1.0))
+	draw_rect(casing_rect, Color(0.85, 0.65, 0.25, 1.0), false, 4.0)
+	
+	# Cylinder Shear Line (Horizontal dashed gold line at Y=330)
+	var shear_y := 330.0
+	for sx in range(200, 1080, 24):
+		draw_line(Vector2(sx, shear_y), Vector2(sx + 14, shear_y), Color(1.0, 0.85, 0.25, 0.8), 2.5)
+	
+	# 4 Pin Chambers (centered at x = 330, 540, 750, 960)
+	var chamber_xs = [330.0, 540.0, 750.0, 960.0]
+	var chamber_w := 96.0
+	var chamber_top := 120.0
+	var chamber_bottom := 520.0
+	
+	for i in range(4):
+		var cx: float = chamber_xs[i]
+		var pin_data = lock_pins[i]
+		var is_sel: bool = (i == selected_pin)
+		var is_solved: bool = pin_data["solved"]
+		var h_norm: float = pin_data["height"]
+		
+		# Chamber slot background
+		var slot_rect := Rect2(cx - chamber_w * 0.5, chamber_top, chamber_w, chamber_bottom - chamber_top)
+		draw_rect(slot_rect, Color(0.10, 0.12, 0.18, 1.0))
+		draw_rect(slot_rect, Color(0.35, 0.40, 0.55, 0.7), false, 2.0)
+		
+		# Selection glow & indicator
+		if is_sel:
+			draw_rect(Rect2(cx - chamber_w * 0.5 - 4, chamber_top - 4, chamber_w + 8, chamber_bottom - chamber_top + 8), Color(0.3, 0.85, 1.0, 0.9), false, 3.0)
+			# Top active pointer
+			draw_line(Vector2(cx, chamber_top - 18), Vector2(cx, chamber_top - 6), Color(0.3, 0.85, 1.0), 3.0)
+			draw_circle(Vector2(cx, chamber_top - 20), 4.0, Color(0.3, 0.85, 1.0))
+
+		# Upper Spring (Coil lines)
+		var spring_bottom: float = chamber_top + (1.0 - h_norm) * 70.0 + 30.0
+		for sy in range(int(chamber_top + 5), int(spring_bottom), 12):
+			var off = 18.0 if (sy / 12) % 2 == 0 else -18.0
+			draw_line(Vector2(cx - off, sy), Vector2(cx + off, sy + 6), Color(0.6, 0.65, 0.75), 2.0)
+
+		# Upper Driver Pin (Hardened Steel Blue)
+		var driver_h: float = 80.0
+		var driver_y: float = spring_bottom
+		var driver_rect := Rect2(cx - chamber_w * 0.45, driver_y, chamber_w * 0.9, driver_h)
+		draw_rect(driver_rect, Color(0.30, 0.38, 0.50))
+		draw_rect(driver_rect, Color(0.55, 0.65, 0.80), false, 1.5)
+
+		# Lower Key Pin (Brass, or Glowing Emerald when aligned)
+		var key_h := 110.0
+		var key_y := driver_y + driver_h + 4.0
+		var key_rect := Rect2(cx - chamber_w * 0.45, key_y, chamber_w * 0.9, key_h)
+		var key_col = Color(0.15, 0.85, 0.45) if is_solved else (Color(0.95, 0.75, 0.25) if is_sel else Color(0.75, 0.55, 0.18))
+		draw_rect(key_rect, key_col)
+		draw_rect(key_rect, Color(1.0, 1.0, 0.8), false, 2.0)
+
+		# Tactile Tension Pick Blade (Drawn below active pin)
+		if is_sel:
+			var pick_tip := Vector2(cx, key_y + key_h + 2.0)
+			draw_line(pick_tip, pick_tip + Vector2(24, 45), Color(0.85, 0.9, 0.95), 4.0)
+			draw_line(pick_tip + Vector2(24, 45), pick_tip + Vector2(60, 45), Color(0.6, 0.65, 0.75), 5.0)

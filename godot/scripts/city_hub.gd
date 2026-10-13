@@ -257,6 +257,19 @@ func _input(event: InputEvent) -> void:
 		elif event.keycode == KEY_U:
 			open_document_inspection()
 			return
+		elif event.keycode == KEY_N:
+			if subscreen_panel.visible and subscreen_mode == "informant":
+				close_subscreen()
+			else:
+				open_informant_negotiation()
+			return
+		elif event.keycode == KEY_T:
+			if inspect_overlay.visible and inspect_overlay.current_mode == inspect_overlay.Mode.LOCKPICK:
+				inspect_overlay.visible = false
+				inspect_overlay.active = false
+			else:
+				open_lockpick_simulator()
+			return
 
 	if subscreen_panel.visible:
 		if event.is_action_pressed("ui_up"):
@@ -497,6 +510,8 @@ func open_investigate() -> void:
 	subscreen_data.append({"type": "inspect", "name": "🔍 SWEEP SCENE FOR PHYSICAL EVIDENCE", "witness": "Magnifying Glass"})
 	subscreen_data.append({"type": "doc_inspect", "name": "📑 EXAMINE RECOVERED TRAVEL DOCUMENTS [U]", "witness": "365nm UV Blacklight Loupe"})
 	subscreen_data.append({"type": "present", "name": "⚡ PRESENT EVIDENCE TO WITNESS [P]", "witness": "Contradiction Matrix"})
+	subscreen_data.append({"type": "informant", "name": "🤝 CONSULT UNDERCOVER INFORMANT [N]", "witness": "Tactical Negotiation & Lead Intel"})
+	subscreen_data.append({"type": "lockpick", "name": "🔓 TACTICAL LOCKPICK TUMBLER SIMULATOR [T]", "witness": "Electronic Lockpick"})
 	
 	var labels: Array[String] = []
 	for p in subscreen_data:
@@ -508,6 +523,10 @@ func open_investigate() -> void:
 			labels.append("%s\nInspect flight tickets under 365nm UV blacklight" % p["name"])
 		elif p["type"] == "present":
 			labels.append("%s\nConfront witnesses with gathered proof & break alibis" % p["name"])
+		elif p["type"] == "informant":
+			labels.append("%s\nNegotiate with local underworld fixer for leads & time" % p["name"])
+		elif p["type"] == "lockpick":
+			labels.append("%s\nPick electronic tumbler pins to bypass security gates (+4H bonus)" % p["name"])
 	_populate_subscreen(labels)
 
 
@@ -553,6 +572,8 @@ func open_dossier() -> void:
 	items.append({"action": "present", "text": "⚡ [P] PRESENT EVIDENCE TO WITNESS (Break Alibis & Decoys)"})
 	items.append({"action": "doc_inspect", "text": "📑 [U] TACTILE UV TRAVEL DOCUMENT INSPECTION"})
 	items.append({"action": "museum", "text": "🏛 [M] EVIDENCE HALL & MUSEUM (Recovered Relics)"})
+	items.append({"action": "informant", "text": "🤝 [N] NEGOTIATE WITH LOCAL INFORMANT / FIXER (Time & Intel)"})
+	items.append({"action": "lockpick", "text": "🔓 [T] TACTILE LOCKPICK TUMBLER SIMULATOR (Bypass Locks)"})
 	
 	# SECTION 1: SUSPECT DEDUCTION PROBABILITY MATRIX
 	items.append({"action": "none", "text": "--- 🎯 DEDUCTION MATRIX: SUSPECT PROBABILITY ---"})
@@ -720,9 +741,7 @@ func _use_gadget(gadget_id: String) -> void:
 			show_dialog("[UV BLACKLIGHT]", "High-intensity ultraviolet sweep detected trace forensic residue: %s!" % picked, "curator_%s" % reg)
 
 		"lockpick":
-			GameManager.hours_left = mini(GameManager.current_rank.get("deadline_hours", 48), GameManager.hours_left + 3)
-			GameManager.broadcast_time()
-			show_dialog("[ACME LOCKPICK]", "Electronic decoder bypassed VIP customs gates and tarmac security! Saved +3 Hours on the investigation clock!", "chief")
+			open_lockpick_simulator()
 
 		"polygraph":
 			var suspect = GameManager.current_criminal
@@ -805,6 +824,10 @@ func _confirm_subscreen(idx: int) -> void:
 					open_document_inspection()
 				elif t == "present":
 					open_present_evidence()
+				elif t == "informant":
+					open_informant_negotiation()
+				elif t == "lockpick":
+					open_lockpick_simulator()
 				else:
 					_handle_investigation(idx)
 			else:
@@ -834,6 +857,12 @@ func _confirm_subscreen(idx: int) -> void:
 				elif act == "museum":
 					open_museum()
 					return
+				elif act == "informant":
+					open_informant_negotiation()
+					return
+				elif act == "lockpick":
+					open_lockpick_simulator()
+					return
 				elif act == "cycle_shell":
 					GameManager.cycle_shell()
 					open_dossier()
@@ -854,6 +883,8 @@ func _confirm_subscreen(idx: int) -> void:
 				_use_gadget(subscreen_data[idx].get("id", "back"))
 		"present_evidence":
 			_present_evidence_item(idx)
+		"informant":
+			_handle_informant_negotiation(idx)
 
 func _handle_investigation(place_index: int) -> void:
 	var city = Database.CITIES[GameManager.current_city_id]
@@ -940,6 +971,10 @@ func open_crime_scene_inspection() -> void:
 func open_document_inspection() -> void:
 	subscreen_panel.visible = false
 	inspect_overlay.start_document_inspection()
+
+func open_lockpick_simulator() -> void:
+	subscreen_panel.visible = false
+	inspect_overlay.start_lockpick()
 
 func open_present_evidence() -> void:
 	subscreen_mode = "present_evidence"
@@ -1036,6 +1071,104 @@ func _present_evidence_item(idx: int) -> void:
 			"Nice try, gumshoe! You'll need real forensic proof to rattle me."
 		].pick_random()
 		show_dialog("[WITNESS CONFRONTATION]", unhelpful, portrait_id)
+
+func open_informant_negotiation() -> void:
+	subscreen_mode = "informant"
+	
+	var city_id = GameManager.current_city_id
+	var hash_val = abs((GameManager.current_case_seed.hash() + city_id.hash()))
+	var archetypes = ["greedy", "lawful", "nervous"]
+	var arch = archetypes[hash_val % 3]
+	
+	var fixer_names = {
+		"greedy": "Vito 'Cashflow' (Black Market Broker)",
+		"lawful": "Kenji Sato (Precinct Veteran)",
+		"nervous": "Rico 'Twitch' (Stashhouse Courier)"
+	}
+	
+	subscreen_title.text = "INFORMANT: %s [%s]" % [fixer_names[arch].to_upper(), arch.to_upper()]
+	
+	subscreen_data = [
+		{"tactic": "bounty", "arch": arch, "title": "💵 OFFER FINANCIAL BOUNTY (5,000 ACME Credits)", "desc": "Grease palms with cash bounty to buy underworld loyalty."},
+		{"tactic": "justice", "arch": arch, "title": "⚖ APPEAL TO CIVIC JUSTICE & DUTY", "desc": "Appeal to community protection and moral duty against crime syndicates."},
+		{"tactic": "intimidation", "arch": arch, "title": "🚨 INTERPOL LEGAL INTIMIDATION", "desc": "Brandish ACME badge and threaten harboring / obstruction charges."},
+		{"tactic": "back", "arch": arch, "title": "◀ WITHDRAW FROM NEGOTIATION", "desc": "Return to active case operations."}
+	]
+	
+	var labels: Array[String] = []
+	for item in subscreen_data:
+		if item["tactic"] == "back":
+			labels.append(item["title"])
+		else:
+			labels.append("%s\n   %s" % [item["title"], item["desc"]])
+	_populate_subscreen(labels)
+
+func _handle_informant_negotiation(idx: int) -> void:
+	if idx >= subscreen_data.size():
+		close_subscreen()
+		return
+	var item = subscreen_data[idx]
+	var tactic: String = item.get("tactic", "back")
+	if tactic == "back":
+		close_subscreen()
+		return
+	
+	var arch: String = item.get("arch", "greedy")
+	close_subscreen()
+	
+	# Spend 1 hour for the tactical negotiation
+	if not GameManager.spend_hours(1):
+		return
+
+	var reg = SoundManager.get_region_for_city(GameManager.current_city_id)
+	if reg == "africa_mideast":
+		reg = "africa"
+	var portrait_id = "curator_%s" % reg
+
+	var is_success = (tactic == "bounty" and arch == "greedy") or (tactic == "justice" and arch == "lawful") or (tactic == "intimidation" and arch == "nervous")
+	
+	if is_success:
+		SoundManager.play_breakthrough()
+		SoundManager.play_clue()
+		flash_screen(Color(0.2, 0.9, 0.5, 0.8), 0.3)
+		shake_screen(3.5, 0.25)
+		
+		# Award +3 bonus hours
+		GameManager.hours_left = mini(GameManager.hours_left + 3, 168)
+		GameManager.broadcast_time()
+		
+		var suspect = GameManager.current_criminal
+		var trail = GameManager.current_trail
+		var curr_id = GameManager.current_city_id
+		var curr_idx = trail.find(curr_id)
+		var lead_msg = ""
+		
+		if curr_idx != -1 and curr_idx < trail.size() - 1:
+			var next_city = Database.CITIES[trail[curr_idx + 1]]
+			lead_msg = "INFORMANT LEAD: 'The operative slipped into the VIP terminal heading for %s (%s). Kept bragging about driving a %s!' (+3 Hours Bonus)" % [next_city["name"], next_city["country"].to_upper(), suspect.get("vehicle", "vehicle")]
+		elif curr_idx == trail.size() - 1:
+			lead_msg = "INFORMANT LEAD: 'They're hiding right here in this city! Saw them near the back-alleys with %s hair and a %s! Get your warrant ready!' (+3 Hours Bonus)" % [suspect.get("hair", "dark"), suspect.get("feature", "disguise")]
+		else:
+			lead_msg = "INFORMANT LEAD: 'You're off track, detective! V.I.L.E. bypassed this territory completely. Check your casebook and backtrack!' (+3 Hours Bonus)"
+		
+		var entry = "[INFORMANT INTEL] %s" % lead_msg
+		if not GameManager.clues_gathered.has(entry):
+			GameManager.clues_gathered.append(entry)
+		GameManager.clue_found.emit(entry)
+		
+		show_dialog("[INFORMANT COOPERATION]", lead_msg, portrait_id)
+	else:
+		SoundManager.play_cancel()
+		shake_screen(2.0, 0.2)
+		var refusal_text = ""
+		if arch == "greedy":
+			refusal_text = "'Nice speech, agent, but speeches don't pay my debts. Money talks, morality walks. Bring real cash next time!'"
+		elif arch == "lawful":
+			refusal_text = "'You think I'm a common crook you can bribe or threaten? I cooperate for justice and the safety of our citizens, nothing else!'"
+		else: # nervous
+			refusal_text = "'Your soft words don't scare V.I.L.E. and they don't comfort me! I'm not risking my neck unless you can guarantee Interpol muscle!'"
+			
+		show_dialog("[NEGOTIATION STALEMATE]", refusal_text, portrait_id)
 
 func _start_alley_chase() -> void:
 	subscreen_panel.visible = false

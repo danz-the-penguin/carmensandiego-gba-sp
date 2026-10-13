@@ -33,6 +33,7 @@ var wav_gadget: AudioStreamWAV
 var wav_hold_it: AudioStreamWAV
 var wav_breakthrough: AudioStreamWAV
 var wav_uv_toggle: AudioStreamWAV
+var wav_lock_click: AudioStreamWAV
 var wav_bgm: AudioStreamWAV
 
 
@@ -93,6 +94,7 @@ func _cache_all_sounds() -> void:
 	wav_hold_it = _load_override("hold_it", _create_hold_it_wav())
 	wav_breakthrough = _load_override("breakthrough", _create_breakthrough_wav())
 	wav_uv_toggle = _load_override("uv_toggle", _create_uv_toggle_wav())
+	wav_lock_click = _load_override("lock_click", _create_lock_click_wav())
 	
 	for reg in ["americas", "europe", "asia", "latin", "africa_mideast"]:
 		regional_bgm[reg] = _load_override("bgm_" + reg, _create_regional_bgm(reg))
@@ -450,6 +452,7 @@ func play_gadget() -> void: play_sfx(wav_gadget)
 func play_hold_it() -> void: play_sfx(wav_hold_it)
 func play_breakthrough() -> void: play_sfx(wav_breakthrough)
 func play_uv_toggle() -> void: play_sfx(wav_uv_toggle)
+func play_lock_click() -> void: play_sfx(wav_lock_click)
 
 
 func _create_impact_wav() -> AudioStreamWAV:
@@ -698,6 +701,28 @@ func _create_uv_toggle_wav() -> AudioStreamWAV:
 		phase_high = fmod(phase_high + (2400.0 / wav.mix_rate), 1.0)
 		var click := (1.0 if phase_low < 0.5 else -1.0) * 0.6 + sin(phase_high * TAU) * 0.4
 		data[i] = int(clampi(int(128 + click * env * 110.0), 0, 255))
+	wav.data = data
+	return wav
+
+func _create_lock_click_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.08
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	
+	var phase_tone := 0.0
+	var phase_ping := 0.0
+	for i in range(sample_count):
+		var t := float(i) / float(wav.mix_rate)
+		var env := exp(-t * 45.0) # Sharp metallic pin snap decay
+		phase_tone = fmod(phase_tone + (1760.0 / wav.mix_rate), 1.0)
+		phase_ping = fmod(phase_ping + (2640.0 / wav.mix_rate), 1.0)
+		var click := (1.0 if phase_tone < 0.5 else -1.0) * 0.5 + sin(phase_ping * TAU) * 0.5
+		data[i] = int(clampi(int(128 + click * env * 120.0), 0, 255))
 	wav.data = data
 	return wav
 

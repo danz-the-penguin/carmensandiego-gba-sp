@@ -1057,6 +1057,210 @@ class GBAGraphicsRenderer {
     }
   }
 
+  // --- Tactical Lockpick Tumbler Simulator ---
+  drawLockpickMinigame(pins, activePin, isUnlocked = false) {
+    this.setResolution(240, 88);
+    this.clear();
+
+    // Dark metallic chassis
+    this.ctx.fillStyle = "#090d16";
+    this.ctx.fillRect(0, 0, 240, 88);
+
+    // Brass Lock Housing Plate
+    this.ctx.fillStyle = "#1e293b";
+    this.ctx.fillRect(20, 8, 200, 72);
+    this.ctx.strokeStyle = "#eab308";
+    this.ctx.lineWidth = 1.5;
+    this.ctx.strokeRect(20, 8, 200, 72);
+
+    // Cylinder Shear Line (Horizontal gold dashed line at y=46)
+    const shearY = 46;
+    this.ctx.strokeStyle = "#facc15";
+    this.ctx.lineWidth = 1;
+    this.ctx.setLineDash([4, 3]);
+    this.ctx.beginPath();
+    this.ctx.moveTo(24, shearY);
+    this.ctx.lineTo(216, shearY);
+    this.ctx.stroke();
+    this.ctx.setLineDash([]);
+
+    // 4 Pin Chambers (centered at x = 52, 98, 142, 188)
+    const chamberXs = [52, 98, 142, 188];
+    const chamberW = 24;
+    const chamberTop = 14;
+    const chamberBottom = 74;
+
+    for (let i = 0; i < 4; i++) {
+      const cx = chamberXs[i];
+      const p = (pins && pins[i]) || { height: 0.1, target: 0.5, solved: false };
+      const isSel = (i === activePin);
+      const isSolved = p.solved;
+      const hNorm = p.height || 0.1;
+
+      // Chamber slot background
+      this.ctx.fillStyle = "#0f172a";
+      this.ctx.fillRect(cx - chamberW / 2, chamberTop, chamberW, chamberBottom - chamberTop);
+      this.ctx.strokeStyle = isSel ? "#38bdf8" : "#334155";
+      this.ctx.lineWidth = isSel ? 1.5 : 1;
+      this.ctx.strokeRect(cx - chamberW / 2, chamberTop, chamberW, chamberBottom - chamberTop);
+
+      if (isSel) {
+        // Selection indicator triangle
+        this.ctx.fillStyle = "#38bdf8";
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx - 3, chamberTop - 3);
+        this.ctx.lineTo(cx + 3, chamberTop - 3);
+        this.ctx.lineTo(cx, chamberTop);
+        this.ctx.fill();
+      }
+
+      // Upper Spring coils
+      const springBottom = chamberTop + (1.0 - hNorm) * 16 + 6;
+      this.ctx.strokeStyle = "#94a3b8";
+      this.ctx.lineWidth = 1;
+      for (let sy = chamberTop + 2; sy < springBottom; sy += 3) {
+        const off = ((sy % 6) === 0) ? 4 : -4;
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx - off, sy);
+        this.ctx.lineTo(cx + off, sy + 2);
+        this.ctx.stroke();
+      }
+
+      // Upper Driver Pin (Hardened Steel Blue)
+      const driverH = 14;
+      const driverY = springBottom;
+      this.ctx.fillStyle = "#475569";
+      this.ctx.fillRect(cx - chamberW * 0.4, driverY, chamberW * 0.8, driverH);
+      this.ctx.strokeStyle = "#94a3b8";
+      this.ctx.strokeRect(cx - chamberW * 0.4, driverY, chamberW * 0.8, driverH);
+
+      // Lower Key Pin (Brass, or Glowing Emerald when aligned)
+      const keyH = 20;
+      const keyY = driverY + driverH + 1;
+      this.ctx.fillStyle = isSolved ? "#22c55e" : (isSel ? "#fbbf24" : "#ca8a04");
+      this.ctx.fillRect(cx - chamberW * 0.4, keyY, chamberW * 0.8, keyH);
+      this.ctx.strokeStyle = isSolved ? "#86efac" : "#fde047";
+      this.ctx.strokeRect(cx - chamberW * 0.4, keyY, chamberW * 0.8, keyH);
+
+      // Tactile Tension Pick Blade
+      if (isSel) {
+        const pickTipY = keyY + keyH + 1;
+        this.ctx.strokeStyle = "#e2e8f0";
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, pickTipY);
+        this.ctx.lineTo(cx + 6, pickTipY + 8);
+        this.ctx.lineTo(cx + 18, pickTipY + 8);
+        this.ctx.stroke();
+      }
+    }
+
+    // Top status title
+    this.ctx.fillStyle = isUnlocked ? "#4ade80" : "#f8fafc";
+    this.ctx.font = '6px "Press Start 2P", monospace';
+    this.ctx.fillText(isUnlocked ? "★ CYLINDER ROTATED: UNLOCKED! ★" : `LOCKPICK: PIN ${activePin + 1}/4`, 28, 14);
+  }
+
+  // --- Upgraded 5-Stage Pursuit QTE Scene ---
+  drawChaseScene(stage, progress, targetKey) {
+    this.setResolution(240, 88);
+    this.clear();
+
+    const stageNames = [
+      "1. CRATE VAULT [B]",
+      "2. STEAM VENT SLIDE [DOWN]",
+      "3. ALLEY FORK CUTOFF [LEFT/RIGHT]",
+      "4. FIRE ESCAPE LEAP [UP]",
+      "5. DEAD END TACKLE [A MASH]"
+    ];
+
+    // Background: Dark alleyway perspective
+    const bg = this.ctx.createLinearGradient(0, 0, 0, 88);
+    bg.addColorStop(0, "#0b0c1e");
+    bg.addColorStop(1, "#1e1b4b");
+    this.ctx.fillStyle = bg;
+    this.ctx.fillRect(0, 0, 240, 88);
+
+    // Brick Alley Walls
+    this.ctx.fillStyle = "#1e293b";
+    this.ctx.fillRect(0, 10, 50, 78);
+    this.ctx.fillRect(190, 10, 50, 78);
+    this.ctx.strokeStyle = "#334155";
+    this.ctx.strokeRect(0, 10, 50, 78);
+    this.ctx.strokeRect(190, 10, 50, 78);
+
+    // Ground cobblestones
+    this.ctx.fillStyle = "#0f172a";
+    this.ctx.fillRect(50, 48, 140, 40);
+
+    // Dynamic obstacle graphic based on stage
+    if (stage === 0) {
+      // Stage 1: Cargo Crates
+      this.ctx.fillStyle = "#b45309";
+      this.ctx.fillRect(100, 36, 36, 32);
+      this.ctx.strokeStyle = "#d97706";
+      this.ctx.strokeRect(100, 36, 36, 32);
+      this.ctx.beginPath();
+      this.ctx.moveTo(100, 36);
+      this.ctx.lineTo(136, 68);
+      this.ctx.moveTo(136, 36);
+      this.ctx.lineTo(100, 68);
+      this.ctx.stroke();
+    } else if (stage === 1) {
+      // Stage 2: Hissing Low Steam Pipe
+      this.ctx.fillStyle = "#64748b";
+      this.ctx.fillRect(60, 38, 120, 10);
+      this.ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+      this.ctx.beginPath();
+      this.ctx.arc(120, 36, 12, 0, Math.PI * 2);
+      this.ctx.fill();
+    } else if (stage === 2) {
+      // Stage 3: Forking Archway
+      this.ctx.fillStyle = "#334155";
+      this.ctx.fillRect(115, 20, 10, 68);
+      this.ctx.fillStyle = "#38bdf8";
+      this.ctx.font = '7px "Press Start 2P", monospace';
+      this.ctx.fillText("◀", 75, 45);
+      this.ctx.fillText("▶", 155, 45);
+    } else if (stage === 3) {
+      // Stage 4: Fire Escape Rooftop Ladder
+      this.ctx.strokeStyle = "#94a3b8";
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeRect(105, 14, 30, 60);
+      for (let y = 20; y < 70; y += 10) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(105, y);
+        this.ctx.lineTo(135, y);
+        this.ctx.stroke();
+      }
+    } else if (stage === 4) {
+      // Stage 5: Cornered Suspect at Dead End Brick Wall
+      this.ctx.fillStyle = "#7f1d1d";
+      this.ctx.fillRect(70, 20, 100, 60);
+      this.ctx.strokeStyle = "#ef4444";
+      this.ctx.strokeRect(70, 20, 100, 60);
+      this.drawCarmenFigure(110, 26);
+    }
+
+    // Top Header & QTE Target Prompt
+    this.ctx.fillStyle = "#facc15";
+    this.ctx.font = '6px "Press Start 2P", monospace';
+    this.ctx.fillText(`PURSUIT QTE: ${stageNames[stage] || ""}`, 12, 12);
+
+    // QTE Prompt Badge
+    this.ctx.fillStyle = "#dc2626";
+    this.ctx.fillRect(60, 68, 120, 16);
+    this.ctx.strokeStyle = "#fef08a";
+    this.ctx.lineWidth = 1.5;
+    this.ctx.strokeRect(60, 68, 120, 16);
+
+    this.ctx.fillStyle = "#ffffff";
+    this.ctx.font = '6px "Press Start 2P", monospace';
+    this.ctx.textAlign = "center";
+    this.ctx.fillText(`PRESS: [ ${targetKey} ]`, 120, 79);
+    this.ctx.textAlign = "start";
+  }
+
   // --- Game Over / Escape Scene ---
   drawGameOverScene() {
     this.setResolution(240, 88);

@@ -12,6 +12,25 @@ A 2010s neo-retro detective adventure inspired by the 1985 classic *"Where in th
 
 ## 🕵️ Features & 2010s Neo-Retro Mechanics
 
+* **Tactile Lockpick Tumblers Minigame [T]:**
+  * Interactive electronic lockpicking microgame with 4 spring-loaded shear pins.
+  * Select tumbler pins with <kbd>◀</kbd> / <kbd>▶</kbd> and apply pick lift tension with <kbd>▲</kbd> / <kbd>▼</kbd>.
+  * When pins reach their exact cylinder shear line, tactile metallic pin-snap audio synthesized clicks (`play_lock_click`) trigger as pins lock in place.
+  * Aligning all 4 pins bypasses transit security gates and grants a +4 Hours investigation time bonus!
+* **Upgraded 5-Stage Rooftop & Alleyway Pursuit QTE:**
+  * Cornering a suspect with an arrest warrant launches a heart-pounding 5-stage alleyway pursuit QTE:
+    1. **Crate Vault (<kbd>B</kbd> / Jump):** Leap over stacked shipping crates blocking the alley.
+    2. **Steam Vent Slide (<kbd>Down</kbd>):** Slide under low, hissing industrial steam vents.
+    3. **Alley Fork Cutoff (<kbd>Left</kbd> / <kbd>Right</kbd>):** Anticipate suspect routing at branching intersections.
+    4. **Fire Escape Rooftop Leap (<kbd>Up</kbd>):** Bound across collapsing iron fire escape stairs.
+    5. **Dead End Tackle Mash (<kbd>A</kbd> × 5):** Corner the suspect at a brick dead-end and mash <kbd>A</kbd> to tackle and handcuff them!
+* **Local Informant Persuasion & Negotiation Mechanic [N]:**
+  * In each global hub, detectives can negotiate with local underworld fixers and retired precinct contacts.
+  * Assess informant psychological dispositions (**Greedy Fixer**, **Civic Duty Fixer**, **Nervous Fixer**) and select from 3 tactical approaches:
+    * **💵 Financial Bounty Offer (5,000 Credits):** Grease palms and buy underworld loyalty.
+    * **⚖ Civic Justice Appeal:** Appeal to moral duty, community protection, and neighborhood safety.
+    * **🚨 Interpol Legal Intimidation:** Brandish ACME badges and threaten harboring/obstruction charges.
+  * Successful negotiation recovers +3 Hours on the investigation clock and extracts critical fugitive flight destinations and trait intel.
 * **Forensic Evidence Presentation (*Ace Attorney* Style) & Contradiction Matrix:**
   * Select **PRESENT EVIDENCE [P]** from the investigation menu, dossier, or hotkey to directly confront witnesses with collected clues, physical traces, and boarding slips.
   * Exposing contradictions or matching suspect traits/destinations triggers a dramatic cyan screen flash, screen shake, authentic double-hit bass stinger (*"HOLD IT!"*), triumphant 7-note ascending breakthrough fanfare, and a cracked witness breakthrough confession (+2 Hours Bonus).
@@ -65,6 +84,8 @@ A 2010s neo-retro detective adventure inspired by the 1985 classic *"Where in th
 | **[R] Shoulder** | <kbd>E</kbd> | Open Interpol Crime Computer |
 | **Present Evidence** | <kbd>P</kbd> | Confront witness with evidence (*Hold It!*) |
 | **UV Inspection** | <kbd>U</kbd> | Toggle 365nm UV Document Examination |
+| **Informant Fixer** | <kbd>N</kbd> | Negotiate with Local Undercover Informant |
+| **Lockpick Simulator** | <kbd>T</kbd> | Open Tactical Lockpick Tumblers Minigame |
 | **[START]** | <kbd>Enter</kbd> / <kbd>Space</kbd> / Click | Start new case from Title Screen |
 | **Light Button** | <kbd>B</kbd> | Cycle AGS-101 Bright / Normal / Frontlit |
 | **Mute BGM** | <kbd>M</kbd> | Toggle 8-bit Detective BGM On/Off |

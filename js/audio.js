@@ -323,6 +323,13 @@ class GBASoundEngine {
     setTimeout(() => this.playTone(130, 0.12, "triangle", 0.25), 25);
   }
 
+  lockClick() {
+    this.init();
+    // Sharp metallic pin snap decay with dual-tone harmonics
+    this.playTone(1760, 0.04, "triangle", 0.40);
+    this.playTone(2640, 0.03, "sine", 0.30);
+  }
+
   getRegionForCity(cityId) {
     const id = (cityId || "").toLowerCase();
     if (["london", "paris", "rome", "athens", "moscow", "reykjavik"].includes(id)) return "europe";

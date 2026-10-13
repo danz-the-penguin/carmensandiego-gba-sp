@@ -1104,6 +1104,8 @@
     <button class="tool-btn" id="btn-quick-inspect">[Y] Search Scene</button>
     <button class="tool-btn" id="btn-quick-present">⚡ [P] Present Proof</button>
     <button class="tool-btn" id="btn-quick-docs">📑 [U] UV Docs</button>
+    <button class="tool-btn" id="btn-quick-informant">🤝 [N] Informant</button>
+    <button class="tool-btn" id="btn-quick-lockpick">🔓 [T] Lockpick</button>
   </div>
 
 
@@ -1174,6 +1176,14 @@
     document.getElementById("btn-quick-docs").addEventListener("click", () => {
       if (engine.subscreenMode === "doc_inspect") engine.toggleUvMode();
       else engine.openDocumentInspection();
+    });
+    document.getElementById("btn-quick-informant").addEventListener("click", () => {
+      if (engine.subscreenMode === "informant") engine.closeSubscreen();
+      else engine.openInformantNegotiation();
+    });
+    document.getElementById("btn-quick-lockpick").addEventListener("click", () => {
+      if (engine.subscreenMode === "lockpick") engine.closeSubscreen();
+      else engine.openLockpickMinigame();
     });
 
     // Hub Menu Click Support
@@ -1258,6 +1268,14 @@
       } else if (k === "m") {
         e.preventDefault();
         toggleBgmMusic();
+      } else if (k === "n") {
+        e.preventDefault();
+        if (engine.subscreenMode === "informant") engine.closeSubscreen();
+        else engine.openInformantNegotiation();
+      } else if (k === "t") {
+        e.preventDefault();
+        if (engine.subscreenMode === "lockpick") engine.closeSubscreen();
+        else engine.openLockpickMinigame();
       }
     });
 

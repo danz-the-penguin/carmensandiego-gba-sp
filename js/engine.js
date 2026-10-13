@@ -408,6 +408,14 @@ class GBACarmenGameEngine {
       title: "⚡ 6. PRESENT EVIDENCE TO WITNESS [P] (HOLD IT!)",
       isPresentEvidence: true
     });
+    this.subscreenOptions.push({
+      title: "🤝 7. CONSULT UNDERCOVER INFORMANT [N] (Fixer Negotiation)",
+      isInformant: true
+    });
+    this.subscreenOptions.push({
+      title: "🔓 8. TACTICAL LOCKPICK SIMULATOR [T] (Bypass Security)",
+      isLockpick: true
+    });
     this.renderSubscreen("INVESTIGATE LOCATIONS", this.subscreenOptions);
   }
 
@@ -735,6 +743,8 @@ class GBACarmenGameEngine {
       { title: "⚡ [P] PRESENT EVIDENCE TO WITNESS (Break Alibis & Decoys)", action: "present_evidence" },
       { title: "📑 [U] TACTILE UV TRAVEL DOCUMENT INSPECTION", action: "doc_inspect" },
       { title: "🏛 [V] EVIDENCE HALL & MUSEUM (Recovered Relics)", action: "museum" },
+      { title: "🤝 [N] NEGOTIATE WITH LOCAL INFORMANT / FIXER (Time & Intel)", action: "informant" },
+      { title: "🔓 [T] TACTILE LOCKPICK TUMBLER SIMULATOR (Bypass Locks)", action: "lockpick" },
       { title: "--- 🎯 DEDUCTION MATRIX: SUSPECT PROBABILITY ---" }
     ];
 
@@ -908,9 +918,8 @@ class GBACarmenGameEngine {
       if (!this.cluesGathered.includes(intel)) this.cluesGathered.push(intel);
       this.setDialog(`[UV BLACKLIGHT] High-intensity ultraviolet sweep detected trace forensic residue: ${picked}!`);
     } else if (gadgetId === "lockpick") {
-      this.hoursLeft = Math.min(this.getRank().deadlineHours, this.hoursLeft + 3);
-      this.updateTimeDisplay();
-      this.setDialog("[ACME LOCKPICK] Electronic decoder bypassed VIP customs gates and tarmac security! Saved +3 Hours on the investigation clock!");
+      this.openLockpickMinigame();
+      return;
     } else if (gadgetId === "polygraph") {
       const suspect = this.currentCase.criminal;
       const traits = [
@@ -1101,7 +1110,7 @@ class GBACarmenGameEngine {
   closeSubscreen() {
     const overlay = document.getElementById("subscreen-overlay");
     overlay.classList.remove("active");
-    if (this.subscreenMode === "doc_inspect") {
+    if (this.subscreenMode === "doc_inspect" || this.subscreenMode === "lockpick" || this.subscreenMode === "chase") {
       if (this.currentWitness) {
         this.renderer.drawWitnessPortrait(this.currentWitness, this.currentWitnessRegion, false, false);
       } else {
@@ -1132,6 +1141,16 @@ class GBACarmenGameEngine {
       return;
     }
 
+    if (this.subscreenMode === "informant") {
+      this.handleInformantChoice(this.subscreenIndex);
+      return;
+    }
+
+    if (this.subscreenMode === "lockpick") {
+      this.closeSubscreen();
+      return;
+    }
+
     if (this.subscreenMode === "present_evidence") {
       this.presentEvidence(this.subscreenIndex);
       return;
@@ -1158,6 +1177,12 @@ class GBACarmenGameEngine {
         return;
       } else if (opt && opt.action === "museum") {
         this.openMuseum();
+        return;
+      } else if (opt && opt.action === "informant") {
+        this.openInformantNegotiation();
+        return;
+      } else if (opt && opt.action === "lockpick") {
+        this.openLockpickMinigame();
         return;
       } else if (opt && opt.action === "cycle_shell") {
         this.cycleShell();
@@ -1195,6 +1220,16 @@ class GBACarmenGameEngine {
       }
       if (placeOpt.isPresentEvidence) {
         this.openPresentEvidenceSubscreen();
+        return;
+      }
+      if (placeOpt.isInformant) {
+        this.currentWitness = null;
+        this.openInformantNegotiation();
+        return;
+      }
+      if (placeOpt.isLockpick) {
+        this.currentWitness = null;
+        this.openLockpickMinigame();
         return;
       }
 
@@ -1327,9 +1362,268 @@ class GBACarmenGameEngine {
     }
   }
 
+  // --- Tactical Lockpick Minigame ---
+  openLockpickMinigame() {
+    this.subscreenMode = "lockpick";
+    this.lockSelectedPin = 0;
+    this.lockCompleted = false;
+    this.lockPins = [
+      { target: 0.65, height: 0.1, solved: false },
+      { target: 0.38, height: 0.1, solved: false },
+      { target: 0.82, height: 0.1, solved: false },
+      { target: 0.50, height: 0.1, solved: false }
+    ];
+    this.audio.shoulderTrigger();
+    this.renderLockpickMinigame();
+  }
+
+  renderLockpickMinigame() {
+    if (this.renderer && typeof this.renderer.drawLockpickMinigame === "function") {
+      this.renderer.drawLockpickMinigame(this.lockPins, this.lockSelectedPin, this.lockCompleted);
+    }
+    const solvedCount = this.lockPins.filter((p) => p.solved).length;
+    let hint = `PIN ${this.lockSelectedPin + 1}/4 | ◀/▶: SELECT PIN | ▲/▼: LIFT PIN TO SHEAR LINE | SET: ${solvedCount}/4`;
+    if (this.lockCompleted) {
+      hint = `★ ALL 4 PINS SET! CYLINDER UNLOCKED! (+4H BONUS) ★ PRESS [B] TO RETURN`;
+    }
+    this.subscreenOptions = [
+      { title: hint },
+      { title: "◀ [B] RETURN TO ACTIVE OPERATIONS" }
+    ];
+    this.subscreenIndex = 0;
+    this.renderSubscreen(`🔓 TACTICAL LOCKPICK TUMBLER SIMULATOR`, this.subscreenOptions);
+  }
+
+  handleLockpickDirection(dir) {
+    if (this.lockCompleted) return;
+    if (dir === "left") {
+      this.lockSelectedPin = (this.lockSelectedPin + 3) % 4;
+      this.audio.cursor();
+      this.renderLockpickMinigame();
+    } else if (dir === "right") {
+      this.lockSelectedPin = (this.lockSelectedPin + 1) % 4;
+      this.audio.cursor();
+      this.renderLockpickMinigame();
+    } else if (dir === "up" || dir === "down") {
+      const p = this.lockPins[this.lockSelectedPin];
+      if (!p.solved) {
+        const delta = (dir === "up") ? 0.14 : -0.14;
+        p.height = Math.max(0.05, Math.min(0.98, p.height + delta));
+        if (Math.abs(p.height - p.target) <= 0.075) {
+          p.solved = true;
+          p.height = p.target;
+          this.audio.lockClick();
+          const allSolved = this.lockPins.every((pin) => pin.solved);
+          if (allSolved && !this.lockCompleted) {
+            this.lockCompleted = true;
+            this.audio.cuffs();
+            this.audio.breakthrough();
+            const maxH = (this.getRank() && this.getRank().deadlineHours) || 48;
+            this.hoursLeft = Math.min(maxH, this.hoursLeft + 4);
+            this.updateTimeDisplay();
+            const msg = "[TACTICAL LOCKPICK SUCCESS] All 4 shear pins aligned! Cylinder turned and security gate bypassed (+4 Hours Bonus)!";
+            if (!this.cluesGathered.includes(msg)) this.cluesGathered.push(msg);
+          }
+        } else {
+          this.audio.cursor();
+        }
+        this.renderLockpickMinigame();
+      }
+    }
+  }
+
+  // --- Local Informant Negotiation ---
+  openInformantNegotiation() {
+    this.subscreenMode = "informant";
+    this.subscreenIndex = 0;
+    this.audio.shoulderTrigger();
+
+    const cityId = this.currentCityId;
+    let seedNum = 0;
+    for (let i = 0; i < (this.currentCaseSeed || "").length; i++) {
+      seedNum += (this.currentCaseSeed || "").charCodeAt(i);
+    }
+    for (let i = 0; i < (cityId || "").length; i++) {
+      seedNum += (cityId || "").charCodeAt(i);
+    }
+    const archetypes = ["greedy", "lawful", "nervous"];
+    const arch = archetypes[Math.abs(seedNum) % 3];
+    this.currentInformantArch = arch;
+
+    const fixerNames = {
+      greedy: "Vito 'Cashflow' (Black Market Broker)",
+      lawful: "Kenji Sato (Precinct Veteran)",
+      nervous: "Rico 'Twitch' (Stashhouse Courier)"
+    };
+    const fixerQuotes = {
+      greedy: "\"Words are cheap, gumshoe. ACME credits talk loud and clear.\"",
+      lawful: "\"V.I.L.E. syndicates have poisoned our streets. Appeal to my duty.\"",
+      nervous: "\"Don't lean on me! If V.I.L.E. sees me talking to Interpol, I'm cooked!\""
+    };
+
+    this.subscreenOptions = [
+      { title: `💵 OFFER FINANCIAL BOUNTY (5,000 ACME Credits)`, tactic: "bounty", arch: arch },
+      { title: `⚖ APPEAL TO CIVIC JUSTICE & DUTY`, tactic: "justice", arch: arch },
+      { title: `🚨 INTERPOL LEGAL INTIMIDATION`, tactic: "intimidation", arch: arch },
+      { title: `◀ WITHDRAW FROM NEGOTIATION`, tactic: "back", arch: arch }
+    ];
+
+    this.renderSubscreen(`INFORMANT: ${fixerNames[arch].toUpperCase()} [${arch.toUpperCase()}]`, this.subscreenOptions);
+    this.setDialog(`INFORMANT CONTACT: ${fixerNames[arch]}\n${fixerQuotes[arch]}`);
+  }
+
+  handleInformantChoice(idx) {
+    if (!this.subscreenOptions || idx >= this.subscreenOptions.length) {
+      this.closeSubscreen();
+      return;
+    }
+    const opt = this.subscreenOptions[idx];
+    if (opt.tactic === "back") {
+      this.closeSubscreen();
+      return;
+    }
+
+    this.closeSubscreen();
+
+    // Spend 1 hour
+    if (!this.spendHours(1)) return;
+
+    const tactic = opt.tactic;
+    const arch = opt.arch || this.currentInformantArch || "greedy";
+    const isSuccess = (tactic === "bounty" && arch === "greedy") ||
+                      (tactic === "justice" && arch === "lawful") ||
+                      (tactic === "intimidation" && arch === "nervous");
+
+    const lcd = document.getElementById("lcd-screen");
+
+    if (isSuccess) {
+      this.audio.breakthrough();
+      this.audio.clueFound();
+      if (lcd) {
+        lcd.classList.add("screen-shake");
+        setTimeout(() => lcd.classList.remove("screen-shake"), 350);
+      }
+      this.flashScreen("#22c55e", 300);
+
+      const maxH = (this.getRank() && this.getRank().deadlineHours) || 48;
+      this.hoursLeft = Math.min(maxH, this.hoursLeft + 3);
+      this.updateTimeDisplay();
+
+      const suspect = this.currentCase.criminal;
+      const trail = this.currentCase.trail;
+      const currIdx = trail.indexOf(this.currentCityId);
+      let leadMsg = "";
+
+      if (currIdx !== -1 && currIdx < trail.length - 1) {
+        const nextCity = CITIES_DATA[trail[currIdx + 1]];
+        leadMsg = `INFORMANT LEAD: 'The operative slipped into the VIP terminal heading for ${nextCity.name} (${nextCity.country.toUpperCase()}). Kept bragging about driving a ${suspect.vehicle}!' (+3 Hours Bonus)`;
+      } else if (currIdx === trail.length - 1) {
+        leadMsg = `INFORMANT LEAD: 'They're hiding right here in this city! Saw them near the back-alleys with ${suspect.hair} hair and a ${suspect.feature}! Get your warrant ready!' (+3 Hours Bonus)`;
+      } else {
+        leadMsg = `INFORMANT LEAD: 'You're off track, detective! V.I.L.E. bypassed this territory completely. Check your casebook and backtrack!' (+3 Hours Bonus)`;
+      }
+
+      const entry = `[INFORMANT INTEL] ${leadMsg}`;
+      if (!this.cluesGathered.includes(entry)) {
+        this.cluesGathered.push(entry);
+      }
+
+      this.setDialog(leadMsg);
+    } else {
+      this.audio.cancel();
+      if (lcd) {
+        lcd.classList.add("screen-shake");
+        setTimeout(() => lcd.classList.remove("screen-shake"), 200);
+      }
+      let refusalText = "";
+      if (arch === "greedy") {
+        refusalText = "INFORMANT: 'Nice speech, agent, but speeches don't pay my debts. Money talks, morality walks. Bring real cash next time!'";
+      } else if (arch === "lawful") {
+        refusalText = "INFORMANT: 'You think I'm a common crook you can bribe or threaten? I cooperate for justice and the safety of our citizens, nothing else!'";
+      } else {
+        refusalText = "INFORMANT: 'Your soft words don't scare V.I.L.E. and they don't comfort me! I'm not risking my neck unless you can guarantee Interpol muscle!'";
+      }
+      this.setDialog(refusalText);
+    }
+  }
+
+  // --- Upgraded 5-Stage Pursuit QTE ---
+  startChaseQTE() {
+    this.subscreenMode = "chase";
+    this.chaseStage = 0;
+    this.chaseMashCount = 0;
+    this.audio.siren();
+    this.audio.suspenseEncounter();
+    this.renderChaseQTE();
+  }
+
+  renderChaseQTE() {
+    const targets = ["B", "DOWN", "LEFT", "UP", "A"];
+    const targetKey = targets[this.chaseStage] || "A";
+    if (this.renderer && typeof this.renderer.drawChaseScene === "function") {
+      this.renderer.drawChaseScene(this.chaseStage, this.chaseMashCount, targetKey);
+    }
+    const stagePrompts = [
+      "STAGE 1/5: Stacked shipping crates blocking alley! Press [B] to VAULT!",
+      "STAGE 2/5: Low hissing steam pipe overhead! Press [DOWN] to SLIDE!",
+      "STAGE 3/5: Alley forks ahead! Press [LEFT] or [RIGHT] to CUT OFF suspect!",
+      "STAGE 4/5: Fire escape stairs collapsing! Press [UP] to LEAP!",
+      `STAGE 5/5: Suspect cornered at dead end brick wall! MASH [A] TO TACKLE! (${this.chaseMashCount}/5)`
+    ];
+    this.setDialog(stagePrompts[this.chaseStage] || "PURSUIT IN PROGRESS!");
+  }
+
+  handleChaseAction(action) {
+    if (this.subscreenMode !== "chase") return;
+    const targets = ["b", "down", ["left", "right"], "up", "a"];
+    const expected = targets[this.chaseStage];
+
+    let matched = false;
+    if (Array.isArray(expected)) {
+      matched = expected.includes((action || "").toLowerCase());
+    } else {
+      matched = ((action || "").toLowerCase() === expected);
+    }
+
+    if (matched) {
+      if (this.chaseStage === 4) {
+        this.chaseMashCount++;
+        this.audio.cursor();
+        const lcd = document.getElementById("lcd-screen");
+        if (lcd) {
+          lcd.classList.add("screen-shake");
+          setTimeout(() => lcd.classList.remove("screen-shake"), 120);
+        }
+        if (this.chaseMashCount >= 5) {
+          this.audio.impact();
+          this.audio.cuffs();
+          this.closeSubscreen();
+          this.finishArrestVictory();
+          return;
+        }
+        this.renderChaseQTE();
+      } else {
+        this.audio.confirm();
+        this.chaseStage++;
+        const lcd = document.getElementById("lcd-screen");
+        if (lcd) {
+          lcd.classList.add("screen-shake");
+          setTimeout(() => lcd.classList.remove("screen-shake"), 180);
+        }
+        this.renderChaseQTE();
+      }
+    } else {
+      this.audio.cancel();
+      const lcd = document.getElementById("lcd-screen");
+      if (lcd) {
+        lcd.classList.add("screen-shake");
+        setTimeout(() => lcd.classList.remove("screen-shake"), 250);
+      }
+    }
+  }
+
   // --- Arrest & Resolution ---
   attemptArrest() {
-    this.state = "ARREST";
     this.currentWitness = null;
     const criminal = this.currentCase.criminal;
     const lcd = document.getElementById("lcd-screen");
@@ -1339,30 +1633,7 @@ class GBACarmenGameEngine {
     }
 
     if (this.warrantSuspect && this.warrantSuspect.id === criminal.id) {
-      this.audio.victory();
-      this.renderer.drawVictoryScene(criminal);
-
-      if (!this.profile.recoveredTreasures) this.profile.recoveredTreasures = [];
-      const treasureObj = TREASURES_DATA.find((t) => t.name === this.currentCase.treasure);
-      const exists = this.profile.recoveredTreasures.some((r) => r.name === this.currentCase.treasure);
-      if (!exists) {
-        this.profile.recoveredTreasures.push({
-          name: this.currentCase.treasure,
-          thief: criminal.name,
-          city: this.currentCityId,
-          lore: treasureObj ? treasureObj.lore : "Historical world relic.",
-          value: treasureObj ? treasureObj.value : "$10,000,000"
-        });
-      }
-
-      this.profile.casesSolved++;
-      this.saveProfile();
-      const newRank = this.getRank();
-
-      const victoryMsg = `CASE SOLVED! Warrant verified. You arrested ${criminal.name} and recovered ${this.currentCase.treasure}! Rank: ${newRank.title} (${this.profile.casesSolved} solved). [PRESS A]`;
-      this.typewrite(victoryMsg, () => {
-        this.setDialog(victoryMsg);
-      }, criminal.id);
+      this.startChaseQTE();
     } else {
       this.audio.cancel();
       this.state = "GAMEOVER";
@@ -1379,6 +1650,36 @@ class GBACarmenGameEngine {
         this.setDialog(failMsg + " [PRESS A]");
       }, "chief");
     }
+  }
+
+  finishArrestVictory() {
+    this.state = "ARREST";
+    this.currentWitness = null;
+    const criminal = this.currentCase.criminal;
+    this.audio.victory();
+    this.renderer.drawVictoryScene(criminal);
+
+    if (!this.profile.recoveredTreasures) this.profile.recoveredTreasures = [];
+    const treasureObj = TREASURES_DATA.find((t) => t.name === this.currentCase.treasure);
+    const exists = this.profile.recoveredTreasures.some((r) => r.name === this.currentCase.treasure);
+    if (!exists) {
+      this.profile.recoveredTreasures.push({
+        name: this.currentCase.treasure,
+        thief: criminal.name,
+        city: this.currentCityId,
+        lore: treasureObj ? treasureObj.lore : "Historical world relic.",
+        value: treasureObj ? treasureObj.value : "$10,000,000"
+      });
+    }
+
+    this.profile.casesSolved++;
+    this.saveProfile();
+    const newRank = this.getRank();
+
+    const victoryMsg = `CASE SOLVED! Suspect tackled & cuffed. You arrested ${criminal.name} and recovered ${this.currentCase.treasure}! Rank: ${newRank.title} (${this.profile.casesSolved} solved). [PRESS A]`;
+    this.typewrite(victoryMsg, () => {
+      this.setDialog(victoryMsg);
+    }, criminal.id);
   }
 
   triggerGameOver() {
@@ -1453,6 +1754,11 @@ class GBACarmenGameEngine {
       return;
     }
 
+    if (this.subscreenMode === "chase") {
+      this.handleChaseAction("a");
+      return;
+    }
+
     if (this.subscreenMode === "trap") {
       if (this.activeTrap && (this.activeTrap.type === "blackout" || this.activeTrap.type === "decoy")) {
         this.resolveTrap(true);
@@ -1483,6 +1789,10 @@ class GBACarmenGameEngine {
 
   handleCancel() {
     this.audio.init();
+    if (this.subscreenMode === "chase") {
+      this.handleChaseAction("b");
+      return;
+    }
     if (this.subscreenMode === "trap") {
       if (this.activeTrap && this.activeTrap.type === "smoke") {
         this.resolveTrap(true);
@@ -1498,6 +1808,14 @@ class GBACarmenGameEngine {
 
   handleDirection(dir) {
     this.audio.init();
+    if (this.subscreenMode === "chase") {
+      this.handleChaseAction(dir);
+      return;
+    }
+    if (this.subscreenMode === "lockpick") {
+      this.handleLockpickDirection(dir);
+      return;
+    }
     if (this.subscreenMode) {
       const items = this.subscreenOptions;
       if (!items || items.length === 0) return;

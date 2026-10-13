@@ -47,16 +47,29 @@ func _setup_stage(s: int) -> void:
 		prompt_label.text = "⚡ OBSTACLE: CRATES TOPPLED! ⚡"
 		subtext_label.text = "PRESS [B] OR ESC TO VAULT!"
 	elif stage == 1:
+		expected_key = "DOWN"
+		max_stage_time = 2.2
+		stage_timer = max_stage_time
+		prompt_label.text = "⚡ HAZARD: LOW STEAM VENT PIPE! ⚡"
+		subtext_label.text = "PRESS [DOWN] OR S TO SLIDE UNDER!"
+	elif stage == 2:
 		expected_key = "LEFT" if (randi() % 2 == 0) else "RIGHT"
 		max_stage_time = 2.0
 		stage_timer = max_stage_time
 		prompt_label.text = "⚡ FORK IN ALLEY: SUSPECT BREAKS %s! ⚡" % expected_key
 		subtext_label.text = "PRESS [%s] D-PAD TO CUT OFF ESCAPE!" % expected_key
-	elif stage == 2:
-		expected_key = "A"
-		max_stage_time = 2.5
+	elif stage == 3:
+		expected_key = "UP"
+		max_stage_time = 2.2
 		stage_timer = max_stage_time
-		prompt_label.text = "⚡ DEAD END! SUSPECT SCALING FENCE! ⚡"
+		prompt_label.text = "⚡ FIRE ESCAPE COLLAPSE! LEAP ROOFTOPS! ⚡"
+		subtext_label.text = "PRESS [UP] OR W TO VAULT ACROSS!"
+	elif stage == 4:
+		expected_key = "A"
+		target_mash = 5
+		max_stage_time = 2.6
+		stage_timer = max_stage_time
+		prompt_label.text = "⚡ DEAD END! CORNERED AT SECURITY FENCE! ⚡"
 		subtext_label.text = "MASH [A] OR SPACE TO TACKLE! (%d/%d)" % [mash_count, target_mash]
 
 func _process(delta: float) -> void:
@@ -88,12 +101,20 @@ func _input(event: InputEvent) -> void:
 				_handle_stage_hit()
 				get_viewport().set_input_as_handled()
 		elif stage == 1:
-			if (expected_key == "LEFT" and (event.keycode == KEY_LEFT or event.keycode == KEY_A)) or \
-			   (expected_key == "RIGHT" and (event.keycode == KEY_RIGHT or event.keycode == KEY_D)):
+			if event.keycode == KEY_DOWN or event.keycode == KEY_S or event.is_action_pressed("ui_down"):
 				_handle_stage_hit()
 				get_viewport().set_input_as_handled()
 		elif stage == 2:
-			if event.keycode == KEY_A or event.keycode == KEY_SPACE or event.keycode == KEY_ENTER:
+			if (expected_key == "LEFT" and (event.keycode == KEY_LEFT or event.keycode == KEY_A or event.is_action_pressed("ui_left"))) or \
+			   (expected_key == "RIGHT" and (event.keycode == KEY_RIGHT or event.keycode == KEY_D or event.is_action_pressed("ui_right"))):
+				_handle_stage_hit()
+				get_viewport().set_input_as_handled()
+		elif stage == 3:
+			if event.keycode == KEY_UP or event.keycode == KEY_W or event.is_action_pressed("ui_up"):
+				_handle_stage_hit()
+				get_viewport().set_input_as_handled()
+		elif stage == 4:
+			if event.keycode == KEY_A or event.keycode == KEY_SPACE or event.keycode == KEY_ENTER or event.is_action_pressed("gba_a"):
 				mash_count += 1
 				SoundManager.play_cursor()
 				subtext_label.text = "MASH [A] OR SPACE TO TACKLE! (%d/%d)" % [mash_count, target_mash]
@@ -104,7 +125,7 @@ func _input(event: InputEvent) -> void:
 func _handle_stage_hit() -> void:
 	SoundManager.play_whoosh()
 	stage += 1
-	if stage < 3:
+	if stage < 5:
 		_setup_stage(stage)
 	else:
 		_finish_chase(true)
@@ -115,7 +136,7 @@ func _handle_stage_miss() -> void:
 	GameManager.hours_left = maxi(1, GameManager.hours_left - 1)
 	GameManager.broadcast_time()
 	stage += 1
-	if stage < 3:
+	if stage < 5:
 		_setup_stage(stage)
 	else:
 		_finish_chase(true)
