@@ -50,6 +50,44 @@ class GBACarmenGameEngine {
     // Title animation timer
     this.titleBlink = true;
     this.titleTimer = null;
+
+    // Living avatar & witness animation state
+    this.currentWitness = null;
+    this.currentWitnessRegion = "americas";
+    this.currentSpeaker = "chief";
+    this.isBlinking = false;
+    this.blinkTimer = null;
+    this.mouthOpen = false;
+    this.startBlinkLoop();
+  }
+
+  startBlinkLoop() {
+    if (this.blinkTimer) clearTimeout(this.blinkTimer);
+    const scheduleNextBlink = () => {
+      const interval = 2800 + Math.random() * 2000; // 2.8s - 4.8s
+      this.blinkTimer = setTimeout(() => {
+        if (this.state === "BRIEFING" || this.currentWitness) {
+          this.isBlinking = true;
+          this.redrawCurrentSpeakerPortrait(this.mouthOpen, true);
+          setTimeout(() => {
+            this.isBlinking = false;
+            this.redrawCurrentSpeakerPortrait(this.mouthOpen, false);
+            scheduleNextBlink();
+          }, 120); // 120ms natural blink duration
+        } else {
+          scheduleNextBlink();
+        }
+      }, interval);
+    };
+    scheduleNextBlink();
+  }
+
+  redrawCurrentSpeakerPortrait(mouthOpen = false, isBlinking = false) {
+    if (this.state === "BRIEFING") {
+      this.renderer.drawBriefingScene(mouthOpen, isBlinking);
+    } else if (this.currentWitness) {
+      this.renderer.drawWitnessPortrait(this.currentWitness, this.currentWitnessRegion, mouthOpen, isBlinking);
+    }
   }
 
   loadProfile() {
@@ -254,14 +292,16 @@ class GBACarmenGameEngine {
 
     // Go to briefing screen
     this.state = "BRIEFING";
+    this.currentWitness = null;
+    this.currentSpeaker = "chief";
     this.audio.confirm();
     this.audio.startBGM();
-    this.renderer.drawBriefingScene();
+    this.renderer.drawBriefingScene(false, false);
 
     const briefingText = `ACME HQ ALERT: ${treasure.name} was stolen from ${CITIES_DATA[startCityId].name}! Suspect spotted fleeing. You have ${this.hoursLeft} hours to track them down and secure a warrant!`;
     this.typewrite(briefingText, () => {
       this.setDialog(briefingText + " [PRESS A]");
-    });
+    }, "chief");
 
     this.updateStatusDisplay(CITIES_DATA[startCityId].name, "MON 9:00AM", `${this.hoursLeft}H LEFT`);
   }
@@ -269,6 +309,8 @@ class GBACarmenGameEngine {
   // --- City Hub View ---
   enterCityHub() {
     this.state = "CITY_HUB";
+    this.currentWitness = null;
+    this.currentSpeaker = "chief";
     this.subscreenMode = null;
     const city = CITIES_DATA[this.currentCityId];
     this.renderer.drawCitySkyline(city.skyline, this.hourOfDay);
@@ -891,13 +933,22 @@ class GBACarmenGameEngine {
       this.closeSubscreen();
 
       if (placeOpt.isInspect) {
+        this.currentWitness = null;
         this.openCrimeSceneInspection();
         return;
       }
 
       // Draw regional witness portrait
       const reg = (this.audio && this.audio.getRegionForCity(this.currentCityId)) || "americas";
-      this.renderer.drawWitnessPortrait(placeOpt.data.witness, reg);
+      this.currentWitness = placeOpt.data.witness;
+      this.currentWitnessRegion = reg;
+      let speakerRole = "banker";
+      const wt = placeOpt.data.witness.toLowerCase();
+      if (wt.includes("pilot") || wt.includes("flight") || wt.includes("captain") || wt.includes("customs") || wt.includes("harbor") || wt.includes("sailor")) speakerRole = "pilot";
+      else if (wt.includes("curator") || wt.includes("archaeologist") || wt.includes("historian") || wt.includes("restorer") || wt.includes("archivist") || wt.includes("scholar") || wt.includes("guide")) speakerRole = "curator";
+      this.currentSpeaker = speakerRole;
+
+      this.renderer.drawWitnessPortrait(placeOpt.data.witness, reg, false, false);
 
       // Spend 2 hours
       if (!this.spendHours(2)) return;
@@ -943,17 +994,17 @@ class GBACarmenGameEngine {
           const warnClue = `${fullClue} - WARNING: Suspect cornered! Secure a warrant via Crime Computer [R] before arresting!`;
           this.typewrite(warnClue, () => {
             this.setDialog(warnClue);
-          });
+          }, speakerRole);
         } else {
           this.typewrite(fullClue, () => {
             this.setDialog(fullClue);
-          });
+          }, speakerRole);
           setTimeout(() => this.attemptArrest(), 1800);
         }
       } else {
         this.typewrite(fullClue, () => {
           this.setDialog(fullClue);
-        });
+        }, speakerRole);
       }
     } else if (this.subscreenMode === "depart") {
       const flightOpt = this.subscreenOptions[this.subscreenIndex];
@@ -1017,6 +1068,7 @@ class GBACarmenGameEngine {
   // --- Arrest & Resolution ---
   attemptArrest() {
     this.state = "ARREST";
+    this.currentWitness = null;
     const criminal = this.currentCase.criminal;
     const lcd = document.getElementById("lcd-screen");
     if (lcd) {
@@ -1048,7 +1100,7 @@ class GBACarmenGameEngine {
       const victoryMsg = `CASE SOLVED! Warrant verified. You arrested ${criminal.name} and recovered ${this.currentCase.treasure}! Rank: ${newRank.title} (${this.profile.casesSolved} solved). [PRESS A]`;
       this.typewrite(victoryMsg, () => {
         this.setDialog(victoryMsg);
-      });
+      }, criminal.id);
     } else {
       this.audio.cancel();
       this.state = "GAMEOVER";
@@ -1063,18 +1115,19 @@ class GBACarmenGameEngine {
 
       this.typewrite(failMsg, () => {
         this.setDialog(failMsg + " [PRESS A]");
-      });
+      }, "chief");
     }
   }
 
   triggerGameOver() {
     this.state = "GAMEOVER";
+    this.currentWitness = null;
     this.audio.gameOver();
     this.renderer.drawGameOverScene();
     const overMsg = "TIME EXPIRED! The deadline passed and the criminal fled! Case Closed. [PRESS A]";
     this.typewrite(overMsg, () => {
       this.setDialog(overMsg);
-    });
+    }, "chief");
   }
 
   // --- Shoulder Triggers (GBA L & R) ---
@@ -1116,6 +1169,8 @@ class GBACarmenGameEngine {
     if (this.typewriterTimer) {
       clearInterval(this.typewriterTimer);
       this.typewriterTimer = null;
+      this.mouthOpen = false;
+      this.redrawCurrentSpeakerPortrait(false, this.isBlinking);
       this.setDialog(this.typewriterTarget);
       if (this.onTypewriterDone) this.onTypewriterDone();
       return;
@@ -1219,24 +1274,32 @@ class GBACarmenGameEngine {
     });
   }
 
-  typewrite(text, onDone = null) {
+  typewrite(text, onDone = null, speaker = "chief") {
     if (this.typewriterTimer) clearInterval(this.typewriterTimer);
     this.typewriterTarget = text;
     this.typewriterIndex = 0;
     this.typewriterText = "";
     this.onTypewriterDone = onDone;
+    this.currentSpeaker = speaker || "chief";
+    this.mouthOpen = false;
 
     this.typewriterTimer = setInterval(() => {
       if (this.typewriterIndex < this.typewriterTarget.length) {
         this.typewriterText += this.typewriterTarget[this.typewriterIndex];
         this.setDialog(this.typewriterText);
         if (this.typewriterIndex % 2 === 0) {
-          this.audio.textBlip();
+          this.audio.textBlip(this.currentSpeaker);
+        }
+        if (this.typewriterIndex % 4 === 0) {
+          this.mouthOpen = !this.mouthOpen;
+          this.redrawCurrentSpeakerPortrait(this.mouthOpen, this.isBlinking);
         }
         this.typewriterIndex++;
       } else {
         clearInterval(this.typewriterTimer);
         this.typewriterTimer = null;
+        this.mouthOpen = false;
+        this.redrawCurrentSpeakerPortrait(false, this.isBlinking);
         if (this.onTypewriterDone) this.onTypewriterDone();
       }
     }, 22);

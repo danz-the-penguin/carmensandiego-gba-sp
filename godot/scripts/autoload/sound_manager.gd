@@ -391,11 +391,41 @@ func play_sfx(stream: AudioStreamWAV, pitch: float = 1.0) -> void:
 func play_cursor() -> void: play_sfx(wav_cursor)
 func play_confirm() -> void: play_sfx(wav_confirm)
 func play_cancel() -> void: play_sfx(wav_cancel)
-func play_text_blip() -> void:
-	if wav_blip != null:
-		blip_player.stream = wav_blip
-		blip_player.pitch_scale = randf_range(0.95, 1.05)
-		blip_player.play()
+func play_text_blip(speaker_id: String = "") -> void:
+	if wav_blip == null:
+		return
+	blip_player.stream = wav_blip
+	var base_pitch := 1.0
+	var role = speaker_id.to_lower()
+	if role.contains("chief"):
+		base_pitch = 0.68 # Deep authoritative police chief baritone
+	elif role.contains("banker"):
+		base_pitch = 1.30 # Crisp rapid financial teller click
+	elif role.contains("pilot"):
+		base_pitch = 0.86 # Radio intercom resonant tone
+	elif role.contains("curator"):
+		base_pitch = 1.12 # Gentle scholarly tone
+	elif role.contains("carmen"):
+		base_pitch = 1.20 # Smooth velvety mystery tone
+	elif role.contains("len_bulk"):
+		base_pitch = 0.60 # Deep gruff rumble
+	elif role.contains("lady_agatha"):
+		base_pitch = 1.40 # High aristocratic chime
+	elif role.contains("nick_brunch"):
+		base_pitch = 0.90 # Gritty detective tenor
+	elif role.contains("fast_eddie"):
+		base_pitch = 1.25 # Quick raspy blip
+	elif role.contains("darlene_dirk"):
+		base_pitch = 0.80 # Deep scuba diver rasp
+	elif role.contains("scar_graynolt"):
+		base_pitch = 1.15 # Sharp villain cadence
+	elif role.contains("katherine_drib") or role.contains("katherine_dirb"):
+		base_pitch = 1.02 # Confident aviator tone
+	else:
+		base_pitch = 1.0
+		
+	blip_player.pitch_scale = base_pitch * randf_range(0.96, 1.04)
+	blip_player.play()
 func play_shoulder() -> void: play_sfx(wav_shoulder)
 func play_light() -> void: play_sfx(wav_light)
 func play_clue() -> void: play_sfx(wav_clue)

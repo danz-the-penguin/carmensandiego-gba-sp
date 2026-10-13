@@ -52,6 +52,13 @@ var subscreen_data: Array = []
 
 var is_typing: bool = false
 var typewriter_timer: float = 0.0
+var current_speaker_id: String = "chief"
+var portrait_material: ShaderMaterial
+var blink_timer: float = 0.0
+var blink_next: float = 3.5
+var is_blinking: bool = false
+var mouth_timer: float = 0.0
+var is_mouth_open: bool = false
 var is_case_ended: bool = false
 var _alert_regexes: Array[RegEx] = []
 var _trait_regexes: Array[RegEx] = []
@@ -103,14 +110,22 @@ func _ready() -> void:
 	trap_overlay.trap_resolved.connect(_on_trap_resolved)
 	museum_overlay.museum_closed.connect(_on_overlay_closed)
 
-
 	GameManager.city_changed.connect(_on_city_changed)
 	GameManager.time_updated.connect(_on_time_updated)
 	GameManager.clue_found.connect(_on_clue_found)
 	GameManager.case_resolved.connect(_on_case_resolved)
 
-
 	original_pos = position
+
+	# Initialize procedural animated portrait shader material
+	var anim_shader = load("res://shaders/portrait_anim.gdshader")
+	if anim_shader:
+		portrait_material = ShaderMaterial.new()
+		portrait_material.shader = anim_shader
+		portrait_material.set_shader_parameter("idle_breath", 1.0)
+		portrait_material.set_shader_parameter("mouth_open", 0.0)
+		portrait_material.set_shader_parameter("eye_blink", 0.0)
+		portrait_rect.material = portrait_material
 
 	if Database.CITIES.has(GameManager.current_city_id):
 		_update_city_view(Database.CITIES[GameManager.current_city_id])
@@ -130,8 +145,32 @@ func _process(delta: float) -> void:
 		if shake_timer <= 0.0:
 			position = original_pos
 
+	# Dynamic eye-blink loop (every 2.8 - 4.8s for 120ms)
+	blink_timer += delta
+	if not is_blinking:
+		if blink_timer >= blink_next:
+			is_blinking = true
+			blink_timer = 0.0
+			if portrait_material:
+				portrait_material.set_shader_parameter("eye_blink", 1.0)
+	else:
+		if blink_timer >= 0.12:
+			is_blinking = false
+			blink_timer = 0.0
+			blink_next = randf_range(2.8, 4.8)
+			if portrait_material:
+				portrait_material.set_shader_parameter("eye_blink", 0.0)
+
 	if is_typing:
 		typewriter_timer += delta
+		mouth_timer += delta
+		# Rhythmic talking mouth flap (every 85ms)
+		if mouth_timer >= 0.085:
+			mouth_timer = 0.0
+			is_mouth_open = not is_mouth_open
+			if portrait_material:
+				portrait_material.set_shader_parameter("mouth_open", 1.0 if is_mouth_open else 0.0)
+
 		if typewriter_timer >= 0.02:
 			typewriter_timer = 0.0
 			var total = dialog_label.get_total_character_count()
@@ -139,14 +178,18 @@ func _process(delta: float) -> void:
 				if dialog_label.visible_characters < total:
 					dialog_label.visible_characters += 1
 					if dialog_label.visible_characters % 2 == 0:
-						SoundManager.play_text_blip()
+						SoundManager.play_text_blip(current_speaker_id)
 					# 2010s Handheld Talking Bob / Flap
 					portrait_rect.position.y = 3.0 if (dialog_label.visible_characters % 4 in [1, 2]) else 4.0
 				else:
 					is_typing = false
 					portrait_rect.position.y = 4.0
+					if portrait_material:
+						portrait_material.set_shader_parameter("mouth_open", 0.0)
 	else:
 		portrait_rect.position.y = 4.0
+		if portrait_material and portrait_material.get_shader_parameter("mouth_open") > 0.0:
+			portrait_material.set_shader_parameter("mouth_open", 0.0)
 
 func _input(event: InputEvent) -> void:
 	if flight_overlay.visible or inspect_overlay.visible or radio_overlay.visible or chase_overlay.visible or trap_overlay.visible or museum_overlay.visible:
@@ -157,6 +200,8 @@ func _input(event: InputEvent) -> void:
 			if event.is_action_pressed("gba_a") or event.is_action_pressed("ui_accept") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed):
 				dialog_label.visible_characters = -1
 				is_typing = false
+				if portrait_material:
+					portrait_material.set_shader_parameter("mouth_open", 0.0)
 		else:
 			if event.is_action_pressed("gba_a") or event.is_action_pressed("ui_accept") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed):
 				GameManager.return_to_title()
@@ -167,6 +212,8 @@ func _input(event: InputEvent) -> void:
 		if event.is_action_pressed("gba_a") or event.is_action_pressed("ui_accept") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed):
 			dialog_label.visible_characters = -1
 			is_typing = false
+			if portrait_material:
+				portrait_material.set_shader_parameter("mouth_open", 0.0)
 			return
 
 	if event.is_action_pressed("gba_l"):
@@ -264,6 +311,7 @@ func _input(event: InputEvent) -> void:
 
 func show_dialog(speaker: String, text: String, portrait_id: String = "chief") -> void:
 	speaker_label.text = speaker
+	current_speaker_id = portrait_id
 	var portrait_tex = PortraitManager.get_portrait(portrait_id)
 	portrait_rect.texture = portrait_tex
 	dialog_label.text = _highlight_bbcode(text)
@@ -273,6 +321,11 @@ func show_dialog(speaker: String, text: String, portrait_id: String = "chief") -
 		vscroll.value = 0
 	is_typing = true
 	typewriter_timer = 0.0
+	mouth_timer = 0.0
+	is_mouth_open = false
+	if portrait_material:
+		portrait_material.set_shader_parameter("mouth_open", 0.0)
+		portrait_material.set_shader_parameter("eye_blink", 0.0)
 
 func _init_highlight_regexes() -> void:
 	if not _alert_regexes.is_empty():

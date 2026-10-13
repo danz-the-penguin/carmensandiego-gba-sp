@@ -122,24 +122,50 @@ func _draw() -> void:
 	# LAYER 4: Scenic Water Reflection Waves (For coastal & river cities)
 	_draw_water_reflections()
 
+	# LAYER 5: Dynamic Time-of-Day Ambient Lighting Wash
+	_draw_ambient_lighting()
+
 func _draw_celestial_bodies() -> void:
+	var w = size.x if size.x > 0 else 1280.0
 	if is_night_time:
+		# Moon traverses across the sky (20:00 to 06:00 = 10 hour duration)
+		var night_norm = float((current_hour + 4) % 24) / 10.0
+		night_norm = clampf(night_norm, 0.0, 1.0)
+		var moon_x = lerpf(w * 0.15, w * 0.88, night_norm)
+		var moon_y = 125.0 - sin(night_norm * PI) * 70.0
+		var moon_pos = Vector2(moon_x, moon_y)
+
 		# Luminous Crescent Moon
-		var moon_pos = Vector2(1120, 75)
 		draw_circle(moon_pos, 22.0, Color(0.96, 0.94, 0.82, 0.95))
 		draw_circle(moon_pos + Vector2(7, -4), 18.0, Color(0.08, 0.11, 0.19, 0.98))
 		# Moon corona glow
 		draw_arc(moon_pos, 26.0, 0, TAU, 32, Color(1.0, 0.95, 0.7, 0.25), 2.0)
 	elif is_sunset:
-		# Deep Crimson/Amber Sunset Sun
-		var sun_pos = Vector2(980, 110)
+		# Deep Crimson/Amber Sunset Sun along western horizon
+		var sunset_norm = clampf(float(current_hour - 17) / 3.0, 0.0, 1.0)
+		var sun_x = lerpf(w * 0.70, w * 0.88, sunset_norm)
+		var sun_y = lerpf(80.0, 130.0, sunset_norm)
+		var sun_pos = Vector2(sun_x, sun_y)
 		draw_circle(sun_pos, 28.0, Color(1.0, 0.45, 0.2, 0.85))
-		draw_circle(sun_pos, 38.0, Color(1.0, 0.6, 0.2, 0.3))
+		draw_circle(sun_pos, 38.0, Color(1.0, 0.6, 0.2, 0.35))
 	else:
-		# Morning / Midday Sun
-		var sun_pos = Vector2(1040, 68)
+		# Morning & Midday Sun along daytime arc (06:00 to 17:00 = 11 hour duration)
+		var day_norm = clampf(float(current_hour - 6) / 11.0, 0.0, 1.0)
+		var sun_x = lerpf(w * 0.18, w * 0.72, day_norm)
+		var sun_y = 120.0 - sin(day_norm * PI) * 65.0
+		var sun_pos = Vector2(sun_x, sun_y)
 		draw_circle(sun_pos, 24.0, Color(1.0, 0.92, 0.45, 0.9))
 		draw_arc(sun_pos, 32.0, 0, TAU, 32, Color(1.0, 0.85, 0.3, 0.3), 3.0)
+
+func _draw_ambient_lighting() -> void:
+	var w = size.x if size.x > 0 else 1280.0
+	var h = size.y if size.y > 0 else 320.0
+	if is_night_time:
+		draw_rect(Rect2(0, 0, w, h), Color(0.04, 0.06, 0.16, 0.20))
+	elif is_sunset:
+		draw_rect(Rect2(0, 0, w, h), Color(0.95, 0.35, 0.15, 0.14))
+	elif current_hour >= 6 and current_hour < 10:
+		draw_rect(Rect2(0, 0, w, h), Color(0.98, 0.78, 0.40, 0.09))
 
 	# Undulating Aurora Borealis for Reykjavik & Moscow at night
 	if is_night_time and (current_city_id == "reykjavik" or current_city_id == "moscow"):

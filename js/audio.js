@@ -85,12 +85,65 @@ class GBASoundEngine {
     }
   }
 
-  textBlip() {
+  textBlip(speaker = "") {
     if (!this.sfxEnabled) return;
     this.init();
     if (!this.ctx) return;
-    // Crisp GBA dialog click
-    this.playTone(880 + Math.random() * 120, 0.02, "triangle", 0.09);
+    const role = (speaker || "").toLowerCase();
+    let freq = 880;
+    let wave = "triangle";
+    let vol = 0.09;
+    if (role.includes("chief")) {
+      freq = 480;
+      wave = "square";
+      vol = 0.12;
+    } else if (role.includes("banker")) {
+      freq = 1140;
+      wave = "triangle";
+      vol = 0.08;
+    } else if (role.includes("pilot")) {
+      freq = 680;
+      wave = "square";
+      vol = 0.10;
+    } else if (role.includes("curator")) {
+      freq = 960;
+      wave = "triangle";
+      vol = 0.08;
+    } else if (role.includes("carmen")) {
+      freq = 1020;
+      wave = "sine";
+      vol = 0.10;
+    } else if (role.includes("len_bulk")) {
+      freq = 420;
+      wave = "square";
+      vol = 0.13;
+    } else if (role.includes("lady_agatha")) {
+      freq = 1250;
+      wave = "sine";
+      vol = 0.08;
+    } else if (role.includes("nick_brunch")) {
+      freq = 720;
+      wave = "triangle";
+      vol = 0.10;
+    } else if (role.includes("fast_eddie")) {
+      freq = 1080;
+      wave = "square";
+      vol = 0.09;
+    } else if (role.includes("darlene_dirk")) {
+      freq = 640;
+      wave = "sawtooth";
+      vol = 0.09;
+    } else if (role.includes("scar_graynolt")) {
+      freq = 990;
+      wave = "square";
+      vol = 0.10;
+    } else if (role.includes("katherine")) {
+      freq = 860;
+      wave = "triangle";
+      vol = 0.09;
+    }
+    const detune = (Math.random() - 0.5) * 50;
+    this.playTone(freq + detune, 0.024, wave, vol);
   }
 
   cursor() {

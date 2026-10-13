@@ -155,7 +155,7 @@ class GBAGraphicsRenderer {
   }
 
   // --- ACME HQ Office Briefing ---
-  drawBriefingScene() {
+  drawBriefingScene(isMouthOpen = false, isBlinking = false) {
     this.setResolution(240, 88);
     this.clear();
 
@@ -209,10 +209,27 @@ class GBAGraphicsRenderer {
     this.ctx.fillRect(102, 14, 36, 10);
     this.ctx.fillRect(102, 20, 6, 12);
     this.ctx.fillRect(132, 20, 6, 12);
-    // Spectacles
+    // Spectacles & Eyes
     this.ctx.fillStyle = "#ffd166";
     this.ctx.strokeRect(108, 26, 8, 6);
     this.ctx.strokeRect(124, 26, 8, 6);
+    if (isBlinking) {
+      this.ctx.fillStyle = "#475569";
+      this.ctx.fillRect(110, 28, 4, 1);
+      this.ctx.fillRect(126, 28, 4, 1);
+    } else {
+      this.ctx.fillStyle = "#1e293b";
+      this.ctx.fillRect(111, 28, 2, 2);
+      this.ctx.fillRect(127, 28, 2, 2);
+    }
+    // Chief talking mouth flap
+    if (isMouthOpen) {
+      this.ctx.fillStyle = "#7f1d1d";
+      this.ctx.fillRect(117, 36, 6, 3);
+    } else {
+      this.ctx.fillStyle = "#991b1b";
+      this.ctx.fillRect(118, 37, 4, 1);
+    }
 
     // Rotary telephone & top secret folder
     this.ctx.fillStyle = "#0f172a";
@@ -545,16 +562,21 @@ class GBAGraphicsRenderer {
     const isSunset = h >= 17 && h < 20;
     const now = Date.now() * 0.002;
 
-    // Layer 1: Celestial Orb & Aurora
+    // Layer 1: Celestial Orb (Continuous solar & lunar parabolic arcs) & Aurora
     if (isNight) {
-      // Crescent Moon
+      // Moon traverses across the sky (20:00 to 06:00 = 10 hour duration)
+      const nightNorm = Math.min(1.0, Math.max(0.0, ((h + 4) % 24) / 10.0));
+      const moonX = 36 + nightNorm * 174;
+      const moonY = 30 - Math.sin(nightNorm * Math.PI) * 16;
+
+      // Luminous Crescent Moon
       this.ctx.fillStyle = "#fef08a";
       this.ctx.beginPath();
-      this.ctx.arc(210, 16, 7, 0, Math.PI * 2);
+      this.ctx.arc(moonX, moonY, 7, 0, Math.PI * 2);
       this.ctx.fill();
       this.ctx.fillStyle = "#0b0c1e";
       this.ctx.beginPath();
-      this.ctx.arc(213, 14, 6, 0, Math.PI * 2);
+      this.ctx.arc(moonX + 2.5, moonY - 1.5, 6, 0, Math.PI * 2);
       this.ctx.fill();
 
       // Northern Aurora Ribbon for Reykjavik & Moscow
@@ -570,17 +592,32 @@ class GBAGraphicsRenderer {
         this.ctx.stroke();
       }
     } else if (isSunset) {
-      // Amber Sunset Sun
+      // Amber Sunset Sun along western horizon (17:00 to 20:00 = 3 hour duration)
+      const sunsetNorm = Math.min(1.0, Math.max(0.0, (h - 17) / 3.0));
+      const sunX = 165 + sunsetNorm * 45;
+      const sunY = 20 + sunsetNorm * 22;
       this.ctx.fillStyle = "rgba(249, 115, 22, 0.85)";
       this.ctx.beginPath();
-      this.ctx.arc(195, 22, 9, 0, Math.PI * 2);
+      this.ctx.arc(sunX, sunY, 9, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.fillStyle = "rgba(251, 146, 60, 0.35)";
+      this.ctx.beginPath();
+      this.ctx.arc(sunX, sunY, 13, 0, Math.PI * 2);
       this.ctx.fill();
     } else {
-      // Golden Daylight Sun
+      // Daytime Solar Arc (06:00 to 17:00 = 11 hour duration)
+      const dayNorm = Math.min(1.0, Math.max(0.0, (h - 6) / 11.0));
+      const sunX = 42 + dayNorm * 135;
+      const sunY = 28 - Math.sin(dayNorm * Math.PI) * 18;
       this.ctx.fillStyle = "rgba(253, 224, 71, 0.85)";
       this.ctx.beginPath();
-      this.ctx.arc(205, 16, 8, 0, Math.PI * 2);
+      this.ctx.arc(sunX, sunY, 8, 0, Math.PI * 2);
       this.ctx.fill();
+      this.ctx.strokeStyle = "rgba(254, 240, 138, 0.35)";
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.arc(sunX, sunY, 11, 0, Math.PI * 2);
+      this.ctx.stroke();
     }
 
     // Layer 2: Kinetic Landmark Beacons & Lighting
@@ -677,6 +714,19 @@ class GBAGraphicsRenderer {
       }
     }
 
+    // Layer 5: Dynamic Time-of-Day Ambient Lighting Wash
+    if (isNight) {
+      this.ctx.fillStyle = "rgba(10, 15, 41, 0.20)";
+      this.ctx.fillRect(0, 0, 240, 88);
+    } else if (isSunset) {
+      this.ctx.fillStyle = "rgba(243, 90, 38, 0.14)";
+      this.ctx.fillRect(0, 0, 240, 88);
+    } else if (h >= 6 && h < 10) {
+      this.ctx.fillStyle = "rgba(250, 199, 102, 0.09)";
+      this.ctx.fillRect(0, 0, 240, 88);
+    }
+  }
+
   drawGradientSky(c1, c2, c3) {
     const sky = this.ctx.createLinearGradient(0, 0, 0, 82);
     sky.addColorStop(0, c1);
@@ -687,7 +737,7 @@ class GBAGraphicsRenderer {
   }
 
   // --- GBA Witness Encounter (Full-Color Portrait Frame) ---
-  drawWitnessPortrait(witnessType, region = "americas") {
+  drawWitnessPortrait(witnessType, region = "americas", isMouthOpen = false, isBlinking = false) {
     this.setResolution(240, 88);
     this.clear();
 
@@ -718,12 +768,12 @@ class GBAGraphicsRenderer {
     if (!this.portraitImages[pKey]) {
       const img = new Image();
       img.src = `assets/portraits/${pKey}.png`;
-      img.onload = () => this.drawWitnessPortrait(witnessType, region);
+      img.onload = () => this.drawWitnessPortrait(witnessType, region, isMouthOpen, isBlinking);
       img.onerror = () => {
         if (!this.portraitImages[baseRole]) {
           const fb = new Image();
           fb.src = `assets/portraits/${baseRole}.png`;
-          fb.onload = () => this.drawWitnessPortrait(witnessType, region);
+          fb.onload = () => this.drawWitnessPortrait(witnessType, region, isMouthOpen, isBlinking);
           this.portraitImages[baseRole] = fb;
         }
       };
@@ -733,6 +783,22 @@ class GBAGraphicsRenderer {
     if (raster && raster.complete && raster.naturalWidth > 0) {
       this.ctx.imageSmoothingEnabled = false;
       this.ctx.drawImage(raster, 88, 10, 64, 60);
+
+      // Living Avatar: Natural Eye Blinking & 2-Frame Talking Mouth Flap over 256x256 Raster
+      if (isBlinking) {
+        this.ctx.fillStyle = "#261515";
+        this.ctx.fillRect(109, 32, 6, 2);
+        this.ctx.fillRect(125, 32, 6, 2);
+        this.ctx.fillStyle = "#d4a373";
+        this.ctx.fillRect(109, 31, 6, 1);
+        this.ctx.fillRect(125, 31, 6, 1);
+      }
+      if (isMouthOpen) {
+        this.ctx.fillStyle = "#3b1212";
+        this.ctx.fillRect(116, 44, 8, 3);
+        this.ctx.fillStyle = "#fed7aa";
+        this.ctx.fillRect(117, 44, 6, 1);
+      }
 
       // Witness name badge banner below
       this.ctx.fillStyle = "#0f172a";
@@ -762,9 +828,22 @@ class GBAGraphicsRenderer {
       // Face
       this.ctx.fillStyle = "#fbcfe8";
       this.ctx.fillRect(104, 25, 32, 20);
-      this.ctx.fillStyle = "#1e293b";
-      this.ctx.fillRect(110, 32, 4, 3);
-      this.ctx.fillRect(126, 32, 4, 3);
+      if (isBlinking) {
+        this.ctx.fillStyle = "#1e293b";
+        this.ctx.fillRect(110, 33, 5, 1);
+        this.ctx.fillRect(126, 33, 5, 1);
+      } else {
+        this.ctx.fillStyle = "#1e293b";
+        this.ctx.fillRect(110, 32, 4, 3);
+        this.ctx.fillRect(126, 32, 4, 3);
+      }
+      if (isMouthOpen) {
+        this.ctx.fillStyle = "#881337";
+        this.ctx.fillRect(117, 39, 6, 3);
+      } else {
+        this.ctx.fillStyle = "#9f1239";
+        this.ctx.fillRect(118, 40, 4, 1);
+      }
     } else if (wt.includes("curator") || wt.includes("archaeologist") || wt.includes("historian")) {
       // Curator with tweed jacket & spectacles
       this.ctx.fillStyle = "#78350f";
@@ -780,6 +859,22 @@ class GBAGraphicsRenderer {
       this.ctx.fillStyle = "#ffd166"; // Golden round spectacles
       this.ctx.strokeRect(108, 26, 8, 6);
       this.ctx.strokeRect(124, 26, 8, 6);
+      if (isBlinking) {
+        this.ctx.fillStyle = "#475569";
+        this.ctx.fillRect(110, 29, 4, 1);
+        this.ctx.fillRect(126, 29, 4, 1);
+      } else {
+        this.ctx.fillStyle = "#1e293b";
+        this.ctx.fillRect(111, 28, 2, 2);
+        this.ctx.fillRect(127, 28, 2, 2);
+      }
+      if (isMouthOpen) {
+        this.ctx.fillStyle = "#881337";
+        this.ctx.fillRect(117, 38, 6, 3);
+      } else {
+        this.ctx.fillStyle = "#9f1239";
+        this.ctx.fillRect(118, 39, 4, 1);
+      }
     } else {
       // Professional teller / citizen
       this.ctx.fillStyle = "#0284c7";
@@ -792,9 +887,22 @@ class GBAGraphicsRenderer {
       this.ctx.fillRect(104, 18, 32, 26);
       this.ctx.fillStyle = "#451a03"; // Brown hair
       this.ctx.fillRect(100, 12, 40, 10);
-      this.ctx.fillStyle = "#1e293b";
-      this.ctx.fillRect(110, 28, 4, 3);
-      this.ctx.fillRect(126, 28, 4, 3);
+      if (isBlinking) {
+        this.ctx.fillStyle = "#1e293b";
+        this.ctx.fillRect(110, 29, 5, 1);
+        this.ctx.fillRect(126, 29, 5, 1);
+      } else {
+        this.ctx.fillStyle = "#1e293b";
+        this.ctx.fillRect(110, 28, 4, 3);
+        this.ctx.fillRect(126, 28, 4, 3);
+      }
+      if (isMouthOpen) {
+        this.ctx.fillStyle = "#881337";
+        this.ctx.fillRect(117, 38, 6, 3);
+      } else {
+        this.ctx.fillStyle = "#9f1239";
+        this.ctx.fillRect(118, 39, 4, 1);
+      }
     }
 
     // Witness name badge banner below

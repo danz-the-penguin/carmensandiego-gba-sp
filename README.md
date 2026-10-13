@@ -12,13 +12,27 @@ A 2010s neo-retro detective adventure inspired by the 1985 classic *"Where in th
 
 ## 🕵️ Features & 2010s Neo-Retro Mechanics
 
-* **Location-Based Regional Witness Portraits:** Question distinct, culturally tailored 128×128 pixel-art witnesses based on geographic location across 5 global regions (15 distinct regional witness portraits):
+* **Audiovisual Living Avatars & 2-Frame Talking Portraits:**
+  * Procedural shader (`portrait_anim.gdshader`) and canvas renderer providing rhythmic talking mouth flaps alternating with typewriter dialogue playback.
+  * Natural biological eye-blinking cycles occurring every 2.8–4.8s for 120ms across all 256×256 character portraits (Chief, Carmen, 7 V.I.L.E. operatives, and all 15 regional witnesses).
+* **Character Voice Blips & Waveform Modulation:**
+  * Dynamic sound synthesis with distinct frequency profiles and waveform characteristics per speaker:
+    * **Chief:** Baritone square wave (480 Hz / 0.68×)
+    * **Bankers:** Rapid staccato chirps (1140 Hz / 1.30×)
+    * **Pilots:** Resonant radio intercom tone (680 Hz / 0.86×)
+    * **Curators:** Scholarly acoustic tone (960 Hz / 1.12×)
+    * **Carmen Sandiego & Agatha:** Mysterious melodic sine frequencies (1020–1250 Hz)
+    * **V.I.L.E. Criminals:** Gritty sawtooth, square, and triangle timbres matching criminal personalities.
+* **Continuous Solar & Lunar Arc Trajectories & Dynamic Lighting:**
+  * Real-time clock-driven parabolic celestial arcs: morning/midday solar path (06:00–17:00), amber golden-hour descent at dusk (17:00–20:00), and full lunar orbit traversals across the night sky (20:00–06:00).
+  * Layer 5 dynamic ambient lighting wash grading the skylines with realistic morning warmth, sunset crimson, and midnight navy washes.
+* **Location-Based Regional Witness Portraits (256×256 px):** Question distinct, culturally tailored 256×256 pixel-art witnesses based on geographic location across 5 global regions (15 distinct regional witness portraits):
   * **Europe:** Savile Row three-piece suit & pince-nez private banker, Continental peaked cap airline captain, Tweed jacket & spectacles museum antiquities scholar.
   * **East Asia & Himalayas:** Sleek slate-blue suit financial trader with abacus pin, Trans-Himalayan captain with modern aviation headset & boom mic, Imperial jade-green silk mandarin jacket palace curator with carved jade amulet.
   * **Latin America:** Embroidered linen Guayabera & gold chain money changer, Amazonian bush pilot with distressed leather bomber & flight goggles, Weathered felt fedora & field compass relic archaeologist.
   * **Africa & Middle East:** Royal-blue embroidered Agbada & kufi bullion merchant, Trans-Sahara sand-khaki flight suit cargo pilot with desert dust goggles, Grand Egyptian Museum linen safari jacket & tarboosh fez antiquities curator with brass loupe.
   * **Americas & Global Hubs:** Wall Street pinstripe power suit executive with earpiece, Trans-Continental double-breasted jumbo jet captain with oak-leaf visor, Modern art museum director with black merino turtleneck & UV restoration torch.
-* **Handcrafted Criminal & ACME Avatars:** Carmen Sandiego, 7 V.I.L.E. masterminds, and ACME Police Chief rendered in sharp 128×128 neo-retro pixel art.
+* **Handcrafted Criminal & ACME Avatars (256×256 px):** Carmen Sandiego, 7 V.I.L.E. masterminds, and ACME Police Chief rendered in sharp 256×256 neo-retro pixel art.
 * **Regional Passport Border Visas:** 5 authentic immigration passport stamps (`stamp_europe.png`, `stamp_asia.png`, `stamp_latin.png`, `stamp_africa.png`, `stamp_americas.png`) granted upon flight arrivals and cataloged under case jurisdiction.
 * **Catchy Looping 8-Bit Chiptune Detective Groove:** Seamless procedural D-minor arpeggio, bassline, and noise percussion BGM that keeps cases thrilling. Press <kbd>M</kbd> at any time to toggle music.
 * **V.I.L.E. Trail Heat Tension Gauge:** Real-time visual feedback in the HUD:
