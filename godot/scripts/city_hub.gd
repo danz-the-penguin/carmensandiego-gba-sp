@@ -248,6 +248,15 @@ func _input(event: InputEvent) -> void:
 			var sh = GameManager.cycle_shell()
 			show_dialog("[GBA SP CHASSIS]", "Custom GBA SP Shell switched to %s! Saved to detective profile." % sh["name"], "chief")
 			return
+		elif event.keycode == KEY_P:
+			if subscreen_panel.visible and subscreen_mode == "present_evidence":
+				close_subscreen()
+			else:
+				open_present_evidence()
+			return
+		elif event.keycode == KEY_U:
+			open_document_inspection()
+			return
 
 	if subscreen_panel.visible:
 		if event.is_action_pressed("ui_up"):
@@ -486,13 +495,19 @@ func open_investigate() -> void:
 	for p in city["places"]:
 		subscreen_data.append({"type": "witness", "name": p["name"], "witness": p["witness"]})
 	subscreen_data.append({"type": "inspect", "name": "🔍 SWEEP SCENE FOR PHYSICAL EVIDENCE", "witness": "Magnifying Glass"})
+	subscreen_data.append({"type": "doc_inspect", "name": "📑 EXAMINE RECOVERED TRAVEL DOCUMENTS [U]", "witness": "365nm UV Blacklight Loupe"})
+	subscreen_data.append({"type": "present", "name": "⚡ PRESENT EVIDENCE TO WITNESS [P]", "witness": "Contradiction Matrix"})
 	
 	var labels: Array[String] = []
 	for p in subscreen_data:
 		if p["type"] == "witness":
 			labels.append("%s\nWitness: %s" % [p["name"], p["witness"]])
-		else:
-			labels.append("%s\nExamine scene with tactile magnifying lens" % p["name"])
+		elif p["type"] == "inspect":
+			labels.append("%s\nExamine crime scene with tactile magnifying lens" % p["name"])
+		elif p["type"] == "doc_inspect":
+			labels.append("%s\nInspect flight tickets under 365nm UV blacklight" % p["name"])
+		elif p["type"] == "present":
+			labels.append("%s\nConfront witnesses with gathered proof & break alibis" % p["name"])
 	_populate_subscreen(labels)
 
 
@@ -535,6 +550,8 @@ func open_dossier() -> void:
 	items.append({"action": "none", "text": "★ STATUS: %s | STOLEN: %s" % [warrant_txt, GameManager.current_treasure]})
 	items.append({"action": "cycle_shell", "text": "🎨 [C] GBA SP SHELL: %s (Click to Cycle)" % shell_data["name"]})
 	items.append({"action": "gadgets", "text": "⚡ [G] ACME GADGET BELT (Deploy GPS, UV, Polygraph, Lockpick)"})
+	items.append({"action": "present", "text": "⚡ [P] PRESENT EVIDENCE TO WITNESS (Break Alibis & Decoys)"})
+	items.append({"action": "doc_inspect", "text": "📑 [U] TACTILE UV TRAVEL DOCUMENT INSPECTION"})
 	items.append({"action": "museum", "text": "🏛 [M] EVIDENCE HALL & MUSEUM (Recovered Relics)"})
 	
 	# SECTION 1: SUSPECT DEDUCTION PROBABILITY MATRIX
@@ -780,8 +797,16 @@ func _confirm_subscreen(idx: int) -> void:
 	match subscreen_mode:
 		"investigate":
 			close_subscreen()
-			if idx < subscreen_data.size() and subscreen_data[idx] is Dictionary and subscreen_data[idx].get("type") == "inspect":
-				open_crime_scene_inspection()
+			if idx < subscreen_data.size() and subscreen_data[idx] is Dictionary:
+				var t = subscreen_data[idx].get("type", "")
+				if t == "inspect":
+					open_crime_scene_inspection()
+				elif t == "doc_inspect":
+					open_document_inspection()
+				elif t == "present":
+					open_present_evidence()
+				else:
+					_handle_investigation(idx)
 			else:
 				_handle_investigation(idx)
 		"depart":
@@ -799,6 +824,12 @@ func _confirm_subscreen(idx: int) -> void:
 				var act = subscreen_data[idx].get("action", "none")
 				if act == "gadgets":
 					open_gadgets()
+					return
+				elif act == "present":
+					open_present_evidence()
+					return
+				elif act == "doc_inspect":
+					open_document_inspection()
 					return
 				elif act == "museum":
 					open_museum()
@@ -821,6 +852,8 @@ func _confirm_subscreen(idx: int) -> void:
 		"gadgets":
 			if idx < subscreen_data.size() and subscreen_data[idx] is Dictionary:
 				_use_gadget(subscreen_data[idx].get("id", "back"))
+		"present_evidence":
+			_present_evidence_item(idx)
 
 func _handle_investigation(place_index: int) -> void:
 	var city = Database.CITIES[GameManager.current_city_id]
@@ -870,6 +903,9 @@ func _handle_investigation(place_index: int) -> void:
 		]
 		var bonus_trait: String = traits_list.pick_random()
 		clue_text += "\n\n[color=#38bdf8][b]⚡ CROSS-EXAMINATION SUCCESS:[/b] Witness cracked under intense questioning: \"%s\"[/color]" % bonus_trait
+	elif not is_cold and GameManager.cases_solved >= 2 and randf() < 0.35 and place_index == 2:
+		# Decoy Contradiction Matrix for higher detective ranks
+		clue_text += "\n\n[color=#f59e0b][b]⚠ CONTRADICTION ALERT:[/b] Witness appears bribed or coached by V.I.L.E.! Press [P] to PRESENT EVIDENCE and break their alibi![/color]"
 
 	SoundManager.play_clue()
 	var full_clue := "[%s] %s" % [city["name"], clue_text]
@@ -900,6 +936,106 @@ func open_crime_scene_inspection() -> void:
 	var city = Database.CITIES[GameManager.current_city_id]
 	var place = city["places"][0]["name"]
 	inspect_overlay.start_inspection(GameManager.current_city_id, place)
+
+func open_document_inspection() -> void:
+	subscreen_panel.visible = false
+	inspect_overlay.start_document_inspection()
+
+func open_present_evidence() -> void:
+	subscreen_mode = "present_evidence"
+	subscreen_title.text = "PRESENT FORENSIC EVIDENCE [HOLD IT! / OBJECTION!]"
+	if GameManager.clues_gathered.is_empty():
+		subscreen_data = [{"empty": true}]
+		_populate_subscreen(["NO EVIDENCE GATHERED YET\nSearch crime scenes or question witnesses first."])
+		return
+
+	var items: Array[Dictionary] = []
+	var labels: Array[String] = []
+	for c in GameManager.clues_gathered:
+		items.append({"clue": c})
+		labels.append("📁 %s" % c)
+	subscreen_data = items
+	_populate_subscreen(labels)
+
+func _present_evidence_item(idx: int) -> void:
+	if idx >= subscreen_data.size() or subscreen_data[idx].get("empty", false):
+		close_subscreen()
+		return
+
+	var chosen_clue: String = subscreen_data[idx].get("clue", "")
+	close_subscreen()
+
+	var suspect = GameManager.current_criminal
+	var trail = GameManager.current_trail
+	var curr_id = GameManager.current_city_id
+	var curr_idx = trail.find(curr_id)
+	var next_city_id = ""
+	if curr_idx != -1 and curr_idx < trail.size() - 1:
+		next_city_id = trail[curr_idx + 1]
+	var next_city = Database.CITIES.get(next_city_id, {})
+	var next_name = next_city.get("name", "")
+	var next_currency = next_city.get("currency", "")
+	var next_flag = next_city.get("flag", "")
+
+	var clue_lower = chosen_clue.to_lower()
+	var is_relevant = false
+
+	# Check if clue matches suspect trait
+	var traits = ["hair", "vehicle", "hobby", "feature", "sex"]
+	for t in traits:
+		var val = str(suspect.get(t, "")).to_lower()
+		if val != "" and clue_lower.contains(val):
+			is_relevant = true
+			break
+
+	# Check if clue matches destination
+	if not is_relevant and next_name != "":
+		if clue_lower.contains(next_name.to_lower()) or (next_currency != "" and clue_lower.contains(next_currency.to_lower())) or (next_flag != "" and clue_lower.contains(next_flag.to_lower())):
+			is_relevant = true
+
+	# Also check if it's a UV document, flight manifest, or forensic stamp
+	if not is_relevant and (clue_lower.contains("uv") or clue_lower.contains("evidence") or clue_lower.contains("manifest") or clue_lower.contains("ticket")):
+		is_relevant = true
+
+	var reg = SoundManager.get_region_for_city(curr_id)
+	if reg == "africa_mideast":
+		reg = "africa"
+	var portrait_id = "curator_%s" % reg
+
+	if is_relevant:
+		SoundManager.play_hold_it()
+		flash_screen(Color(0.2, 0.9, 1.0, 0.9), 0.35)
+		shake_screen(4.0, 0.35)
+		await get_tree().create_timer(0.35).timeout
+
+		SoundManager.play_breakthrough()
+		flash_screen(Color(1.0, 0.85, 0.2, 0.6), 0.25)
+
+		# Award +2 bonus hours
+		GameManager.hours_left = mini(GameManager.hours_left + 2, 168)
+		GameManager.broadcast_time()
+
+		var confession = ""
+		if next_name != "":
+			confession = "HOLD IT! ... You caught me red-handed with that evidence! I was paid off by V.I.L.E. to misdirect you, but I can't deny this proof: the suspect definitely boarded transport for %s (%s) and drove a %s! (+2 Hours Bonus)" % [next_name, next_city.get("country", "").to_upper(), suspect.get("vehicle", "vehicle")]
+		else:
+			confession = "HOLD IT! ... Alright, detective, you win! The suspect is holed up right here in this city planning their getaway! Secure your warrant and check the hideouts! (+2 Hours Bonus)"
+
+		var logged_entry = "[CONTRADICTION BREAKTHROUGH] Witness cracked: %s" % confession
+		if not GameManager.clues_gathered.has(logged_entry):
+			GameManager.clues_gathered.append(logged_entry)
+		GameManager.clue_found.emit(logged_entry)
+
+		show_dialog("[WITNESS BREAKTHROUGH!]", confession, portrait_id)
+	else:
+		SoundManager.play_cancel()
+		shake_screen(1.5, 0.15)
+		var unhelpful = [
+			"What does that prove? That has nothing to do with what I saw, detective!",
+			"Are you bluffing? That piece of evidence doesn't contradict my testimony at all.",
+			"Nice try, gumshoe! You'll need real forensic proof to rattle me."
+		].pick_random()
+		show_dialog("[WITNESS CONFRONTATION]", unhelpful, portrait_id)
 
 func _start_alley_chase() -> void:
 	subscreen_panel.visible = false

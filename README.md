@@ -12,6 +12,13 @@ A 2010s neo-retro detective adventure inspired by the 1985 classic *"Where in th
 
 ## 🕵️ Features & 2010s Neo-Retro Mechanics
 
+* **Forensic Evidence Presentation (*Ace Attorney* Style) & Contradiction Matrix:**
+  * Select **PRESENT EVIDENCE [P]** from the investigation menu, dossier, or hotkey to directly confront witnesses with collected clues, physical traces, and boarding slips.
+  * Exposing contradictions or matching suspect traits/destinations triggers a dramatic cyan screen flash, screen shake, authentic double-hit bass stinger (*"HOLD IT!"*), triumphant 7-note ascending breakthrough fanfare, and a cracked witness breakthrough confession (+2 Hours Bonus).
+  * **Decoy Contradiction Matrix:** In higher detective ranks, witnesses have a chance of acting as bribed V.I.L.E. informants providing conflicting testimonies that must be broken down with forensic proof.
+* **Tactile Document & Travel Slip Inspection Mini-Game [U]:**
+  * Interactive examination subscreen rendering transatlantic flight manifests and boarding passes with flight origins, destinations, carrier stubs, and customs stamps.
+  * **365nm UV Blacklight Mode (<kbd>A</kbd> / <kbd>U</kbd>):** Toggle ultraviolet blacklight to reveal glowing fluorescent watermarks, hidden V.I.L.E. courier destination routing, and latent fingerprint ridges for verified forensic breakthroughs.
 * **Audiovisual Living Avatars & 2-Frame Talking Portraits:**
   * Procedural shader (`portrait_anim.gdshader`) and canvas renderer providing rhythmic talking mouth flaps alternating with typewriter dialogue playback.
   * Natural biological eye-blinking cycles occurring every 2.8–4.8s for 120ms across all 256×256 character portraits (Chief, Carmen, 7 V.I.L.E. operatives, and all 15 regional witnesses).
@@ -56,6 +63,8 @@ A 2010s neo-retro detective adventure inspired by the 1985 classic *"Where in th
 | **[B] Button** | <kbd>X</kbd> / <kbd>Escape</kbd> | Cancel, close submenus, go back |
 | **[L] Shoulder** | <kbd>Q</kbd> | Open Case Notes / Clue Dossier |
 | **[R] Shoulder** | <kbd>E</kbd> | Open Interpol Crime Computer |
+| **Present Evidence** | <kbd>P</kbd> | Confront witness with evidence (*Hold It!*) |
+| **UV Inspection** | <kbd>U</kbd> | Toggle 365nm UV Document Examination |
 | **[START]** | <kbd>Enter</kbd> / <kbd>Space</kbd> / Click | Start new case from Title Screen |
 | **Light Button** | <kbd>B</kbd> | Cycle AGS-101 Bright / Normal / Frontlit |
 | **Mute BGM** | <kbd>M</kbd> | Toggle 8-bit Detective BGM On/Off |

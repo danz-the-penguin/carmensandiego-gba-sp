@@ -295,6 +295,34 @@ class GBASoundEngine {
     });
   }
 
+  holdIt() {
+    this.init();
+    // Dramatic double-hit bass impact and suspense stinger
+    this.playTone(110, 0.18, "sawtooth", 0.45);
+    this.playTone(330, 0.22, "square", 0.35);
+    setTimeout(() => {
+      this.playTone(82, 0.25, "sawtooth", 0.50);
+      this.playTone(392, 0.30, "square", 0.40);
+      this.playTone(523, 0.30, "triangle", 0.35);
+    }, 120);
+  }
+
+  breakthrough() {
+    this.init();
+    // Triumphant 7-note ascending arpeggio fanfare
+    const notes = [261.6, 329.6, 392.0, 493.9, 523.3, 659.3, 784.0];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 0.12, "square", 0.32), idx * 45);
+    });
+  }
+
+  uvToggle() {
+    this.init();
+    // 365nm electrical ballast ignition strike and hum
+    this.playTone(1850, 0.03, "sine", 0.20);
+    setTimeout(() => this.playTone(130, 0.12, "triangle", 0.25), 25);
+  }
+
   getRegionForCity(cityId) {
     const id = (cityId || "").toLowerCase();
     if (["london", "paris", "rome", "athens", "moscow", "reykjavik"].includes(id)) return "europe";

@@ -400,6 +400,14 @@ class GBACarmenGameEngine {
       title: "🔍 4. SWEEP CRIME SCENE (MAGNIFYING LENS)",
       isInspect: true
     });
+    this.subscreenOptions.push({
+      title: "📑 5. EXAMINE TRAVEL DOCUMENTS [U] (UV BLACKLIGHT)",
+      isDocInspect: true
+    });
+    this.subscreenOptions.push({
+      title: "⚡ 6. PRESENT EVIDENCE TO WITNESS [P] (HOLD IT!)",
+      isPresentEvidence: true
+    });
     this.renderSubscreen("INVESTIGATE LOCATIONS", this.subscreenOptions);
   }
 
@@ -463,6 +471,216 @@ class GBACarmenGameEngine {
     this.renderSubscreen("🔍 CRIME SCENE PHYSICAL INSPECTION", this.subscreenOptions);
   }
 
+  openDocumentInspection() {
+    this.subscreenMode = "doc_inspect";
+    this.subscreenIndex = 0;
+    this.uvMode = false;
+    this.audio.ping();
+
+    const suspect = this.currentCase.criminal;
+    const trail = this.currentCase.trail;
+    const currIdx = trail.indexOf(this.currentCityId);
+    const nextCityId = currIdx !== -1 && currIdx < trail.length - 1 ? trail[currIdx + 1] : null;
+    const nextCity = nextCityId && CITIES_DATA[nextCityId] ? CITIES_DATA[nextCityId] : { name: "CONFIDENTIAL HUB", country: "UNKNOWN" };
+
+    const secretText = `[UV FORENSIC PASS] Flight ticket routing stamped for ${nextCity.name} (${nextCity.country})! Suspect trait: ${suspect.hair || "Unknown"} hair, ${suspect.vehicle || "Vehicle"}!`;
+    this.activeDocData = {
+      title: "TRANS-CONTINENTAL BOARDING PASS & FLIGHT MANIFEST",
+      carrier: "ACME TRANSIT COURIER AIRWAYS",
+      flightNo: `ACME-${Math.floor(200 + Math.random() * 700)}`,
+      origin: CITIES_DATA[this.currentCityId].name.toUpperCase(),
+      dest: nextCity.name.toUpperCase(),
+      passenger: `ALIAS: ${(suspect.name || "V.I.L.E. OPERATIVE").toUpperCase()}`,
+      secretClue: secretText,
+      found: false
+    };
+
+    this.renderDocInspectionSubscreen();
+  }
+
+  toggleUvMode() {
+    this.uvMode = !this.uvMode;
+    this.audio.uvToggle();
+    this.renderDocInspectionSubscreen();
+  }
+
+  renderDocInspectionSubscreen() {
+    const doc = this.activeDocData;
+    if (this.renderer && typeof this.renderer.drawDocumentInspection === "function") {
+      this.renderer.drawDocumentInspection(doc, this.uvMode);
+    }
+    const items = [
+      { title: `FLIGHT PASS: ${doc.origin} ✈ ${doc.dest}` },
+      { title: `CARRIER: ${doc.carrier} | FLIGHT: ${doc.flightNo}` },
+      { title: `PASSENGER: ${doc.passenger}` }
+    ];
+
+    if (this.uvMode) {
+      items.push({
+        title: "★ [365nm UV BEAM ACTIVE] GLOWING FLUORESCENT WATERMARK DETECTED!",
+        isSecret: true
+      });
+      items.push({
+        title: "▶ EXAMINE FLUORESCENT ANNOTATION & COLLECT LEAD",
+        isCollect: true
+      });
+    } else {
+      items.push({
+        title: "MICROPRINT SMUDGED. TOGGLE UV BLACKLIGHT [U] OR [A] TO SCAN",
+        isToggle: true
+      });
+    }
+    items.push({ title: "◀ [B] RETURN TO CASE OPERATIONS" });
+
+    this.subscreenOptions = items;
+    this.renderSubscreen(`📑 TACTILE DOCUMENT EXAMINATION: ${this.uvMode ? "UV BLACKLIGHT ON" : "NORMAL LIGHT"}`, items);
+  }
+
+  collectDocSecret() {
+    const doc = this.activeDocData;
+    this.audio.holdIt();
+    this.flashScreen("#38bdf8", 350);
+    setTimeout(() => {
+      this.audio.breakthrough();
+      this.flashScreen("#facc15", 250);
+
+      const maxH = (this.getRank() && this.getRank().deadlineHours) || 48;
+      this.hoursLeft = Math.min(maxH, this.hoursLeft + 2);
+      this.updateTimeDisplay();
+
+      if (!this.cluesGathered.includes(doc.secretClue)) {
+        this.cluesGathered.push(doc.secretClue);
+      }
+
+      this.closeSubscreen();
+      this.setDialog(`[FORENSIC EVIDENCE RECOVERED] Microscopic UV examination revealed secret flight routing and suspect traits! (+2 Hours Bonus)`);
+    }, 350);
+  }
+
+  openPresentEvidenceSubscreen() {
+    this.subscreenMode = "present_evidence";
+    this.subscreenIndex = 0;
+    this.audio.shoulderTrigger();
+
+    if (this.cluesGathered.length === 0) {
+      this.subscreenOptions = [
+        { title: "NO EVIDENCE GATHERED YET!" },
+        { title: "Question witnesses or sweep crime scenes first." },
+        { title: "◀ [B] RETURN" }
+      ];
+      this.renderSubscreen("⚡ PRESENT EVIDENCE [HOLD IT!]", this.subscreenOptions);
+      return;
+    }
+
+    const items = this.cluesGathered.map((c, i) => ({
+      title: `📁 ${c}`,
+      clue: c,
+      index: i
+    }));
+    this.subscreenOptions = items;
+    this.renderSubscreen("⚡ PRESENT EVIDENCE TO WITNESS [HOLD IT! / OBJECTION!]", items);
+  }
+
+  presentEvidence(idx) {
+    if (!this.subscreenOptions || idx >= this.subscreenOptions.length) {
+      this.closeSubscreen();
+      return;
+    }
+
+    const opt = this.subscreenOptions[idx];
+    if (!opt.clue) {
+      this.closeSubscreen();
+      return;
+    }
+
+    const chosenClue = opt.clue;
+    this.closeSubscreen();
+
+    const suspect = this.currentCase.criminal;
+    const trail = this.currentCase.trail;
+    const currIdx = trail.indexOf(this.currentCityId);
+    const nextCityId = currIdx !== -1 && currIdx < trail.length - 1 ? trail[currIdx + 1] : null;
+    const nextCity = nextCityId && CITIES_DATA[nextCityId] ? CITIES_DATA[nextCityId] : null;
+
+    const clueLower = chosenClue.toLowerCase();
+    let isRelevant = false;
+
+    // Check if clue matches suspect trait
+    const traits = ["hair", "vehicle", "hobby", "feature", "sex"];
+    for (const t of traits) {
+      const val = (suspect[t] || "").toLowerCase();
+      if (val && clueLower.includes(val)) {
+        isRelevant = true;
+        break;
+      }
+    }
+
+    // Check if clue matches destination
+    if (!isRelevant && nextCity) {
+      if (
+        clueLower.includes(nextCity.name.toLowerCase()) ||
+        (nextCity.currency && clueLower.includes(nextCity.currency.toLowerCase())) ||
+        (nextCity.flag && clueLower.includes(nextCity.flag.toLowerCase()))
+      ) {
+        isRelevant = true;
+      }
+    }
+
+    // Check if clue is UV document or forensic trace
+    if (!isRelevant && (clueLower.includes("uv") || clueLower.includes("evidence") || clueLower.includes("manifest") || clueLower.includes("ticket"))) {
+      isRelevant = true;
+    }
+
+    if (isRelevant) {
+      this.audio.holdIt();
+      this.flashScreen("#38bdf8", 350);
+      setTimeout(() => {
+        this.audio.breakthrough();
+        this.flashScreen("#facc15", 250);
+
+        const maxH = (this.getRank() && this.getRank().deadlineHours) || 48;
+        this.hoursLeft = Math.min(maxH, this.hoursLeft + 2);
+        this.updateTimeDisplay();
+
+        let confession = "";
+        if (nextCity) {
+          confession = `HOLD IT! ... You caught me red-handed with that evidence! I was paid off by V.I.L.E. to misdirect you, but I can't deny this proof: the suspect definitely boarded transport for ${nextCity.name} (${nextCity.country}) and drove a ${suspect.vehicle}! (+2 Hours Bonus)`;
+        } else {
+          confession = `HOLD IT! ... Alright, detective, you win! The suspect is holed up right here in this city planning their getaway! Secure your warrant and check the hideouts! (+2 Hours Bonus)`;
+        }
+
+        const entry = `[CONTRADICTION BREAKTHROUGH] Witness cracked: ${confession}`;
+        if (!this.cluesGathered.includes(entry)) {
+          this.cluesGathered.push(entry);
+        }
+
+        this.setDialog(confession);
+      }, 350);
+    } else {
+      this.audio.cancel();
+      const unhelpful = [
+        "What does that prove? That has nothing to do with what I saw, detective!",
+        "Are you bluffing? That piece of evidence doesn't contradict my testimony at all.",
+        "Nice try, gumshoe! You'll need real forensic proof to rattle me."
+      ];
+      const pick = unhelpful[Math.floor(Math.random() * unhelpful.length)];
+      this.setDialog(`[WITNESS CONFRONTATION] ${pick}`);
+    }
+  }
+
+  flashScreen(color = "#38bdf8", durationMs = 250) {
+    const canvas = document.getElementById("game-canvas");
+    if (!canvas) return;
+    const origBoxShadow = canvas.style.boxShadow;
+    const origFilter = canvas.style.filter;
+    canvas.style.boxShadow = `inset 0 0 40px ${color}`;
+    canvas.style.filter = "brightness(1.5)";
+    setTimeout(() => {
+      canvas.style.boxShadow = origBoxShadow;
+      canvas.style.filter = origFilter;
+    }, durationMs);
+  }
+
 
   openDepartSubscreen() {
     this.subscreenMode = "depart";
@@ -514,6 +732,8 @@ class GBACarmenGameEngine {
       { title: `★ STATUS: ${warrantTitle} | STOLEN: ${this.currentCase.treasure}` },
       { title: `🎨 [C] GBA SP SHELL: ${shell.name} (Click to Cycle)`, action: "cycle_shell" },
       { title: "⚡ [G] ACME GADGET BELT (Deploy GPS, UV, Polygraph, Lockpick)", action: "gadgets" },
+      { title: "⚡ [P] PRESENT EVIDENCE TO WITNESS (Break Alibis & Decoys)", action: "present_evidence" },
+      { title: "📑 [U] TACTILE UV TRAVEL DOCUMENT INSPECTION", action: "doc_inspect" },
       { title: "🏛 [V] EVIDENCE HALL & MUSEUM (Recovered Relics)", action: "museum" },
       { title: "--- 🎯 DEDUCTION MATRIX: SUSPECT PROBABILITY ---" }
     ];
@@ -881,6 +1101,13 @@ class GBACarmenGameEngine {
   closeSubscreen() {
     const overlay = document.getElementById("subscreen-overlay");
     overlay.classList.remove("active");
+    if (this.subscreenMode === "doc_inspect") {
+      if (this.currentWitness) {
+        this.renderer.drawWitnessPortrait(this.currentWitness, this.currentWitnessRegion, false, false);
+      } else {
+        this.renderer.drawCityHub(this.currentCityId, this.getCurrentTimeStr());
+      }
+    }
     this.subscreenMode = null;
     this.audio.cancel();
   }
@@ -889,6 +1116,24 @@ class GBACarmenGameEngine {
   handleSubscreenConfirm() {
     if (this.subscreenMode === "radio" || this.subscreenMode === "inspect" || this.subscreenMode === "museum") {
       this.closeSubscreen();
+      return;
+    }
+
+    if (this.subscreenMode === "doc_inspect") {
+      const opt = this.subscreenOptions[this.subscreenIndex];
+      if (opt && opt.isToggle) {
+        this.toggleUvMode();
+        return;
+      } else if (opt && opt.isCollect) {
+        this.collectDocSecret();
+        return;
+      }
+      this.closeSubscreen();
+      return;
+    }
+
+    if (this.subscreenMode === "present_evidence") {
+      this.presentEvidence(this.subscreenIndex);
       return;
     }
 
@@ -904,6 +1149,12 @@ class GBACarmenGameEngine {
       const opt = this.subscreenOptions[this.subscreenIndex];
       if (opt && opt.action === "gadgets") {
         this.openGadgets();
+        return;
+      } else if (opt && opt.action === "present_evidence") {
+        this.openPresentEvidenceSubscreen();
+        return;
+      } else if (opt && opt.action === "doc_inspect") {
+        this.openDocumentInspection();
         return;
       } else if (opt && opt.action === "museum") {
         this.openMuseum();
@@ -935,6 +1186,15 @@ class GBACarmenGameEngine {
       if (placeOpt.isInspect) {
         this.currentWitness = null;
         this.openCrimeSceneInspection();
+        return;
+      }
+      if (placeOpt.isDocInspect) {
+        this.currentWitness = null;
+        this.openDocumentInspection();
+        return;
+      }
+      if (placeOpt.isPresentEvidence) {
+        this.openPresentEvidenceSubscreen();
         return;
       }
 
@@ -972,6 +1232,8 @@ class GBACarmenGameEngine {
           ];
           const bonus = traitsList[Math.floor(Math.random() * traitsList.length)];
           clueText += `\n\n⚡ CROSS-EXAMINATION SUCCESS: Witness cracked under intense questioning: "${bonus}"`;
+        } else if (this.profile && this.profile.casesSolved >= 2 && Math.random() < 0.35 && placeOpt.index === 2) {
+          clueText += `\n\n⚠ CONTRADICTION ALERT: Witness appears bribed or coached by V.I.L.E.! Press [P] to PRESENT EVIDENCE and break their alibi!`;
         }
       }
 

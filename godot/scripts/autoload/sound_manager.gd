@@ -30,6 +30,9 @@ var wav_ping: AudioStreamWAV
 var wav_whoosh: AudioStreamWAV
 var wav_siren: AudioStreamWAV
 var wav_gadget: AudioStreamWAV
+var wav_hold_it: AudioStreamWAV
+var wav_breakthrough: AudioStreamWAV
+var wav_uv_toggle: AudioStreamWAV
 var wav_bgm: AudioStreamWAV
 
 
@@ -87,6 +90,9 @@ func _cache_all_sounds() -> void:
 	wav_whoosh = _load_override("whoosh", _create_whoosh_wav())
 	wav_siren = _load_override("siren", _create_siren_wav())
 	wav_gadget = _load_override("gadget", _create_gadget_wav())
+	wav_hold_it = _load_override("hold_it", _create_hold_it_wav())
+	wav_breakthrough = _load_override("breakthrough", _create_breakthrough_wav())
+	wav_uv_toggle = _load_override("uv_toggle", _create_uv_toggle_wav())
 	
 	for reg in ["americas", "europe", "asia", "latin", "africa_mideast"]:
 		regional_bgm[reg] = _load_override("bgm_" + reg, _create_regional_bgm(reg))
@@ -441,6 +447,9 @@ func play_ping() -> void: play_sfx(wav_ping)
 func play_whoosh() -> void: play_sfx(wav_whoosh)
 func play_siren() -> void: play_sfx(wav_siren)
 func play_gadget() -> void: play_sfx(wav_gadget)
+func play_hold_it() -> void: play_sfx(wav_hold_it)
+func play_breakthrough() -> void: play_sfx(wav_breakthrough)
+func play_uv_toggle() -> void: play_sfx(wav_uv_toggle)
 
 
 func _create_impact_wav() -> AudioStreamWAV:
@@ -598,6 +607,97 @@ func _create_gadget_wav() -> AudioStreamWAV:
 		var env := exp(-t * 4.0)
 		var val := sin(phase * TAU) * env * 0.8
 		data[i] = int(clampi(int(128 + val * 120.0), 0, 255))
+	wav.data = data
+	return wav
+
+func _create_hold_it_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.45
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	
+	# Dramatic double-hit orchestral stinger:
+	# Hit 1 (0 to 0.12s): Low punchy bass chord (130.8Hz C3 + 196.0Hz G3)
+	# Hit 2 (0.13 to 0.45s): Powerful suspense seventh chord (261.6Hz C4, 329.6Hz E4, 392.0Hz G4, 493.9Hz B4)
+	var phase_c3 := 0.0
+	var phase_g3 := 0.0
+	var phase_c4 := 0.0
+	var phase_e4 := 0.0
+	var phase_g4 := 0.0
+	var phase_b4 := 0.0
+	
+	for i in range(sample_count):
+		var t := float(i) / float(wav.mix_rate)
+		var val := 0.0
+		if t < 0.12:
+			var env1 := exp(-t * 22.0)
+			phase_c3 = fmod(phase_c3 + 130.81 / wav.mix_rate, 1.0)
+			phase_g3 = fmod(phase_g3 + 196.00 / wav.mix_rate, 1.0)
+			var s1 := (1.0 if phase_c3 < 0.5 else -1.0) * 0.5 + (1.0 if phase_g3 < 0.5 else -1.0) * 0.5
+			val = s1 * env1 * 0.95
+		elif t >= 0.13:
+			var t2 := t - 0.13
+			var env2 := exp(-t2 * 6.5)
+			phase_c4 = fmod(phase_c4 + 261.63 / wav.mix_rate, 1.0)
+			phase_e4 = fmod(phase_e4 + 329.63 / wav.mix_rate, 1.0)
+			phase_g4 = fmod(phase_g4 + 392.00 / wav.mix_rate, 1.0)
+			phase_b4 = fmod(phase_b4 + 493.88 / wav.mix_rate, 1.0)
+			var chord := (sin(phase_c4 * TAU) + (1.0 if phase_e4 < 0.5 else -1.0) * 0.7 + sin(phase_g4 * TAU) * 0.8 + (1.0 if phase_b4 < 0.5 else -1.0) * 0.6) * 0.32
+			val = chord * env2
+		data[i] = int(clampi(int(128 + val * 122.0), 0, 255))
+	wav.data = data
+	return wav
+
+func _create_breakthrough_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.48
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	
+	# Rapid triumphant ascending 7-note arpeggio (C4 -> E4 -> G4 -> C5 -> E5 -> G5 -> C6)
+	var freqs = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]
+	var note_dur := 0.05
+	var phase := 0.0
+	
+	for i in range(sample_count):
+		var t := float(i) / float(wav.mix_rate)
+		var note_idx := mini(int(t / note_dur), freqs.size() - 1)
+		var note_t := fmod(t, note_dur) if note_idx < freqs.size() - 1 else (t - note_dur * 6.0)
+		var env := exp(-note_t * (18.0 if note_idx < freqs.size() - 1 else 6.0))
+		var f: float = freqs[note_idx]
+		phase = fmod(phase + (f / wav.mix_rate), 1.0)
+		var s := (1.0 if phase < 0.5 else -1.0) * 0.7 + sin(phase * TAU) * 0.3
+		data[i] = int(clampi(int(128 + s * env * 115.0), 0, 255))
+	wav.data = data
+	return wav
+
+func _create_uv_toggle_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.16
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	
+	var phase_low := 0.0
+	var phase_high := 0.0
+	for i in range(sample_count):
+		var t := float(i) / float(wav.mix_rate)
+		var env := exp(-t * 16.0)
+		phase_low = fmod(phase_low + (120.0 / wav.mix_rate), 1.0)
+		phase_high = fmod(phase_high + (2400.0 / wav.mix_rate), 1.0)
+		var click := (1.0 if phase_low < 0.5 else -1.0) * 0.6 + sin(phase_high * TAU) * 0.4
+		data[i] = int(clampi(int(128 + click * env * 110.0), 0, 255))
 	wav.data = data
 	return wav
 

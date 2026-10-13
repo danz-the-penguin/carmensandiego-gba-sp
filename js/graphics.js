@@ -961,6 +961,102 @@ class GBAGraphicsRenderer {
     this.ctx.textAlign = "start";
   }
 
+  // --- Tactile Document & Boarding Pass Inspection ---
+  drawDocumentInspection(docData, uvMode = false) {
+    this.setResolution(240, 88);
+    this.clear();
+
+    if (!uvMode) {
+      // Normal Light: Manila / Cream Boarding Pass
+      this.ctx.fillStyle = "#1e293b";
+      this.ctx.fillRect(0, 0, 240, 88);
+
+      this.ctx.fillStyle = "#f1f5f9";
+      this.ctx.fillRect(16, 6, 208, 76);
+      this.ctx.strokeStyle = "#94a3b8";
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeRect(16, 6, 208, 76);
+
+      // Perforation line
+      this.ctx.strokeStyle = "#cbd5e1";
+      this.ctx.setLineDash([2, 2]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(170, 6);
+      this.ctx.lineTo(170, 82);
+      this.ctx.stroke();
+      this.ctx.setLineDash([]);
+
+      // Carrier & Header
+      this.ctx.fillStyle = "#1e3a8a";
+      this.ctx.font = '6px "Press Start 2P", monospace';
+      this.ctx.fillText("ACME TRANSIT COURIER", 24, 18);
+
+      this.ctx.fillStyle = "#0f172a";
+      this.ctx.font = '5px "Press Start 2P", monospace';
+      this.ctx.fillText(`FROM: ${docData.origin || "ORIGIN"}`, 24, 32);
+      this.ctx.fillText(`TO:   ${docData.dest || "DESTINATION"}`, 24, 44);
+      this.ctx.fillText(`PASS: ${docData.passenger || "V.I.L.E."}`, 24, 56);
+
+      // Stub details
+      this.ctx.fillStyle = "#64748b";
+      this.ctx.fillText(`FLT: ${docData.flightNo || "AC-404"}`, 174, 28);
+      this.ctx.fillText("SEAT: 14B", 174, 42);
+      this.ctx.fillText("GATE: 03", 174, 56);
+
+      // Customs rubber stamp in red
+      this.ctx.strokeStyle = "rgba(220, 38, 38, 0.75)";
+      this.ctx.lineWidth = 1.5;
+      this.ctx.strokeRect(100, 48, 55, 24);
+      this.ctx.fillStyle = "rgba(220, 38, 38, 0.75)";
+      this.ctx.font = '5px "Press Start 2P", monospace';
+      this.ctx.fillText("CUSTOMS", 106, 60);
+      this.ctx.fillText("TRANSIT", 106, 68);
+    } else {
+      // 365nm UV Blacklight Examination: Deep Ultraviolet Ambient with Glowing Fluorescent Ink
+      this.ctx.fillStyle = "#060312";
+      this.ctx.fillRect(0, 0, 240, 88);
+
+      this.ctx.fillStyle = "#0d0b26";
+      this.ctx.fillRect(16, 6, 208, 76);
+      this.ctx.strokeStyle = "#4338ca";
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeRect(16, 6, 208, 76);
+
+      // Faint dim text
+      this.ctx.fillStyle = "#312e81";
+      this.ctx.font = '5px "Press Start 2P", monospace';
+      this.ctx.fillText("ACME TRANSIT [UV ACTIVE]", 24, 18);
+      this.ctx.fillText(`FROM: ${docData.origin || "ORIGIN"}`, 24, 32);
+      this.ctx.fillText(`TO:   ${docData.dest || "DESTINATION"}`, 24, 44);
+
+      // Glowing Neon Fluorescent Watermark & Courier Seal
+      this.ctx.strokeStyle = "#38bdf8";
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeRect(100, 20, 68, 48);
+
+      this.ctx.fillStyle = "#38bdf8";
+      this.ctx.font = '6px "Press Start 2P", monospace';
+      this.ctx.fillText("★ V.I.L.E. ★", 106, 34);
+      this.ctx.fillText("COURIER SEAL", 103, 44);
+
+      // Fluorescent routing text
+      this.ctx.fillStyle = "#4ade80";
+      this.ctx.font = '5px "Press Start 2P", monospace';
+      this.ctx.fillText(`DEST: ${docData.dest}`, 103, 56);
+      this.ctx.fillText("CONFIRMED", 106, 64);
+
+      // Latent fluorescent fingerprint whorls
+      this.ctx.strokeStyle = "#a855f7";
+      this.ctx.lineWidth = 1;
+      this.ctx.beginPath();
+      this.ctx.arc(42, 60, 10, 0, Math.PI * 2);
+      this.ctx.stroke();
+      this.ctx.beginPath();
+      this.ctx.arc(42, 60, 6, 0, Math.PI * 2);
+      this.ctx.stroke();
+    }
+  }
+
   // --- Game Over / Escape Scene ---
   drawGameOverScene() {
     this.setResolution(240, 88);
