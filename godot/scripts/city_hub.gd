@@ -8,6 +8,7 @@ extends Control
 @onready var trail_label: Label = $StatusBar/HBox/TrailLabel
 @onready var clock_label: Label = $StatusBar/HBox/ClockLabel
 @onready var hours_label: Label = $StatusBar/HBox/HoursLabel
+@onready var speedrun_label: Label = $StatusBar/HBox/SpeedrunLabel
 
 @onready var portrait_rect: TextureRect = $DialogBox/PortraitFrame/Portrait
 @onready var speaker_label: Label = $DialogBox/SpeakerLabel
@@ -139,6 +140,9 @@ func _ready() -> void:
 	show_dialog("[ACME CHIEF]", "URGENT BRIEFING: %s was stolen from %s! You have %d hours to track down the suspect and secure a warrant!" % [GameManager.current_treasure, city_name, GameManager.hours_left], "chief")
 
 func _process(delta: float) -> void:
+	if speedrun_label and GameManager.speedrun_active:
+		speedrun_label.text = "⏱ " + GameManager.format_speedrun_time(GameManager.speedrun_elapsed)
+
 	if shake_timer > 0.0:
 		shake_timer -= delta
 		position = original_pos + Vector2(randf_range(-shake_intensity, shake_intensity), randf_range(-shake_intensity, shake_intensity))
@@ -269,6 +273,17 @@ func _input(event: InputEvent) -> void:
 				inspect_overlay.active = false
 			else:
 				open_lockpick_simulator()
+			return
+		elif event.keycode == KEY_O:
+			if subscreen_panel.visible and subscreen_mode == "speedrun":
+				close_subscreen()
+			else:
+				open_speedrun_splits()
+			return
+		elif event.keycode == KEY_K:
+			GameManager.copy_seed_to_clipboard()
+			SoundManager.play_confirm()
+			show_dialog("[ACME SEED DISPATCH]", "Case Seed Code '%s' copied to system clipboard! Share with fellow detectives." % GameManager.current_case_seed, "chief")
 			return
 
 	if subscreen_panel.visible:
@@ -572,6 +587,8 @@ func open_dossier() -> void:
 	items.append({"action": "present", "text": "⚡ [P] PRESENT EVIDENCE TO WITNESS (Break Alibis & Decoys)"})
 	items.append({"action": "doc_inspect", "text": "📑 [U] TACTILE UV TRAVEL DOCUMENT INSPECTION"})
 	items.append({"action": "museum", "text": "🏛 [M] EVIDENCE HALL & MUSEUM (Recovered Relics)"})
+	items.append({"action": "speedrun", "text": "⏱ [O] SPEEDRUN SPLITS & STOPWATCH"})
+	items.append({"action": "copy_seed", "text": "📋 [K] COPY / EXPORT CASE SEED CODE"})
 	items.append({"action": "informant", "text": "🤝 [N] NEGOTIATE WITH LOCAL INFORMANT / FIXER (Time & Intel)"})
 	items.append({"action": "lockpick", "text": "🔓 [T] TACTILE LOCKPICK TUMBLER SIMULATOR (Bypass Locks)"})
 	
@@ -666,6 +683,39 @@ func open_dossier() -> void:
 func open_museum() -> void:
 	subscreen_panel.visible = false
 	museum_overlay.open_museum()
+
+func open_speedrun_splits() -> void:
+	subscreen_mode = "speedrun"
+	subscreen_title.text = "SPEEDRUN SPLIT TRACKER & STOPWATCH [O]"
+	var items: Array[Dictionary] = []
+	var best_str = GameManager.format_speedrun_time(GameManager.best_speedrun_time) if GameManager.best_speedrun_time < 999999.0 else "--:--.-"
+	var cur_str = GameManager.format_speedrun_time(GameManager.speedrun_elapsed)
+	var is_daily_str = "YES (DAILY CHALLENGE)" if GameManager.is_daily_case else "NO (CAREER/CUSTOM)"
+	
+	items.append({"action": "none", "text": "⏱ ELAPSED: %s   ★ PERSONAL BEST: %s" % [cur_str, best_str]})
+	items.append({"action": "none", "text": "📋 CASE SEED: %s   DAILY: %s" % [GameManager.current_case_seed, is_daily_str]})
+	items.append({"action": "copy_seed", "text": "📋 [K] COPY CASE SEED CODE TO CLIPBOARD"})
+	items.append({"action": "none", "text": "--- 🏁 RECORDED MILESTONE SPLITS ---"})
+	
+	if GameManager.speedrun_splits.is_empty():
+		items.append({"action": "none", "text": "No splits logged yet. Hop between cities or secure warrants to log splits!"})
+	else:
+		var prev_t = 0.0
+		for i in range(GameManager.speedrun_splits.size()):
+			var sp = GameManager.speedrun_splits[i]
+			var t: float = sp.get("time", 0.0)
+			var delta_t = t - prev_t
+			prev_t = t
+			var delta_str = "+%.1fs" % delta_t if i > 0 else "START"
+			items.append({"action": "none", "text": "%d. [%s] %s (%s)" % [i + 1, GameManager.format_speedrun_time(t), sp.get("name", "Split"), delta_str]})
+			
+	items.append({"action": "back", "text": "◀ CLOSE SPEEDRUN SPLITS [B / O]"})
+	
+	subscreen_data = items
+	var labels: Array[String] = []
+	for it in items:
+		labels.append(it["text"])
+	_populate_subscreen(labels)
 
 func open_gadgets() -> void:
 	subscreen_mode = "gadgets"
@@ -857,6 +907,14 @@ func _confirm_subscreen(idx: int) -> void:
 				elif act == "museum":
 					open_museum()
 					return
+				elif act == "speedrun":
+					open_speedrun_splits()
+					return
+				elif act == "copy_seed":
+					GameManager.copy_seed_to_clipboard()
+					SoundManager.play_confirm()
+					show_dialog("[ACME SEED DISPATCH]", "Case Seed Code '%s' copied to system clipboard! Share with fellow detectives." % GameManager.current_case_seed, "chief")
+					return
 				elif act == "informant":
 					open_informant_negotiation()
 					return
@@ -877,6 +935,15 @@ func _confirm_subscreen(idx: int) -> void:
 						GameManager.computer_filters["feature"] = s.get("feature", "")
 						open_crime_computer()
 						return
+			close_subscreen()
+		"speedrun":
+			if idx < subscreen_data.size() and subscreen_data[idx] is Dictionary:
+				var act = subscreen_data[idx].get("action", "none")
+				if act == "copy_seed":
+					GameManager.copy_seed_to_clipboard()
+					SoundManager.play_confirm()
+					show_dialog("[ACME SEED DISPATCH]", "Case Seed Code '%s' copied to system clipboard!" % GameManager.current_case_seed, "chief")
+					return
 			close_subscreen()
 		"gadgets":
 			if idx < subscreen_data.size() and subscreen_data[idx] is Dictionary:

@@ -128,23 +128,109 @@ texture = ExtResource("2_fedora")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="PressStartLabel" type="Label" parent="."]
+[node name="MenuBox" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_top = 430.0
+offset_left = 340.0
+offset_top = 405.0
+offset_right = 940.0
+offset_bottom = 535.0
+theme_override_constants/separation = 8
+
+[node name="BtnCareer" type="Button" parent="MenuBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "▶ 1. CAREER CASE (RANK ADVANCEMENT)"
+
+[node name="BtnDaily" type="Button" parent="MenuBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "★ 2. DAILY ACME CHALLENGE"
+
+[node name="BtnCustom" type="Button" parent="MenuBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "🎲 3. CUSTOM CASE & SEED CODES"
+
+[node name="StatsLabel" type="Label" parent="."]
+layout_mode = 0
+offset_top = 548.0
 offset_right = 1280.0
-offset_bottom = 470.0
-theme_override_colors/font_color = Color(1, 0.86, 0.4, 1)
-theme_override_font_sizes/font_size = 14
-text = "▶ PRESS START / [SPACE] / [Z] ◀"
+offset_bottom = 575.0
+theme_override_colors/font_color = Color(0.98, 0.75, 0.25, 1)
+theme_override_font_sizes/font_size = 11
+text = "BEST SPEEDRUN: --:--.- | TODAY'S DAILY: AVAILABLE"
 horizontal_alignment = 1
 
 [node name="InstructionsLabel" type="Label" parent="."]
 layout_mode = 0
-offset_top = 560.0
+offset_top = 590.0
 offset_right = 1280.0
-offset_bottom = 650.0
+offset_bottom = 670.0
 theme_override_colors/font_color = Color(0.46, 0.54, 0.68, 1)
 theme_override_font_sizes/font_size = 11
-text = "[ARROWS / WASD] MOVE   [Z / SPACE] CONFIRM   [X / ESC] BACK
-[Q] DOSSIER   [E] CRIME COMPUTER   [G] GADGETS   [V] MUSEUM   [M] MUTE"
+text = "[▲ / ▼ / WASD] SELECT   [Z / SPACE / ENTER] START   [1, 2, 3] QUICK LAUNCH
+[Q] DOSSIER   [E] CRIME COMPUTER   [O] SPLITS   [K] SEED   [M] MUTE"
 horizontal_alignment = 1
+
+[node name="SeedDialog" type="Panel" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 340.0
+offset_top = 220.0
+offset_right = 940.0
+offset_bottom = 500.0
+
+[node name="DialogTitle" type="Label" parent="SeedDialog"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 16.0
+offset_right = 580.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
+theme_override_font_sizes/font_size = 14
+text = "ENTER CUSTOM CASE SEED"
+horizontal_alignment = 1
+
+[node name="DialogDesc" type="Label" parent="SeedDialog"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 46.0
+offset_right = 570.0
+offset_bottom = 70.0
+theme_override_colors/font_color = Color(0.68, 0.78, 0.92, 1)
+theme_override_font_sizes/font_size = 10
+text = "Deterministic generator: same seed produces identical case & route"
+horizontal_alignment = 1
+
+[node name="SeedInput" type="LineEdit" parent="SeedDialog"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 78.0
+offset_right = 560.0
+offset_bottom = 120.0
+placeholder_text = "e.g. #ACME-7788 or custom seed text"
+
+[node name="BtnStartCustom" type="Button" parent="SeedDialog"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 140.0
+offset_right = 270.0
+offset_bottom = 185.0
+text = "START CASE [ENTER]"
+
+[node name="BtnPasteClip" type="Button" parent="SeedDialog"]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 140.0
+offset_right = 560.0
+offset_bottom = 185.0
+text = "PASTE CLIPBOARD"
+
+[node name="BtnCancelSeed" type="Button" parent="SeedDialog"]
+layout_mode = 0
+offset_left = 185.0
+offset_top = 205.0
+offset_right = 415.0
+offset_bottom = 250.0
+text = "CANCEL [ESC]"
+

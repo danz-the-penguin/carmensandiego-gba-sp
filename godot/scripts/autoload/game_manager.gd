@@ -21,6 +21,14 @@ var current_rank: Dictionary
 var recovered_treasures: Array = []
 var current_case_seed: String = "#ACME-1000"
 
+# Phase 4: Speedrun Stopwatch & Daily Challenge State
+var speedrun_active: bool = false
+var speedrun_elapsed: float = 0.0
+var speedrun_splits: Array[Dictionary] = []
+var best_speedrun_time: float = 999999.0
+var daily_records: Dictionary = {}
+var is_daily_case: bool = false
+
 # Unlockable GBA SP Console Shell Customizations
 const SHELLS: Array[Dictionary] = [
 	{"id": "platinum", "name": "PLATINUM SILVER", "cases": 0, "color": Color("#c4cad8")},
@@ -73,6 +81,8 @@ func load_profile() -> void:
 		cases_solved = cfg.get_value("player", "cases_solved", 0)
 		recovered_treasures = cfg.get_value("player", "recovered_treasures", [])
 		current_shell_index = cfg.get_value("player", "current_shell_index", 0)
+		best_speedrun_time = cfg.get_value("player", "best_speedrun_time", 999999.0)
+		daily_records = cfg.get_value("player", "daily_records", {})
 	update_rank()
 
 func save_profile() -> void:
@@ -80,7 +90,51 @@ func save_profile() -> void:
 	cfg.set_value("player", "cases_solved", cases_solved)
 	cfg.set_value("player", "recovered_treasures", recovered_treasures)
 	cfg.set_value("player", "current_shell_index", current_shell_index)
+	cfg.set_value("player", "best_speedrun_time", best_speedrun_time)
+	cfg.set_value("player", "daily_records", daily_records)
 	cfg.save("user://detective_profile.cfg")
+
+func _process(delta: float) -> void:
+	if speedrun_active and current_state in [State.BRIEFING, State.CITY_HUB, State.DOSSIER, State.CRIME_COMPUTER]:
+		speedrun_elapsed += delta
+
+func format_speedrun_time(t: float) -> String:
+	if t >= 999990.0:
+		return "--:--.-"
+	var total_msec: int = int(t * 1000.0)
+	var minutes: int = total_msec / 60000
+	var seconds: int = (total_msec % 60000) / 1000
+	var tenths: int = (total_msec % 1000) / 100
+	return "%02d:%02d.%d" % [minutes, seconds, tenths]
+
+func record_speedrun_split(split_name: String) -> void:
+	var prev_time := 0.0
+	if not speedrun_splits.is_empty():
+		prev_time = speedrun_splits[-1]["time"]
+	var delta := speedrun_elapsed - prev_time
+	speedrun_splits.append({
+		"name": split_name,
+		"time": speedrun_elapsed,
+		"delta": delta,
+		"formatted": format_speedrun_time(speedrun_elapsed)
+	})
+
+func copy_seed_to_clipboard() -> String:
+	DisplayServer.clipboard_set(current_case_seed)
+	SoundManager.play_confirm()
+	return current_case_seed
+
+func start_daily_case() -> void:
+	var today_str = Time.get_date_string_from_system()
+	start_new_case("DAILY-%s" % today_str)
+
+func is_today_daily_completed() -> bool:
+	var today_str = Time.get_date_string_from_system()
+	return daily_records.has(today_str)
+
+func get_today_daily_record() -> Dictionary:
+	var today_str = Time.get_date_string_from_system()
+	return daily_records.get(today_str, {})
 
 
 func _input(event: InputEvent) -> void:
@@ -116,9 +170,18 @@ func cycle_light_mode() -> void:
 	light_mode_changed.emit(light_modes[light_mode_index])
 
 # --- Procedural Case Generator ---
-func start_new_case() -> void:
+func start_new_case(seed_string: String = "", custom_params: Dictionary = {}) -> void:
 	update_rank()
-	current_case_seed = "#ACME-%04d" % randi_range(1000, 9999)
+	if seed_string != "":
+		current_case_seed = seed_string
+	else:
+		current_case_seed = "#ACME-%04d" % randi_range(1000, 9999)
+	
+	is_daily_case = current_case_seed.begins_with("DAILY-")
+	
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(current_case_seed)
+	
 	var hops: int = current_rank["hops"]
 	hours_left = current_rank["deadline_hours"]
 	day_index = 0
@@ -126,6 +189,12 @@ func start_new_case() -> void:
 	warrant_suspect = {}
 	clues_gathered.clear()
 	computer_filters = {"sex": "", "hair": "", "vehicle": "", "hobby": "", "feature": ""}
+	
+	# Start speedrun stopwatch
+	speedrun_active = true
+	speedrun_elapsed = 0.0
+	speedrun_splits.clear()
+	record_speedrun_split("HQ Assignment")
 	
 	# Tactical Gadget Capacity Scales With Detective Rank
 	var base_uv = 2 + (1 if cases_solved >= 2 else 0) + (1 if cases_solved >= 8 else 0) + (1 if cases_solved >= 12 else 0)
@@ -139,20 +208,34 @@ func start_new_case() -> void:
 		"polygraph": base_poly
 	}
 
-
 	# 1. Stolen treasure & start city
-	var treasure_data: Dictionary = Database.TREASURES.pick_random()
+	var treasure_data: Dictionary = {}
+	if custom_params.has("treasure"):
+		for t in Database.TREASURES:
+			if t["name"] == custom_params["treasure"]:
+				treasure_data = t
+				break
+	if treasure_data.is_empty():
+		treasure_data = Database.TREASURES[rng.randi_range(0, Database.TREASURES.size() - 1)]
+
 	current_treasure = treasure_data["name"]
 	var start_city: String = treasure_data["city"]
 	current_city_id = start_city
 
 	# 2. Culprit
-	current_criminal = Database.SUSPECTS.pick_random()
-	if current_rank["title"] == "ACE DETECTIVE" and randf() < 0.6:
+	current_criminal = {}
+	if custom_params.has("criminal"):
 		for s in Database.SUSPECTS:
-			if s["id"] == "carmen":
+			if s["id"] == custom_params["criminal"] or s["name"] == custom_params["criminal"]:
 				current_criminal = s
 				break
+	if current_criminal.is_empty():
+		current_criminal = Database.SUSPECTS[rng.randi_range(0, Database.SUSPECTS.size() - 1)]
+		if current_rank["title"] == "ACE DETECTIVE" and rng.randf() < 0.6:
+			for s in Database.SUSPECTS:
+				if s["id"] == "carmen":
+					current_criminal = s
+					break
 
 	# 3. Flight trail
 	current_trail = [start_city]
@@ -164,7 +247,7 @@ func start_new_case() -> void:
 		for c in connections:
 			if not current_trail.has(c):
 				candidates.append(c)
-		var next_city: String = candidates.pick_random() if candidates.size() > 0 else connections.pick_random()
+		var next_city: String = candidates[rng.randi_range(0, candidates.size() - 1)] if candidates.size() > 0 else connections[rng.randi_range(0, connections.size() - 1)]
 		current_trail.append(next_city)
 		curr = next_city
 
@@ -185,7 +268,12 @@ func start_new_case() -> void:
 			"Heard speaking " + next_data["language"] + ".",
 			"Mentioned sight-seeing at " + next_data["landmark"] + "!"
 		]
-		geo_clues.shuffle()
+		# Seeded Fisher-Yates shuffle
+		for idx in range(geo_clues.size() - 1, 0, -1):
+			var swap_idx = rng.randi_range(0, idx)
+			var temp = geo_clues[idx]
+			geo_clues[idx] = geo_clues[swap_idx]
+			geo_clues[swap_idx] = temp
 
 		var trait_clues: Array[String] = [
 			"%s had striking %s hair." % [pronoun_subj, current_criminal["hair"].to_upper()],
@@ -245,6 +333,8 @@ func travel_to(destination_id: String) -> void:
 	if not spend_hours(4):
 		return
 	current_city_id = destination_id
+	var c_name: String = Database.CITIES[current_city_id]["name"]
+	record_speedrun_split("Hop to %s" % c_name)
 	city_changed.emit(Database.CITIES[current_city_id])
 
 func investigate_place(place_index: int) -> void:
@@ -269,6 +359,7 @@ func investigate_place(place_index: int) -> void:
 		attempt_arrest()
 
 func return_to_title() -> void:
+	speedrun_active = false
 	title_requested.emit()
 
 func attempt_arrest() -> void:
@@ -276,6 +367,23 @@ func attempt_arrest() -> void:
 	if not warrant_suspect.is_empty() and warrant_suspect["id"] == current_criminal["id"]:
 		SoundManager.play_victory()
 		cases_solved += 1
+		speedrun_active = false
+		record_speedrun_split("Arrest %s" % current_criminal.get("name", "SUSPECT"))
+		
+		var speed_msg := "⏱ TIME: %s" % format_speedrun_time(speedrun_elapsed)
+		if speedrun_elapsed < best_speedrun_time:
+			best_speedrun_time = speedrun_elapsed
+			speed_msg += " (NEW PERSONAL BEST!)"
+		
+		if is_daily_case:
+			var today_str = Time.get_date_string_from_system()
+			daily_records[today_str] = {
+				"time": speedrun_elapsed,
+				"formatted": format_speedrun_time(speedrun_elapsed),
+				"treasure": current_treasure,
+				"criminal": current_criminal.get("name", "SUSPECT")
+			}
+			speed_msg += " [DAILY CHALLENGE COMPLETE!]"
 		
 		var found_already = false
 		for rec in recovered_treasures:
@@ -301,14 +409,15 @@ func attempt_arrest() -> void:
 		save_profile()
 		update_rank()
 		var quote = current_criminal.get("quote", "Curses! Foiled again!")
-		case_resolved.emit(true, "%s: \"%s\"\n\nCASE SOLVED! %s apprehended! %s recovered! Promotion: %s" % [current_criminal["name"], quote, current_criminal["name"], current_treasure, current_rank["title"]])
+		case_resolved.emit(true, "%s: \"%s\"\n\nCASE SOLVED! %s apprehended! %s recovered!\n%s\nPromotion: %s" % [current_criminal["name"], quote, current_criminal["name"], current_treasure, speed_msg, current_rank["title"]])
 	else:
-
+		speedrun_active = false
 		SoundManager.play_game_over()
 		var msg := "ALERT: You cornered %s without a valid warrant! The criminal escaped!" % current_criminal["name"] if warrant_suspect.is_empty() else "BLUNDER: Warrant was for %s, but thief was %s! Escaped!" % [warrant_suspect["name"], current_criminal["name"]]
 		case_resolved.emit(false, msg)
 
 func trigger_game_over() -> void:
+	speedrun_active = false
 	current_state = State.GAMEOVER
 	SoundManager.play_game_over()
 	case_resolved.emit(false, "TIME EXPIRED! The deadline passed and the thief escaped!")

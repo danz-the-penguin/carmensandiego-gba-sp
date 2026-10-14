@@ -12,6 +12,18 @@ A 2010s neo-retro detective adventure inspired by the 1985 classic *"Where in th
 
 ## 🕵️ Features & 2010s Neo-Retro Mechanics
 
+* **Daily ACME Challenge Mode:**
+  * Synchronized global procedural case generation seeded deterministically by the current calendar date (`DAILY-YYYY-MM-DD`).
+  * Enables detectives across the globe to investigate identical stolen treasures, culprits, flight routes, and witness testimony.
+  * Tracks daily completion status, personal speedrun completion badges, and records daily case archives.
+* **Real-Time Speedrun Stopwatch & Split Tracker HUD Overlay [O]:**
+  * Integrated real-time elapsed stopwatch (`⏱ MM:SS.m`) embedded directly in the GBA SP status bar.
+  * Dynamic milestone split recording: automatically stamps splits upon HQ Assignment, each intercontinental flight hop, warrant issuance, and final suspect arrest.
+  * Dedicated Speedrun Splits subscreen (<kbd>O</kbd>) displaying elapsed time, segment deltas, personal best (PB) comparisons, and case seed info.
+  * Synthesized electronic digital split beeps (`play_stopwatch()`) provide crisp audio feedback on split milestones.
+* **Custom Case Generator & Seed Code Sharing [K]:**
+  * Input custom seed strings (e.g. `#ACME-7788` or secret prompts) in the Title Screen modal to deterministically generate exact case scenarios.
+  * One-click clipboard copy/export (<kbd>K</kbd>) allows sharing exact case seeds with friends and fellow speedrunners.
 * **Tactile Lockpick Tumblers Minigame [T]:**
   * Interactive electronic lockpicking microgame with 4 spring-loaded shear pins.
   * Select tumbler pins with <kbd>◀</kbd> / <kbd>▶</kbd> and apply pick lift tension with <kbd>▲</kbd> / <kbd>▼</kbd>.
@@ -86,6 +98,8 @@ A 2010s neo-retro detective adventure inspired by the 1985 classic *"Where in th
 | **UV Inspection** | <kbd>U</kbd> | Toggle 365nm UV Document Examination |
 | **Informant Fixer** | <kbd>N</kbd> | Negotiate with Local Undercover Informant |
 | **Lockpick Simulator** | <kbd>T</kbd> | Open Tactical Lockpick Tumblers Minigame |
+| **Speedrun Splits** | <kbd>O</kbd> | Toggle Real-Time Speedrun Splits & Stopwatch |
+| **Copy Case Seed** | <kbd>K</kbd> | Copy Case Seed Code to System Clipboard |
 | **[START]** | <kbd>Enter</kbd> / <kbd>Space</kbd> / Click | Start new case from Title Screen |
 | **Light Button** | <kbd>B</kbd> | Cycle AGS-101 Bright / Normal / Frontlit |
 | **Mute BGM** | <kbd>M</kbd> | Toggle 8-bit Detective BGM On/Off |

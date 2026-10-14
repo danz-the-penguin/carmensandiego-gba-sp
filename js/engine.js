@@ -34,6 +34,13 @@ class GBACarmenGameEngine {
     this.currentCaseSeed = "#ACME-1000";
     this.currentShellIndex = 0;
 
+    // Real-Time Speedrun Stopwatch & Daily Challenge State
+    this.speedrunActive = false;
+    this.speedrunElapsed = 0.0;
+    this.speedrunSplits = [];
+    this.speedrunTimer = null;
+    this.isDailyCase = false;
+
     // Navigation state
     this.menuIndex = 0; // 0=Investigate, 1=Depart, 2=Crime Comp, 3=Dossier
     this.subscreenMode = null; // 'investigate', 'depart', 'computer_filter', 'dossier', 'gadgets', 'museum', 'trap'
@@ -97,6 +104,8 @@ class GBACarmenGameEngine {
         if (saved) {
           const parsed = JSON.parse(saved);
           if (!parsed.recoveredTreasures) parsed.recoveredTreasures = [];
+          if (parsed.bestSpeedrunTime === undefined) parsed.bestSpeedrunTime = 999999.0;
+          if (!parsed.dailyRecords) parsed.dailyRecords = {};
           if (parsed.shellIndex !== undefined) this.currentShellIndex = parsed.shellIndex;
           this.applyShellTheme();
           return parsed;
@@ -105,7 +114,7 @@ class GBACarmenGameEngine {
     } catch (e) {
       // Storage not available
     }
-    return { casesSolved: 0, rankIndex: 0, recoveredTreasures: [] };
+    return { casesSolved: 0, rankIndex: 0, recoveredTreasures: [], bestSpeedrunTime: 999999.0, dailyRecords: {} };
   }
 
   saveProfile() {
@@ -127,6 +136,131 @@ class GBACarmenGameEngine {
       }
     }
     return rank;
+  }
+
+  // --- Deterministic Mulberry32 PRNG ---
+  createSeededRng(seedStr) {
+    let h = 0;
+    const str = String(seedStr || "#ACME-1000");
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+    }
+    let s = h >>> 0;
+    return function() {
+      s = (s + 0x6D2B79F5) | 0;
+      let t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // --- Real-Time Speedrun Stopwatch Methods ---
+  formatSpeedrunTime(sec) {
+    if (sec >= 999999 || sec === undefined || isNaN(sec)) return "--:--.-";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    const ms = Math.floor((sec % 1) * 10);
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${ms}`;
+  }
+
+  startSpeedrunTimer() {
+    this.stopSpeedrunTimer();
+    this.speedrunActive = true;
+    this.speedrunElapsed = 0.0;
+    this.speedrunSplits = [];
+    this.updateStopwatchDisplay();
+    this.speedrunTimer = setInterval(() => {
+      if (this.speedrunActive) {
+        this.speedrunElapsed += 0.1;
+        this.updateStopwatchDisplay();
+      }
+    }, 100);
+  }
+
+  stopSpeedrunTimer() {
+    this.speedrunActive = false;
+    if (this.speedrunTimer) {
+      clearInterval(this.speedrunTimer);
+      this.speedrunTimer = null;
+    }
+  }
+
+  updateStopwatchDisplay() {
+    const el = document.getElementById("txt-speedrun");
+    if (el) {
+      el.textContent = "⏱ " + this.formatSpeedrunTime(this.speedrunElapsed);
+    }
+  }
+
+  recordSpeedrunSplit(name) {
+    const split = { name: name, time: this.speedrunElapsed };
+    this.speedrunSplits.push(split);
+    if (this.audio && typeof this.audio.speedrunSplit === "function") {
+      this.audio.speedrunSplit();
+    }
+  }
+
+  copySeedCode() {
+    if (typeof navigator !== "undefined" && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(this.currentCaseSeed).catch(() => {});
+    }
+    if (this.audio) this.audio.confirm();
+    this.setDialog(`📋 CASE SEED COPIED: '${this.currentCaseSeed}'! Share with fellow gumshoes.`);
+  }
+
+  startDailyCase() {
+    const today = new Date().toISOString().slice(0, 10);
+    this.isDailyCase = true;
+    this.startNewCase("DAILY-" + today);
+  }
+
+  isTodayDailyCompleted() {
+    const today = new Date().toISOString().slice(0, 10);
+    return Boolean(this.profile && this.profile.dailyRecords && this.profile.dailyRecords[today]);
+  }
+
+  openSpeedrunSplits() {
+    this.subscreenMode = "speedrun";
+    this.subscreenIndex = 0;
+    this.audio.shoulderTrigger();
+
+    const bestStr = this.formatSpeedrunTime((this.profile && this.profile.bestSpeedrunTime) || 999999.0);
+    const curStr = this.formatSpeedrunTime(this.speedrunElapsed);
+    const isDailyStr = this.isDailyCase ? "YES (DAILY CHALLENGE)" : "NO (CAREER/CUSTOM)";
+
+    if (this.renderer && typeof this.renderer.drawSpeedrunSplits === "function") {
+      this.renderer.drawSpeedrunSplits(
+        this.speedrunSplits,
+        this.speedrunElapsed,
+        (this.profile && this.profile.bestSpeedrunTime) || 999999.0,
+        this.currentCaseSeed,
+        this.isDailyCase
+      );
+    }
+
+    const items = [
+      { title: `⏱ ELAPSED: ${curStr}  |  ★ BEST: ${bestStr}` },
+      { title: `📋 SEED: ${this.currentCaseSeed}  |  DAILY: ${isDailyStr}` },
+      { title: "📋 [K] COPY CASE SEED CODE TO CLIPBOARD", action: "copy_seed" },
+      { title: "--- 🏁 RECORDED MILESTONE SPLITS ---" }
+    ];
+
+    if (this.speedrunSplits.length === 0) {
+      items.push({ title: "No splits recorded yet. Hop between cities or secure warrants to log splits!" });
+    } else {
+      let prevTime = 0.0;
+      this.speedrunSplits.forEach((sp, i) => {
+        const delta = sp.time - prevTime;
+        prevTime = sp.time;
+        const deltaStr = i > 0 ? `+${delta.toFixed(1)}s` : "START";
+        items.push({ title: `${i + 1}. [${this.formatSpeedrunTime(sp.time)}] ${sp.name} (${deltaStr})` });
+      });
+    }
+
+    items.push({ title: "◀ CLOSE SPEEDRUN SPLITS [B / O]" });
+
+    this.subscreenOptions = items;
+    this.renderSubscreen("SPEEDRUN STOPWATCH & SPLIT TRACKER [O]", items);
   }
 
   cycleShell() {
@@ -169,6 +303,7 @@ class GBACarmenGameEngine {
   // --- Title Screen Loop ---
   initTitleScreen() {
     this.state = "TITLE";
+    this.stopSpeedrunTimer();
     this.audio.stopBGM();
     if (this.titleTimer) clearInterval(this.titleTimer);
 
@@ -183,25 +318,50 @@ class GBACarmenGameEngine {
     }, 450);
 
     this.renderer.drawTitleScene(true);
-    this.setDialog("PRESS START or [A] to report to ACME Detective HQ!");
+    const bestStr = this.formatSpeedrunTime((this.profile && this.profile.bestSpeedrunTime) || 999999.0);
+    const todayCompleted = this.isTodayDailyCompleted();
+    const dailyStatus = todayCompleted ? "DONE" : "READY";
+    this.setDialog(`[ACME TITLE] [1] CAREER CASE  [2] DAILY CHALLENGE (${dailyStatus})  [3] CUSTOM SEED\n★ BEST PB: ${bestStr} | PRESS START / [A]`);
     this.updateStatusDisplay("ACME HQ", "STANDBY", `RANK: ${this.getRank().title}`);
   }
 
   // --- Start a New Procedural Case ---
-  startNewCase() {
+  startNewCase(seedString = "", customParams = {}) {
     if (this.titleTimer) clearInterval(this.titleTimer);
     const lcd = document.getElementById("lcd-screen");
     if (lcd) lcd.classList.remove("fullscreen-title");
     const rank = this.getRank();
 
+    if (seedString && seedString.trim()) {
+      this.currentCaseSeed = seedString.trim();
+    } else {
+      this.currentCaseSeed = "#ACME-" + Math.floor(1000 + Math.random() * 9000);
+      this.isDailyCase = false;
+    }
+
+    const rng = this.createSeededRng(this.currentCaseSeed);
+
     // 1. Pick a stolen treasure & starting city
-    const treasure = TREASURES_DATA[Math.floor(Math.random() * TREASURES_DATA.length)];
+    let treasure = null;
+    if (customParams && customParams.treasure) {
+      treasure = TREASURES_DATA.find((t) => t.name === customParams.treasure);
+    }
+    if (!treasure) {
+      treasure = TREASURES_DATA[Math.floor(rng() * TREASURES_DATA.length)];
+    }
     const startCityId = treasure.city;
 
     // 2. Pick a criminal (Ace rank: Carmen Sandiego 60% chance)
-    let criminal = SUSPECTS_DATA[Math.floor(Math.random() * SUSPECTS_DATA.length)];
-    if (rank.title === "ACE DETECTIVE" && Math.random() < 0.6) {
-      criminal = SUSPECTS_DATA.find((s) => s.id === "carmen");
+    let criminal = null;
+    if (customParams && customParams.criminal) {
+      criminal = SUSPECTS_DATA.find((s) => s.id === customParams.criminal || s.name === customParams.criminal);
+    }
+    if (!criminal) {
+      criminal = SUSPECTS_DATA[Math.floor(rng() * SUSPECTS_DATA.length)];
+      if (rank.title === "ACE DETECTIVE" && rng() < 0.6) {
+        const carmen = SUSPECTS_DATA.find((s) => s.id === "carmen");
+        if (carmen) criminal = carmen;
+      }
     }
 
     // 3. Generate trail of cities based on rank hops
@@ -211,8 +371,8 @@ class GBACarmenGameEngine {
       const cityData = CITIES_DATA[curr];
       const validConnections = cityData.connections.filter((id) => !trail.includes(id));
       const nextCityId = validConnections.length > 0
-        ? validConnections[Math.floor(Math.random() * validConnections.length)]
-        : cityData.connections[Math.floor(Math.random() * cityData.connections.length)];
+        ? validConnections[Math.floor(rng() * validConnections.length)]
+        : cityData.connections[Math.floor(rng() * cityData.connections.length)];
       trail.push(nextCityId);
       curr = nextCityId;
     }
@@ -243,7 +403,14 @@ class GBACarmenGameEngine {
         `Guide: "Inquired about ${nextData.geography.toUpperCase()}."`
       ];
 
-      const shuffledGeo = [...geoClues].sort(() => 0.5 - Math.random());
+      // Seeded Fisher-Yates shuffle
+      const shuffledGeo = [...geoClues];
+      for (let j = shuffledGeo.length - 1; j > 0; j--) {
+        const swapIdx = Math.floor(rng() * (j + 1));
+        const temp = shuffledGeo[j];
+        shuffledGeo[j] = shuffledGeo[swapIdx];
+        shuffledGeo[swapIdx] = temp;
+      }
       const selectedSuspectTrait = suspectTraits[i % suspectTraits.length];
 
       cityClues[thisCity] = [
@@ -276,7 +443,10 @@ class GBACarmenGameEngine {
     this.warrantSuspect = null;
     this.cluesGathered = [];
     this.computerFilters = { sex: null, hair: null, vehicle: null, hobby: null, feature: null };
-    this.currentCaseSeed = "#ACME-" + Math.floor(1000 + Math.random() * 9000);
+
+    // Reset and start speedrun stopwatch
+    this.startSpeedrunTimer();
+    this.recordSpeedrunSplit("HQ Assignment");
 
     const solved = (this.profile && this.profile.casesSolved) || 0;
     const baseUV = 2 + (solved >= 2 ? 1 : 0) + (solved >= 8 ? 1 : 0) + (solved >= 12 ? 1 : 0);
@@ -743,6 +913,8 @@ class GBACarmenGameEngine {
       { title: "⚡ [P] PRESENT EVIDENCE TO WITNESS (Break Alibis & Decoys)", action: "present_evidence" },
       { title: "📑 [U] TACTILE UV TRAVEL DOCUMENT INSPECTION", action: "doc_inspect" },
       { title: "🏛 [V] EVIDENCE HALL & MUSEUM (Recovered Relics)", action: "museum" },
+      { title: "⏱ [O] SPEEDRUN SPLITS & STOPWATCH", action: "speedrun" },
+      { title: "📋 [K] COPY / EXPORT CASE SEED CODE", action: "copy_seed" },
       { title: "🤝 [N] NEGOTIATE WITH LOCAL INFORMANT / FIXER (Time & Intel)", action: "informant" },
       { title: "🔓 [T] TACTILE LOCKPICK TUMBLER SIMULATOR (Bypass Locks)", action: "lockpick" },
       { title: "--- 🎯 DEDUCTION MATRIX: SUSPECT PROBABILITY ---" }
@@ -1178,6 +1350,12 @@ class GBACarmenGameEngine {
       } else if (opt && opt.action === "museum") {
         this.openMuseum();
         return;
+      } else if (opt && opt.action === "speedrun") {
+        this.openSpeedrunSplits();
+        return;
+      } else if (opt && opt.action === "copy_seed") {
+        this.copySeedCode();
+        return;
       } else if (opt && opt.action === "informant") {
         this.openInformantNegotiation();
         return;
@@ -1198,6 +1376,16 @@ class GBACarmenGameEngine {
           feature: s.feature || null
         };
         this.openCrimeComputerSubscreen();
+        return;
+      }
+      this.closeSubscreen();
+      return;
+    }
+
+    if (this.subscreenMode === "speedrun") {
+      const opt = this.subscreenOptions[this.subscreenIndex];
+      if (opt && opt.action === "copy_seed") {
+        this.copySeedCode();
         return;
       }
       this.closeSubscreen();
@@ -1311,6 +1499,8 @@ class GBACarmenGameEngine {
       if (!this.spendHours(4)) return;
 
       this.currentCityId = flightOpt.cityId;
+      const destCity = CITIES_DATA[this.currentCityId];
+      this.recordSpeedrunSplit("Hop to " + destCity.name);
       const destReg = (this.audio && this.audio.getRegionForCity(this.currentCityId)) || "americas";
       this.audio.confirm();
       this.enterCityHub();
@@ -1347,6 +1537,7 @@ class GBACarmenGameEngine {
 
     if (matches.length === 1) {
       this.warrantSuspect = matches[0];
+      this.recordSpeedrunSplit("Warrant: " + this.warrantSuspect.name);
       this.audio.warrantIssued();
       const msg = `MATCH CONFIRMED! ARREST WARRANT ISSUED FOR: ${this.warrantSuspect.name}! Bring them in!`;
       this.typewrite(msg);
@@ -1635,6 +1826,7 @@ class GBACarmenGameEngine {
     if (this.warrantSuspect && this.warrantSuspect.id === criminal.id) {
       this.startChaseQTE();
     } else {
+      this.stopSpeedrunTimer();
       this.audio.cancel();
       this.state = "GAMEOVER";
       this.renderer.drawGameOverScene();
@@ -1656,6 +1848,26 @@ class GBACarmenGameEngine {
     this.state = "ARREST";
     this.currentWitness = null;
     const criminal = this.currentCase.criminal;
+    this.stopSpeedrunTimer();
+    this.recordSpeedrunSplit("Arrest " + criminal.name);
+
+    let speedMsg = `⏱ TIME: ${this.formatSpeedrunTime(this.speedrunElapsed)}`;
+    if (this.speedrunElapsed < (this.profile.bestSpeedrunTime || 999999.0)) {
+      this.profile.bestSpeedrunTime = this.speedrunElapsed;
+      speedMsg += " (NEW PERSONAL BEST!)";
+    }
+    if (this.isDailyCase) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      if (!this.profile.dailyRecords) this.profile.dailyRecords = {};
+      this.profile.dailyRecords[todayStr] = {
+        time: this.speedrunElapsed,
+        formatted: this.formatSpeedrunTime(this.speedrunElapsed),
+        treasure: this.currentCase.treasure,
+        criminal: criminal.name
+      };
+      speedMsg += " [DAILY CHALLENGE COMPLETE!]";
+    }
+
     this.audio.victory();
     this.renderer.drawVictoryScene(criminal);
 
@@ -1676,13 +1888,14 @@ class GBACarmenGameEngine {
     this.saveProfile();
     const newRank = this.getRank();
 
-    const victoryMsg = `CASE SOLVED! Suspect tackled & cuffed. You arrested ${criminal.name} and recovered ${this.currentCase.treasure}! Rank: ${newRank.title} (${this.profile.casesSolved} solved). [PRESS A]`;
+    const victoryMsg = `CASE SOLVED! Suspect tackled & cuffed. You arrested ${criminal.name} and recovered ${this.currentCase.treasure}!\n${speedMsg}\nRank: ${newRank.title} (${this.profile.casesSolved} solved). [PRESS A]`;
     this.typewrite(victoryMsg, () => {
       this.setDialog(victoryMsg);
     }, criminal.id);
   }
 
   triggerGameOver() {
+    this.stopSpeedrunTimer();
     this.state = "GAMEOVER";
     this.currentWitness = null;
     this.audio.gameOver();

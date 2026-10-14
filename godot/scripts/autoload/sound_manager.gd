@@ -34,6 +34,7 @@ var wav_hold_it: AudioStreamWAV
 var wav_breakthrough: AudioStreamWAV
 var wav_uv_toggle: AudioStreamWAV
 var wav_lock_click: AudioStreamWAV
+var wav_stopwatch: AudioStreamWAV
 var wav_bgm: AudioStreamWAV
 
 
@@ -95,6 +96,7 @@ func _cache_all_sounds() -> void:
 	wav_breakthrough = _load_override("breakthrough", _create_breakthrough_wav())
 	wav_uv_toggle = _load_override("uv_toggle", _create_uv_toggle_wav())
 	wav_lock_click = _load_override("lock_click", _create_lock_click_wav())
+	wav_stopwatch = _load_override("stopwatch", _create_stopwatch_wav())
 	
 	for reg in ["americas", "europe", "asia", "latin", "africa_mideast"]:
 		regional_bgm[reg] = _load_override("bgm_" + reg, _create_regional_bgm(reg))
@@ -453,6 +455,7 @@ func play_hold_it() -> void: play_sfx(wav_hold_it)
 func play_breakthrough() -> void: play_sfx(wav_breakthrough)
 func play_uv_toggle() -> void: play_sfx(wav_uv_toggle)
 func play_lock_click() -> void: play_sfx(wav_lock_click)
+func play_stopwatch() -> void: play_sfx(wav_stopwatch)
 
 
 func _create_impact_wav() -> AudioStreamWAV:
@@ -723,6 +726,29 @@ func _create_lock_click_wav() -> AudioStreamWAV:
 		phase_ping = fmod(phase_ping + (2640.0 / wav.mix_rate), 1.0)
 		var click := (1.0 if phase_tone < 0.5 else -1.0) * 0.5 + sin(phase_ping * TAU) * 0.5
 		data[i] = int(clampi(int(128 + click * env * 120.0), 0, 255))
+	wav.data = data
+	return wav
+
+func _create_stopwatch_wav() -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	wav.mix_rate = 22050
+	wav.stereo = false
+	var duration := 0.09
+	var sample_count := int(duration * wav.mix_rate)
+	var data := PackedByteArray()
+	data.resize(sample_count)
+	
+	# Crisp dual-pitch electronic digital split beep (1400 Hz then 2100 Hz)
+	var phase := 0.0
+	for i in range(sample_count):
+		var t := float(i) / float(wav.mix_rate)
+		var f := 1400.0 if t < 0.04 else 2100.0
+		var seg_t := t if t < 0.04 else (t - 0.04)
+		var env := exp(-seg_t * 22.0)
+		phase = fmod(phase + (f / wav.mix_rate), 1.0)
+		var tone := (1.0 if phase < 0.5 else -1.0) * env * 0.55
+		data[i] = int(clampi(int(128 + tone * 120.0), 0, 255))
 	wav.data = data
 	return wav
 

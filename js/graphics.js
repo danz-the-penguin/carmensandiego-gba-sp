@@ -1288,6 +1288,64 @@ class GBAGraphicsRenderer {
     this.ctx.fillText("CASE CLOSED BY CHIEF", 120, 60);
     this.ctx.textAlign = "start";
   }
+
+  // --- Real-Time Speedrun Stopwatch & Split Tracker ---
+  drawSpeedrunSplits(splits = [], elapsed = 0, bestTime = 999999, seed = "", isDaily = false) {
+    this.setResolution(240, 88);
+    this.clear();
+
+    // Dark high-tech stopwatch monitor plate
+    this.ctx.fillStyle = "#090d16";
+    this.ctx.fillRect(0, 0, 240, 88);
+
+    this.ctx.fillStyle = "#111827";
+    this.ctx.fillRect(10, 6, 220, 76);
+    this.ctx.strokeStyle = "#38bdf8";
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeRect(10, 6, 220, 76);
+
+    // Title
+    this.ctx.fillStyle = "#fbbf24";
+    this.ctx.font = '6px "Press Start 2P", monospace';
+    this.ctx.fillText("STOPWATCH & SPLIT TRACKER [O]", 16, 16);
+
+    const formatTime = (sec) => {
+      if (sec >= 999999 || sec === undefined || isNaN(sec)) return "--:--.-";
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      const ms = Math.floor((sec % 1) * 10);
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${ms}`;
+    };
+
+    this.ctx.fillStyle = "#38bdf8";
+    this.ctx.font = '5px "Press Start 2P", monospace';
+    this.ctx.fillText(`TIME: ${formatTime(elapsed)}`, 16, 28);
+    this.ctx.fillStyle = "#4ade80";
+    this.ctx.fillText(`PB: ${formatTime(bestTime)}`, 130, 28);
+
+    this.ctx.fillStyle = "#94a3b8";
+    this.ctx.fillText(`SEED: ${seed} ${isDaily ? "[DAILY]" : ""}`, 16, 38);
+
+    // Divider line
+    this.ctx.strokeStyle = "#1f2937";
+    this.ctx.beginPath();
+    this.ctx.moveTo(14, 43);
+    this.ctx.lineTo(226, 43);
+    this.ctx.stroke();
+
+    const displaySplits = splits.slice(-3);
+    let y = 54;
+    for (let i = 0; i < displaySplits.length; i++) {
+      const sp = displaySplits[i];
+      this.ctx.fillStyle = "#f8fafc";
+      this.ctx.fillText(`• ${formatTime(sp.time)} ${sp.name.substring(0, 18)}`, 16, y);
+      y += 10;
+    }
+    if (splits.length === 0) {
+      this.ctx.fillStyle = "#64748b";
+      this.ctx.fillText("No splits logged yet.", 16, 58);
+    }
+  }
 }
 
 if (typeof window !== "undefined") {

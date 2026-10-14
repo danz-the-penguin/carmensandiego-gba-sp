@@ -176,6 +176,13 @@ class GBASoundEngine {
     setTimeout(() => this.playTone(1050, 0.03, "sine", 0.2), 20);
   }
 
+  speedrunSplit() {
+    // Crisp dual-pitch electronic digital split beep (1400 Hz then 2100 Hz)
+    this.init();
+    this.playTone(1400, 0.04, "square", 0.35, -0.2);
+    setTimeout(() => this.playTone(2100, 0.05, "square", 0.45, 0.2), 40);
+  }
+
   clueFound() {
     this.init();
     const notes = [440, 554, 659, 880];
